@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resources | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .resource-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 24px;
+      transition: box-shadow 0.2s;
+    }
+    .resource-card:hover { box-shadow: var(--shadow); }
+    .resource-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .resource-icon {
+      font-size: 2.2rem;
+      flex-shrink: 0;
+    }
+    .resource-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .resource-meta {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .resource-card p {
+      color: var(--text-medium);
+      font-size: 0.92rem;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .resource-card .btn { display: inline-block; }
+    .ideas-list { list-style: none; margin: 0; }
+    .ideas-list li {
+      border-bottom: 1px solid var(--border);
+      padding: 18px 0;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .ideas-list li:last-child { border-bottom: none; }
+    .idea-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--gold);
+      flex-shrink: 0;
+      width: 36px;
+      line-height: 1.2;
+    }
+    .idea-content strong {
+      display: block;
+      color: var(--navy);
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .idea-content p {
+      color: var(--text-medium);
+      font-size: 0.88rem;
+      line-height: 1.65;
+      margin: 0;
+    }
+    .placeholder-box {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      border-radius: 12px;
+      padding: 48px 40px;
+      text-align: center;
+      color: var(--white);
+    }
+    .placeholder-box .icon { font-size: 3rem; margin-bottom: 16px; }
+    .placeholder-box h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 12px; }
+    .placeholder-box p { color: rgba(255,255,255,0.72); max-width: 500px; margin: 0 auto; font-size: 0.92rem; line-height: 1.65; }
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 56px 0; }
+    .agenda-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 24px; }
+    .agenda-item {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--gold);
+      border-radius: 0 10px 10px 0;
+      padding: 20px 24px;
+    }
+    .agenda-item h4 { font-family: 'Playfair Display', serif; color: var(--navy); font-size: 0.95rem; margin-bottom: 8px; }
+    .agenda-item p { font-size: 0.85rem; color: var(--text-medium); line-height: 1.6; margin: 0; }
+    .stats-row { display: flex; flex-wrap: wrap; gap: 16px; margin: 24px 0; }
+    .stat-pill {
+      background: var(--navy);
+      color: var(--white);
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 0.85rem;
+    }
+    .stat-pill strong { display: block; color: var(--gold); font-size: 1.1rem; font-family: 'Playfair Display', serif; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="members.html">Committee</a></li>
+      <li><a href="minutes.html">Minutes</a></li>
+      <li><a href="resources.html" class="active">Resources</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="hero hero-small">
+  <div class="hero-eyebrow">Committee Resources</div>
+  <h1>Resources &amp; <span>Documents</span></h1>
+  <p>Strategic documents, committee ideas, and reference materials for the Membership Services Committee.</p>
+</div>
+
+<section>
+  <div class="section-inner">
+    <div class="section-label">Committee Documents</div>
+    <h2 class="section-title">Official Materials</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">
+      Documents produced by and for the Membership Services Committee — agendas, strategic plans, and reference materials to guide our work.
+    </p>
+
+    <!-- Antonio Davis Documents -->
+    <div class="resource-card">
+      <div class="resource-card-header">
+        <div class="resource-icon">📄</div>
+        <div>
+          <div class="resource-meta">President's Documents — Antonio Davis</div>
+          <h3>Membership Services — One-Page Deliverable</h3>
+        </div>
+      </div>
+      <p>
+        A concise one-page summary of membership services priorities prepared by NBRPA President Antonio Davis. This document was reviewed at the May 7, 2026 committee meeting and outlines key priorities and action items for the committee to support and execute.
+      </p>
+      <a href="https://nbrpa-my.sharepoint.com/:b:/g/personal/adavis_legendsofbasketball_com/IQCHE4-53UWARI9usT-T7LhIAXKJ7MrhHaF57bRwPs3plFg?e=s2unAR" class="btn btn-gold" target="_blank" rel="noopener">View One-Pager →</a>
+    </div>
+
+    <div class="resource-card">
+      <div class="resource-card-header">
+        <div class="resource-icon">📊</div>
+        <div>
+          <div class="resource-meta">President's Documents — Antonio Davis</div>
+          <h3>Membership Services — Strategic Overview</h3>
+        </div>
+      </div>
+      <p>
+        A strategic presentation on membership services prepared by President Antonio Davis, covering committee priorities, membership growth strategy, and the framework for the transition program initiative.
+      </p>
+      <a href="https://nbrpa-my.sharepoint.com/:p:/g/personal/adavis_legendsofbasketball_com/IQASHUEJSVvDRYq395StEI51AVR991bPgx2yV1G8R8-fqkI?e=h1u2GO" class="btn btn-gold" target="_blank" rel="noopener">View Presentation →</a>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Systems Map -->
+    <div class="section-label">Systems Map</div>
+    <h2 class="section-title">Membership Systems Map</h2>
+    <div class="gold-line"></div>
+    <p style="color: var(--text-medium); font-size: 0.97rem; line-height: 1.75; max-width: 680px; margin-bottom: 32px;">
+      A visual diagram mapping the systems and programs available to Legends of Basketball members — how the pillars, services, and resources connect.
+    </p>
+
+    <div class="placeholder-box">
+      <div class="icon">🗺️</div>
+      <h3>Systems Map — Coming Soon</h3>
+      <p>The membership systems map is being finalized. It will be posted here as soon as the document is ready. Committee members with the file should send it to <a href="mailto:gfos44@gmail.com" style="color: var(--gold);">gfos44@gmail.com</a> for publication.</p>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- May 7 Meeting Agenda -->
+    <div class="section-label" id="may-7-agenda">Meeting Agenda</div>
+    <h2 class="section-title">May 7, 2026 — Committee Meeting</h2>
+    <div class="gold-line"></div>
+
+    <div class="resource-card">
+      <div class="resource-card-header">
+        <div class="resource-icon">📋</div>
+        <div>
+          <div class="resource-meta">Legends of Basketball · May 7, 2026 · 5:00 PM EST</div>
+          <h3>Member Services &amp; Benefits Committee — Meeting Agenda</h3>
+        </div>
+      </div>
+
+      <p>Official agenda for the May 7, 2026 committee session, covering membership growth strategy, transition program planning, and committee workstream assignments.</p>
+
+      <div class="stats-row">
+        <div class="stat-pill"><strong>May 7, 2026</strong>Meeting Date</div>
+        <div class="stat-pill"><strong>5:00 PM EST</strong>Start Time</div>
+        <div class="stat-pill"><strong>Zoom</strong>Format</div>
+      </div>
+
+      <h4 style="font-family: 'Playfair Display', serif; color: var(--navy); margin: 24px 0 16px;">Agenda Items</h4>
+      <div class="agenda-grid">
+        <div class="agenda-item">
+          <h4>1. Welcome &amp; Opening Remarks</h4>
+          <p>Greg Foster, Committee Chair. Recap of April 7 initial meeting. Reaffirmation of committee purpose.</p>
+        </div>
+        <div class="agenda-item">
+          <h4>2. President's One-Page Deliverable</h4>
+          <p>Review of Antonio Davis' membership services summary. Discussion of key priorities and committee support strategy.</p>
+        </div>
+        <div class="agenda-item">
+          <h4>3. Membership Growth Strategy</h4>
+          <p>Delegation of responsibilities. Identifying prospects. Retention strategy. Clarifying the value message for former players.</p>
+        </div>
+        <div class="agenda-item">
+          <h4>4. Transition Program Update</h4>
+          <p>Player transition program as priority initiative. 5-member task force to be formed (due 5/18). NBA/NBPA partnership target: 7/9.</p>
+        </div>
+        <div class="agenda-item">
+          <h4>5. Workstream Assignments</h4>
+          <p>Membership Identification &amp; Recruitment. Communication with Chapter Presidents (Mo Evans lead). Growth targets by 6/29.</p>
+        </div>
+        <div class="agenda-item">
+          <h4>6. Open Discussion &amp; Next Steps</h4>
+          <p>Committee feedback. Immediate follow-up tasks. Reporting expectations. Preparation for June 2 meeting.</p>
+        </div>
+      </div>
+
+      <h4 style="font-family: 'Playfair Display', serif; color: var(--navy); margin: 28px 0 16px;">Membership Growth Targets</h4>
+      <div style="overflow-x: auto; border-radius: 10px; border: 1px solid var(--border);">
+        <table class="minutes-table">
+          <thead>
+            <tr>
+              <th>Member Group</th>
+              <th>Current</th>
+              <th>Ever Paid</th>
+              <th>Engagement Goal</th>
+              <th>Growth Goal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Harlem Globetrotters</td>
+              <td>73</td>
+              <td>60</td>
+              <td>100%</td>
+              <td>10% by 6/29</td>
+            </tr>
+            <tr>
+              <td>WNBA</td>
+              <td>514</td>
+              <td>113</td>
+              <td>25%</td>
+              <td>10% by 6/29</td>
+            </tr>
+            <tr>
+              <td>ABA</td>
+              <td>77</td>
+              <td>61</td>
+              <td>100%</td>
+              <td>10% by 6/29</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 style="font-family: 'Playfair Display', serif; color: var(--navy); margin: 28px 0 16px;">Upcoming Meeting Schedule</h4>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+        <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
+          <strong style="color: var(--navy); display: block;">June 2, 2026</strong>
+          <span style="color: var(--text-medium);">5:00 PM EST</span>
+        </div>
+        <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
+          <strong style="color: var(--navy); display: block;">July 7, 2026</strong>
+          <span style="color: var(--text-medium);">5:00 PM EST</span>
+        </div>
+        <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
+          <strong style="color: var(--navy); display: block;">August 4, 2026</strong>
+          <span style="color: var(--text-medium);">5:00 PM EST</span>
+        </div>
+        <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
+          <strong style="color: var(--navy); display: block;">September 15, 2026</strong>
+          <span style="color: var(--text-medium);">5:00 PM EST</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="alt">
+  <div class="section-inner">
+    <div class="section-label">Committee Ideas</div>
+    <h2 class="section-title">Leslie Johnson's Membership Ideas</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">
+      Fifteen proposals submitted by committee member Leslie Johnson to strengthen NBRPA membership services, recruitment, and member engagement.
+    </p>
+
+    <ul class="ideas-list">
+      <li>
+        <div class="idea-num">01</div>
+        <div class="idea-content">
+          <strong>Free First-Year Membership</strong>
+          <p>Offer free entry-level membership for the first year after a player's career ends — the critical window when they are still household names, most open to connection, and most at risk for mental health decline. Prioritize WNBA players (average career 2 years or less) and NBA players who may need more convincing while still benefiting from playing-career income.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">02</div>
+        <div class="idea-content">
+          <strong>New Members Orientation Class</strong>
+          <p>Create a "New Beginners NBRPA Membership Class" — a one-day web-based course guiding new members through NBRPA services and training them how to utilize available resources.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">03</div>
+        <div class="idea-content">
+          <strong>Benefits Clarity Diagram</strong>
+          <p>Produce a single-sheet diagram or graphic that clearly maps which programs and benefits each member type (NBA, WNBA, Harlem Globetrotters, ABA) can access — eliminating confusion about divided offerings.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">04</div>
+        <div class="idea-content">
+          <strong>Flexible Dues Payment Options</strong>
+          <p>Introduce monthly or quarterly installment payment options for dues. At $250/year, monthly payments of ~$20 reduce friction and increase membership retention — especially for members not receiving automatic deductions.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">05</div>
+        <div class="idea-content">
+          <strong>Annual Web-Based Refresher Courses</strong>
+          <p>Offer yearly web-based refresher courses reminding members of available programs and benefits, while also highlighting association accomplishments throughout the year.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">06</div>
+        <div class="idea-content">
+          <strong>Member Referral Incentive Program</strong>
+          <p>Create a referral rewards program: for every new member who signs a full-year or longer membership, the referring member receives a $25–$50 gift card. Generates member-driven recruitment and an additional member revenue stream.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">07</div>
+        <div class="idea-content">
+          <strong>NBRPA Headquarters Day Tour</strong>
+          <p>Host an annual one-day tour or shadowing experience at NBRPA headquarters in Chicago. Understanding how the organization operates motivates members to contribute more actively.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">08</div>
+        <div class="idea-content">
+          <strong>Member Volunteer Registry</strong>
+          <p>Establish an opt-in volunteer list of members who are available to contribute to youth programs, NBRPA Cares, Full Court Press programs, and other initiatives — matching willing members with needs as they arise.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">09</div>
+        <div class="idea-content">
+          <strong>Member Showcase Media Program</strong>
+          <p>Create an NBRPA portal where members upload videos showcasing their post-career talents, businesses, and accomplishments. Promotes member value to potential sponsors and keeps the membership visible and celebrated.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">10</div>
+        <div class="idea-content">
+          <strong>NIL Partnership Opportunities</strong>
+          <p>Convene a focus group of financially savvy NBRPA members to identify opportunities for legends to participate in NIL (Name, Image, and Likeness) agreements with colleges and universities they once attended.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">11</div>
+        <div class="idea-content">
+          <strong>Coaching, Clinics &amp; Training Program</strong>
+          <p>A program where member volunteers are compensated for coaching, individual training, and sports camps booked through the NBRPA. Revenue split: 70% to the player, 30% to the NBRPA. Marketed via social media linking to the NBRPA website.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">12</div>
+        <div class="idea-content">
+          <strong>Legends to Classrooms Program</strong>
+          <p>A "Hire a Legend" portal where schools use grant funding to book legends for virtual classroom sessions. Revenue split: 50% to the member, 50% to the NBRPA. Open to any school or organization willing to pay per hour of engagement.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">13</div>
+        <div class="idea-content">
+          <strong>Real Estate Investment Program</strong>
+          <p>Partner with national real estate firms to provide members with investment education and opportunities. Companies gain access to NBRPA members; members gain real estate knowledge and deal flow.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">14</div>
+        <div class="idea-content">
+          <strong>Credit Building Program</strong>
+          <p>Partner with a national credit-building organization to help members rebuild credit following financial setbacks — divorce, child support, property loss — and position themselves for future financial success.</p>
+        </div>
+      </li>
+      <li>
+        <div class="idea-num">15</div>
+        <div class="idea-content">
+          <strong>Fans Speak to a Legend Program</strong>
+          <p>A separate social media campaign where fans pay to schedule a 30-minute Zoom conversation with a legend of their choice. Revenue split: 60% to the member, 40% to the NBRPA. Members submit a short biography and set their calendar availability.</p>
+        </div>
+      </li>
+    </ul>
+
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-top: 32px;">
+      <p style="font-size: 0.88rem; color: var(--text-light); font-style: italic; margin: 0;">
+        Submitted by Leslie Johnson, Committee Member — WNBA pioneer, Indiana Basketball Hall of Famer, and international professional player.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
+</footer>
+
+</body>
+</html>
