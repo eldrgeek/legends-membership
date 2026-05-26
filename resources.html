@@ -122,6 +122,7 @@
       <li><a href="members.html">Committee</a></li>
       <li><a href="minutes.html">Minutes</a></li>
       <li><a href="resources.html" class="active">Resources</a></li>
+      <li><a href="resources.html#share-ideas">Share Ideas</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
     </ul>
   </div>
@@ -423,6 +424,38 @@
         Submitted by Leslie Johnson, Committee Member — WNBA pioneer, Indiana Basketball Hall of Famer, and international professional player.
       </p>
     </div>
+  </div>
+</section>
+
+<section id="share-ideas">
+  <div class="section-inner" style="max-width: 760px;">
+    <div class="section-label">Your Ideas</div>
+    <h2 class="section-title">Share an Idea</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">
+      Have a suggestion for the committee? We want to hear from you. Use this form to share ideas for programs, membership benefits, or anything that would strengthen the Legends of Basketball community.
+    </p>
+
+    <form name="ideas" method="POST" data-netlify="true" style="background: var(--off-white); border: 1px solid var(--border); border-radius: 12px; padding: 40px;">
+      <input type="hidden" name="form-name" value="ideas">
+
+      <div style="margin-bottom: 24px;">
+        <label for="idea-name" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em;">Your Name</label>
+        <input type="text" id="idea-name" name="name" required placeholder="First and last name" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <label for="idea-email" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em;">Email <span style="font-weight: 400; color: var(--text-light);">(optional)</span></label>
+        <input type="email" id="idea-email" name="email" placeholder="your@email.com" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+
+      <div style="margin-bottom: 32px;">
+        <label for="idea-text" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em;">Your Idea or Suggestion</label>
+        <textarea id="idea-text" name="idea" required rows="6" placeholder="Describe your idea for the committee — a new program, benefit, event, or anything that could strengthen our membership..." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-gold" style="font-size: 0.95rem; padding: 14px 36px;">Submit Idea →</button>
+    </form>
   </div>
 </section>
 
