@@ -101,28 +101,39 @@
     <p class="login-footer-note">
       Don't have an account? Contact <a href="mailto:gfos44@gmail.com">Greg Foster</a> to receive an invitation.
     </p>
+    <p class="login-footer-note" style="margin-top:12px;font-size:0.73rem;color:var(--text-light);">
+      Tip: Use your browser's built-in password reveal (the eye icon in the password field) if you need to check what you're typing.
+    </p>
   </div>
 </div>
 
 <script>
-  netlifyIdentity.init();
+  var params = new URLSearchParams(window.location.search);
 
-  var redirectTo = '/';
+  // Show confirmed banner if redirected from confirmation flow
+  if (params.get('confirmed') === '1') {
+    var banner = document.createElement('div');
+    banner.style.cssText = 'background:#16a34a;color:#fff;padding:12px 16px;border-radius:8px;margin-bottom:20px;font-size:0.88rem;font-weight:600;text-align:center;';
+    banner.textContent = 'Email confirmed! Please sign in below.';
+    var card = document.querySelector('.login-card');
+    var btn = document.getElementById('login-btn');
+    card.insertBefore(banner, btn);
+  }
+
+  var redirectTo = '/members.html';
   try {
-    var params = new URLSearchParams(window.location.search);
     var r = params.get('redirect');
     if (r && r.startsWith('/') && !r.startsWith('//')) redirectTo = r;
   } catch(e) {}
 
+  // Listeners before init()
   netlifyIdentity.on('init', function(user) {
-    if (user) {
-      window.location.replace(redirectTo);
-    }
+    if (user) window.location.replace(redirectTo);
   });
-
   netlifyIdentity.on('login', function() {
     window.location.replace(redirectTo);
   });
+  netlifyIdentity.init();
 
   document.getElementById('login-btn').addEventListener('click', function() {
     netlifyIdentity.open('login');

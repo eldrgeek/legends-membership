@@ -135,16 +135,20 @@
 </footer>
 
 <script>
-  netlifyIdentity.init();
-  netlifyIdentity.on('init', function(user) {
-    var hash = window.location.hash;
-    if (!user && (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token='))) {
-      netlifyIdentity.open('signup');
-    }
+  // Listeners MUST be registered before init() so events aren't missed
+  netlifyIdentity.on('confirm', function() {
+    // Email confirmed — redirect to login with success banner
+    window.location.replace('/login.html?confirmed=1');
+  });
+  netlifyIdentity.on('signup', function() {
+    // Invite accepted + password set — enter committee area
+    window.location.replace('/members.html');
   });
   netlifyIdentity.on('login', function() {
-    window.location.href = '/members.html';
+    window.location.replace('/members.html');
   });
+  // init() auto-processes #confirmation_token, #invite_token, #recovery_token from URL hash
+  netlifyIdentity.init();
 </script>
 
 </body>
