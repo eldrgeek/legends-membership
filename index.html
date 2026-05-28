@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Membership Services Committee | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
 
@@ -132,6 +133,19 @@
   </div>
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
+
+<script>
+  netlifyIdentity.init();
+  netlifyIdentity.on('init', function(user) {
+    var hash = window.location.hash;
+    if (!user && (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token='))) {
+      netlifyIdentity.open('signup');
+    }
+  });
+  netlifyIdentity.on('login', function() {
+    window.location.href = '/members.html';
+  });
+</script>
 
 </body>
 </html>
