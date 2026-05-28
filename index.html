@@ -139,6 +139,19 @@
 </footer>
 
 <script>
+  // Phase B: instrument auth events FIRST so we catch everything including our own handlers
+  (function instrument() {
+    var t0 = Date.now();
+    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
+    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
+      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
+    });
+    var _r = window.location.replace.bind(window.location);
+    window.location.replace = function(u){ log('REPLACE', u); console.trace(); return _r(u); };
+    window.addEventListener('beforeunload', function(){ log('UNLOAD', window.location.href); });
+    log('PAGE LOADED', window.location.href);
+  })();
+
   function updateAuthUI(user) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
@@ -152,7 +165,7 @@
     }
   }
 
-  // Handle recovery/invite tokens BEFORE init() — log out any current user so the
+  // Handle recovery/invite/confirmation tokens BEFORE init() — log out any current user so the
   // widget can process the token cleanly, then open the appropriate modal.
   (function handleRecoveryToken() {
     var hash = window.location.hash || '';
@@ -163,19 +176,34 @@
       });
     }
     if (hash.indexOf('invite_token=') !== -1) {
+      // Flag that a real invite acceptance is in progress — only this session should redirect
+      sessionStorage.setItem('legends_post_invite', '1');
       try { if (netlifyIdentity.currentUser()) { netlifyIdentity.logout(); } } catch(e){}
       netlifyIdentity.on('init', function() {
         netlifyIdentity.open('signup');
       });
+    }
+    if (hash.indexOf('confirmation_token=') !== -1) {
+      // Flag that a real email confirmation is in progress
+      sessionStorage.setItem('legends_post_confirm', '1');
     }
   })();
 
   // Listeners MUST be registered before init() so events aren't missed
   netlifyIdentity.on('init', updateAuthUI);
   netlifyIdentity.on('confirm', function() {
+    // Only redirect when we set the flag from a real confirmation_token in the URL.
+    // Guards against spurious 'confirm' re-fires on session restore.
+    if (sessionStorage.getItem('legends_post_confirm') !== '1') return;
+    sessionStorage.removeItem('legends_post_confirm');
     window.location.replace('/login.html?confirmed=1');
   });
   netlifyIdentity.on('signup', function() {
+    // Only redirect when we set the flag from a real invite_token in the URL.
+    // Guards against the widget spuriously re-firing 'signup' on session restore,
+    // which caused the / ↔ /members.html redirect loop.
+    if (sessionStorage.getItem('legends_post_invite') !== '1') return;
+    sessionStorage.removeItem('legends_post_invite');
     window.location.replace('/members.html');
   });
   // NOTE: NO redirect on 'login' here — login fires on session restore from localStorage,

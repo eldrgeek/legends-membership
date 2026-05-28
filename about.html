@@ -175,6 +175,19 @@
 </footer>
 
 <script>
+  // Phase B: instrument auth events FIRST so we catch everything including our own handlers
+  (function instrument() {
+    var t0 = Date.now();
+    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
+    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
+      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
+    });
+    var _r = window.location.replace.bind(window.location);
+    window.location.replace = function(u){ log('REPLACE', u); console.trace(); return _r(u); };
+    window.addEventListener('beforeunload', function(){ log('UNLOAD', window.location.href); });
+    log('PAGE LOADED', window.location.href);
+  })();
+
   function updateAuthUI(user) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');

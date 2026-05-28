@@ -25,7 +25,7 @@
       <li><a href="about.html">About &amp; Contact</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
         <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
-        <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+        <button onclick="sessionStorage.setItem('legends_active_logout','1'); netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
       </li>
     </ul>
   </div>
@@ -263,6 +263,19 @@
 </footer>
 
 <script>
+  // Phase B: instrument auth events FIRST so we catch everything including our own handlers
+  (function instrument() {
+    var t0 = Date.now();
+    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
+    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
+      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
+    });
+    var _r = window.location.replace.bind(window.location);
+    window.location.replace = function(u){ log('REPLACE', u); console.trace(); return _r(u); };
+    window.addEventListener('beforeunload', function(){ log('UNLOAD', window.location.href); });
+    log('PAGE LOADED', window.location.href);
+  })();
+
   function updateAuthUI(user) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
@@ -287,6 +300,11 @@
     updateAuthUI(user);
   });
   netlifyIdentity.on('logout', function() {
+    // Only redirect when the user explicitly clicked Sign Out (flag set on button onclick).
+    // Guards against spurious 'logout' events fired during token-refresh edge cases,
+    // which caused the / ↔ /members.html redirect loop.
+    if (sessionStorage.getItem('legends_active_logout') !== '1') return;
+    sessionStorage.removeItem('legends_active_logout');
     window.location.replace('/');
   });
   netlifyIdentity.init();
