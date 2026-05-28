@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Committee Login | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 100%);
+      padding: 40px 24px;
+    }
+    .login-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 48px 40px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    .login-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .login-sub {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 32px;
+    }
+    .login-gold-line {
+      width: 48px;
+      height: 3px;
+      background: var(--gold);
+      margin: 0 auto 32px;
+    }
+    .login-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+    .login-desc {
+      font-size: 0.9rem;
+      color: var(--text-medium);
+      line-height: 1.65;
+      margin-bottom: 32px;
+    }
+    .login-btn {
+      display: inline-block;
+      background: var(--navy);
+      color: var(--gold);
+      border: none;
+      padding: 14px 36px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+    .login-btn:hover { background: var(--navy-mid); }
+    .login-footer-note {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      margin-top: 24px;
+      line-height: 1.5;
+    }
+    .login-footer-note a { color: var(--navy); }
+    @media (max-width: 480px) {
+      .login-card { padding: 36px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-logo">Legends of Basketball</div>
+    <div class="login-sub">Membership Services Committee</div>
+    <div class="login-gold-line"></div>
+    <h1 class="login-title">Committee Access</h1>
+    <p class="login-desc">
+      This section of the site is for committee members only. Sign in with your committee invitation to access meeting minutes, resources, and documents.
+    </p>
+    <button class="login-btn" id="login-btn">Sign In</button>
+    <p class="login-footer-note">
+      Don't have an account? Contact <a href="mailto:gfos44@gmail.com">Greg Foster</a> to receive an invitation.
+    </p>
+  </div>
+</div>
+
+<script>
+  netlifyIdentity.init();
+
+  var redirectTo = '/';
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var r = params.get('redirect');
+    if (r && r.startsWith('/') && !r.startsWith('//')) redirectTo = r;
+  } catch(e) {}
+
+  netlifyIdentity.on('init', function(user) {
+    if (user) {
+      window.location.replace(redirectTo);
+    }
+  });
+
+  netlifyIdentity.on('login', function() {
+    window.location.replace(redirectTo);
+  });
+
+  document.getElementById('login-btn').addEventListener('click', function() {
+    netlifyIdentity.open('login');
+  });
+</script>
+
+</body>
+</html>

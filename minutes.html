@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meeting Minutes | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+    document.documentElement.style.visibility = 'hidden';
+    netlifyIdentity.on('init', function(user) {
+      if (!user) {
+        window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
+      } else {
+        document.documentElement.style.visibility = '';
+      }
+    });
+    netlifyIdentity.on('logout', function() { window.location.href = '/'; });
+  </script>
 </head>
 <body>
 
@@ -22,9 +34,23 @@
       <li><a href="resources.html">Resources</a></li>
       <li><a href="resources.html#share-ideas">Share Ideas</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; display: flex; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
     </ul>
   </div>
 </nav>
+<script>
+  netlifyIdentity.on('init', function(user) {
+    if (user) {
+      var el = document.getElementById('auth-nav');
+      var nm = document.getElementById('auth-name');
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = user.email;
+    }
+  });
+</script>
 
 <div class="hero hero-small">
   <div class="hero-eyebrow">Official Records</div>
@@ -60,6 +86,12 @@
             <td><a href="resources.html#may-7-agenda">View Agenda →</a></td>
           </tr>
           <tr>
+            <td>April 9, 2026</td>
+            <td>Regular Session</td>
+            <td>Committee Reset · Mission Reaffirmation · Strategic Priorities · Scholarship Modernization · Financial Literacy</td>
+            <td><a href="#april-9-minutes">View Minutes →</a></td>
+          </tr>
+          <tr>
             <td>April 7, 2026</td>
             <td>Initial Session</td>
             <td>Committee Formation · Organizational Overview</td>
@@ -78,6 +110,67 @@
         <strong>Greg Foster, Chairman</strong> — <a href="mailto:gfos44@gmail.com" style="color: var(--navy); font-weight: 600;">gfos44@gmail.com</a>
       </p>
     </div>
+  </div>
+</section>
+
+<section class="alt" id="april-9-minutes">
+  <div class="section-inner">
+    <div class="section-label">April 9, 2026 · 4:32 PM ET · Zoom</div>
+    <h2 class="section-title">Member Services Committee Meeting Minutes</h2>
+    <div class="gold-line"></div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Chair</strong>Greg Foster
+      </div>
+      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Present</strong>Foster, Tinsley, Hollins, L. Johnson, Capers, M. Jones, Choo Smith, A. Davis, S. Lovelace
+      </div>
+      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Absent</strong>Willie Davis (medical leave) · Mo Evans (conflict)
+      </div>
+    </div>
+
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Opening / Committee Reset</h3>
+      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
+        The committee formally began the new committee year with a renewed focus on structure, accountability, and active participation. Bruce Capers volunteered to handle roll call moving forward.
+      </p>
+    </div>
+
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Mission and Committee Focus</h3>
+      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-bottom: 12px;">The committee reaffirmed its purpose to:</p>
+      <ul style="padding-left: 20px; font-size: 0.92rem; color: var(--text-medium); line-height: 2;">
+        <li>Identify beneficial member programs and services</li>
+        <li>Support existing members</li>
+        <li>Recruit and retain membership</li>
+      </ul>
+      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-top: 12px;">Discussion centered on alignment with the organization's five pillars and improving member-facing programming.</p>
+    </div>
+
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Key Strategic Priorities Discussed</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Membership recruitment and retention</div>
+        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Transition services and life-after-basketball support</div>
+        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Streamlining current programs</div>
+        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Scholarship modernization</div>
+        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Financial literacy and strategic partner activation</div>
+        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Improved messaging of member value</div>
+      </div>
+    </div>
+
+    <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 12px; padding: 28px;">
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 12px; font-size: 1.05rem;">Key Action Direction</h3>
+      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
+        By the June meeting, the committee will work toward identifying the top three priority initiatives within the five pillars, with a goal of presenting Q4 deliverables and budget recommendations.
+      </p>
+    </div>
+
+    <p style="font-size: 0.78rem; color: var(--text-light); font-style: italic; margin-top: 24px;">
+      Minutes prepared by Greg Foster, Chair — Member Services Committee, Legends of Basketball
+    </p>
   </div>
 </section>
 
