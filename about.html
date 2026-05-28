@@ -23,6 +23,10 @@
       <li><a href="resources.html">Resources</a></li>
       <li><a href="resources.html#share-ideas">Share Ideas</a></li>
       <li><a href="about.html" class="active">About &amp; Contact</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
     </ul>
   </div>
 </nav>
@@ -171,16 +175,33 @@
 </footer>
 
 <script>
-  netlifyIdentity.init();
+  function updateAuthUI(user) {
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    if (!el) return;
+    if (user) {
+      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (nm) nm.textContent = name;
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'none';
+    }
+  }
   netlifyIdentity.on('init', function(user) {
+    updateAuthUI(user);
     var hash = window.location.hash;
     if (!user && (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token='))) {
       netlifyIdentity.open('signup');
     }
   });
-  netlifyIdentity.on('login', function() {
+  netlifyIdentity.on('login', function(user) {
+    updateAuthUI(user);
     window.location.href = '/members.html';
   });
+  netlifyIdentity.on('logout', function() {
+    window.location.replace('/');
+  });
+  netlifyIdentity.init();
 </script>
 
 </body>

@@ -24,6 +24,10 @@
       <li><a href="resources.html#share-ideas">Share Ideas</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
     </ul>
   </div>
 </nav>
@@ -135,17 +139,32 @@
 </footer>
 
 <script>
+  function updateAuthUI(user) {
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    if (!el) return;
+    if (user) {
+      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (nm) nm.textContent = name;
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'none';
+    }
+  }
   // Listeners MUST be registered before init() so events aren't missed
+  netlifyIdentity.on('init', updateAuthUI);
   netlifyIdentity.on('confirm', function() {
-    // Email confirmed — redirect to login with success banner
     window.location.replace('/login.html?confirmed=1');
   });
   netlifyIdentity.on('signup', function() {
-    // Invite accepted + password set — enter committee area
     window.location.replace('/members.html');
   });
-  netlifyIdentity.on('login', function() {
+  netlifyIdentity.on('login', function(user) {
+    updateAuthUI(user);
     window.location.replace('/members.html');
+  });
+  netlifyIdentity.on('logout', function() {
+    window.location.replace('/');
   });
   // init() auto-processes #confirmation_token, #invite_token, #recovery_token from URL hash
   netlifyIdentity.init();
