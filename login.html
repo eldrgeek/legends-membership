@@ -126,9 +126,30 @@
     if (r && r.startsWith('/') && !r.startsWith('//')) redirectTo = r;
   } catch(e) {}
 
+  // Handle recovery/invite tokens BEFORE init() — log out any current user so the
+  // widget can process the token cleanly, then open the appropriate modal.
+  (function handleRecoveryToken() {
+    var hash = window.location.hash || '';
+    if (hash.indexOf('recovery_token=') !== -1) {
+      try { if (netlifyIdentity.currentUser()) { netlifyIdentity.logout(); } } catch(e){}
+      netlifyIdentity.on('init', function() {
+        netlifyIdentity.open('login');
+      });
+    }
+    if (hash.indexOf('invite_token=') !== -1) {
+      try { if (netlifyIdentity.currentUser()) { netlifyIdentity.logout(); } } catch(e){}
+      netlifyIdentity.on('init', function() {
+        netlifyIdentity.open('signup');
+      });
+    }
+  })();
+
   // Listeners before init()
   netlifyIdentity.on('init', function(user) {
-    if (user) window.location.replace(redirectTo);
+    // Only auto-redirect if NOT processing a recovery/invite token
+    var hash = window.location.hash || '';
+    var hasToken = hash.indexOf('recovery_token=') !== -1 || hash.indexOf('invite_token=') !== -1;
+    if (user && !hasToken) window.location.replace(redirectTo);
   });
   netlifyIdentity.on('login', function() {
     window.location.replace(redirectTo);

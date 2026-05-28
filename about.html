@@ -57,7 +57,7 @@
       <div style="border-left: 4px solid var(--gold); padding: 24px 28px; background: var(--off-white); border-radius: 0 10px 10px 0;">
         <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 12px;">Who We Are</h3>
         <p style="font-size: 0.9rem; color: var(--text-medium); line-height: 1.7;">
-          A ten-member committee of former professional basketball players — themselves legends — elected and appointed to serve the NBRPA membership. We represent the NBA, WNBA, ABA, and Harlem Globetrotters.
+          A nine-member committee of former professional basketball players — themselves legends — elected and appointed to serve the NBRPA membership. We represent the NBA, WNBA, ABA, and Harlem Globetrotters.
         </p>
       </div>
       <div style="border-left: 4px solid var(--gold); padding: 24px 28px; background: var(--off-white); border-radius: 0 10px 10px 0;">
@@ -187,16 +187,29 @@
       el.style.display = 'none';
     }
   }
-  netlifyIdentity.on('init', function(user) {
-    updateAuthUI(user);
-    var hash = window.location.hash;
-    if (!user && (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token='))) {
-      netlifyIdentity.open('signup');
+
+  // Handle recovery/invite tokens BEFORE init()
+  (function handleRecoveryToken() {
+    var hash = window.location.hash || '';
+    if (hash.indexOf('recovery_token=') !== -1) {
+      try { if (netlifyIdentity.currentUser()) { netlifyIdentity.logout(); } } catch(e){}
+      netlifyIdentity.on('init', function() {
+        netlifyIdentity.open('login');
+      });
     }
-  });
+    if (hash.indexOf('invite_token=') !== -1) {
+      try { if (netlifyIdentity.currentUser()) { netlifyIdentity.logout(); } } catch(e){}
+      netlifyIdentity.on('init', function() {
+        netlifyIdentity.open('signup');
+      });
+    }
+  })();
+
+  netlifyIdentity.on('init', updateAuthUI);
+  // NOTE: NO redirect on 'login' — login fires on session restore, which would
+  // auto-redirect logged-in users away from this public page.
   netlifyIdentity.on('login', function(user) {
     updateAuthUI(user);
-    window.location.href = '/members.html';
   });
   netlifyIdentity.on('logout', function() {
     window.location.replace('/');

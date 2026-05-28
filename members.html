@@ -34,7 +34,7 @@
 <div class="hero hero-small">
   <div class="hero-eyebrow">Membership Services Committee</div>
   <h1>Committee <span>Members</span></h1>
-  <p>Ten distinguished alumni serving the Legends of Basketball membership.</p>
+  <p>Nine distinguished alumni serving the Legends of Basketball membership.</p>
 </div>
 
 <section>
@@ -42,7 +42,7 @@
     <div class="section-label">Directory</div>
     <h2 class="section-title">Meet the Committee</h2>
     <div class="gold-line"></div>
-    <p class="section-lead">Our committee members bring decades of professional basketball experience across the NBA, ABA, WNBA, and Harlem Globetrotters.</p>
+    <p class="section-lead">Our nine committee members bring decades of professional basketball experience across the NBA, ABA, WNBA, and Harlem Globetrotters.</p>
 
     <div class="members-grid">
 
@@ -244,26 +244,6 @@
         </div>
       </div>
 
-      <!-- Choo Smith -->
-      <div class="member-card">
-        <div class="card-header">
-          <div class="avatar">CS</div>
-          <div class="card-name-block">
-            <div class="name">Choo Smith</div>
-            <div class="role">Committee Member</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-tags">
-            <span class="tag">NBA</span>
-            <span class="tag">Professional Player</span>
-          </div>
-          <p>Former professional basketball player and committee contributor who serves as an opening voice at committee sessions. Committed to supporting the NBRPA's mission of connecting and uplifting legends after their playing careers.</p>
-        </div>
-        <div class="card-footer">
-          <a href="members/choo-smith.html" class="btn btn-navy">View Profile</a>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -302,9 +282,9 @@
       netlifyIdentity.open('signup');
     }
   });
+  // No redirect on 'login' needed — already on the target page. Just update UI.
   netlifyIdentity.on('login', function(user) {
     updateAuthUI(user);
-    window.location.href = '/members.html';
   });
   netlifyIdentity.on('logout', function() {
     window.location.replace('/');
