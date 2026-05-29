@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recommendation Detail | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    .page-content { max-width: 800px; margin: 80px auto 0; padding: 40px 24px 60px; }
+    .back-link { display: inline-block; color: var(--navy); font-size: 0.85rem; font-weight: 500; margin-bottom: 24px; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .rec-header { margin-bottom: 28px; }
+    .rec-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .badge-bug { background: #fee2e2; color: #b91c1c; }
+    .badge-feature { background: #dbeafe; color: #1d4ed8; }
+    .badge-open { background: #f3f4f6; color: #6b7280; }
+    .badge-triaged { background: #ede9fe; color: #7c3aed; }
+    .badge-needs_revision { background: #fef3c7; color: #d97706; }
+    .badge-approved { background: #d1fae5; color: #065f46; }
+    .badge-rejected { background: #fee2e2; color: #991b1b; }
+    .badge-shipped { background: #f5e9c5; color: #92400e; }
+    .rec-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--navy); margin-bottom: 8px; line-height: 1.3; }
+    .rec-meta { font-size: 0.8rem; color: var(--text-light); margin-bottom: 20px; }
+    .rec-body { background: var(--off-white); border: 1px solid var(--border); border-radius: 10px; padding: 24px; font-size: 0.95rem; color: var(--text-dark); line-height: 1.7; white-space: pre-wrap; margin-bottom: 12px; }
+    .rec-context { font-size: 0.78rem; color: var(--text-light); }
+    .comments-section { margin-top: 36px; }
+    .comments-heading { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--navy); margin-bottom: 16px; }
+    .gold-line { width: 40px; height: 3px; background: var(--gold); margin: 6px 0 20px; }
+    .comment { border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; }
+    .comment-user { background: var(--white); border: 1px solid var(--border); }
+    .comment-coach { background: #ede9fe; border: 1px solid #c4b5fd; }
+    .comment-human_manager { background: var(--gold-pale); border: 1px solid var(--gold); }
+    .comment-header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+    .comment-author { font-size: 0.8rem; font-weight: 700; color: var(--navy); }
+    .comment-kind { font-size: 0.7rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; }
+    .comment-time { font-size: 0.72rem; color: var(--text-light); margin-left: auto; }
+    .comment-body { font-size: 0.88rem; color: var(--text-dark); line-height: 1.65; white-space: pre-wrap; }
+    .add-comment { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-top: 20px; }
+    .add-comment h4 { font-size: 0.95rem; font-weight: 600; color: var(--navy); margin-bottom: 12px; }
+    .add-comment textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.88rem; resize: vertical; min-height: 80px; }
+    .add-comment textarea:focus { outline: none; border-color: var(--navy); }
+    .comment-btn { margin-top: 10px; background: var(--navy); color: var(--gold); border: none; padding: 10px 24px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; }
+    .comment-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-prompt { background: var(--navy); border-radius: 10px; padding: 20px; text-align: center; margin-top: 20px; }
+    .login-prompt p { color: rgba(255,255,255,0.7); font-size: 0.88rem; margin-bottom: 12px; }
+    .decision-panel { background: var(--gold-pale); border: 1px solid var(--gold); border-radius: 10px; padding: 20px; margin-top: 24px; }
+    .decision-panel h4 { font-size: 0.95rem; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+    .decision-note { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-bottom: 10px; }
+    .decision-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .decision-btn { padding: 9px 18px; border: none; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+    .btn-approve { background: #065f46; color: #fff; }
+    .btn-reject { background: #991b1b; color: #fff; }
+    .btn-revise { background: #d97706; color: #fff; }
+    .btn-ship { background: var(--navy); color: var(--gold); }
+    .alert { padding: 12px 16px; border-radius: 8px; margin: 12px 0; font-size: 0.88rem; }
+    .alert-success { background: #d1fae5; color: #065f46; }
+    .alert-error { background: #fee2e2; color: #991b1b; }
+    .loading { color: var(--text-light); text-align: center; padding: 60px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="members.html">Committee</a></li>
+      <li><a href="minutes.html">Minutes</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li><a href="login.html" id="nav-login-link" style="font-size:0.78rem;color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.18);padding:5px 11px;border-radius:4px;">Committee Login</a></li>
+      <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
+        <span id="auth-name" style="font-size:0.78rem;color:rgba(255,255,255,0.55);"></span>
+        <button onclick="netlifyIdentity.logout()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-content">
+  <a href="recommendations.html" class="back-link">← Back to Recommendations</a>
+  <div id="detail-area">
+    <div class="loading">Loading…</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="recommendations.html">Recommendations</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script>
+  var API_BASE = 'https://vpsmikewolf.duckdns.org/api/recommendations';
+  var MANAGER_EMAIL = 'gfos44@gmail.com';
+  var currentUser = null;
+  var recId = null;
+
+  (function instrument() {
+    var t0 = Date.now();
+    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
+    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
+      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
+    });
+    log('PAGE LOADED', window.location.href);
+  })();
+
+  function updateAuthUI(user) {
+    currentUser = user;
+    var authNav = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginLink = document.getElementById('nav-login-link');
+    if (user) {
+      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (nm) nm.textContent = name;
+      if (authNav) authNav.style.display = 'flex';
+      if (loginLink) loginLink.style.display = 'none';
+    } else {
+      if (authNav) authNav.style.display = 'none';
+    }
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function formatDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  }
+  function statusLabel(s) {
+    return {'open':'Open','triaged':'Triaged','needs_revision':'Needs Revision',
+            'approved':'Approved','rejected':'Rejected','shipped':'Shipped'}[s] || s;
+  }
+
+  function isManager() {
+    return currentUser && currentUser.email && currentUser.email.toLowerCase() === MANAGER_EMAIL.toLowerCase();
+  }
+
+  function renderDetail(rec, comments) {
+    var area = document.getElementById('detail-area');
+    var backLink = rec.channel === 'bug' ? 'bugs.html' : 'features.html';
+    var backLabel = rec.channel === 'bug' ? '← Back to Bug Reports' : '← Back to Feature Forum';
+
+    var decisionPanel = '';
+    if (isManager() && ['open','triaged','needs_revision'].includes(rec.status)) {
+      decisionPanel = '<div class="decision-panel" id="decision-panel">' +
+        '<h4>Greg\'s Decision</h4>' +
+        '<textarea class="decision-note" id="decision-note" placeholder="Optional note (will be posted as a comment)"></textarea>' +
+        '<div class="decision-btns">' +
+          '<button class="decision-btn btn-approve" onclick="makeDecision(\'approved\')">✅ Approve</button>' +
+          '<button class="decision-btn btn-reject" onclick="makeDecision(\'rejected\')">❌ Reject</button>' +
+          '<button class="decision-btn btn-revise" onclick="makeDecision(\'needs_revision\')">🔄 Needs Revision</button>' +
+          '<button class="decision-btn btn-ship" onclick="makeDecision(\'shipped\')">🚀 Mark Shipped</button>' +
+        '</div>' +
+        '<div id="decision-msg" style="margin-top:10px;"></div>' +
+      '</div>';
+    }
+
+    var commentsHtml = '';
+    if (comments.length) {
+      commentsHtml = comments.map(function(c) {
+        var authorLabel = c.author_kind === 'coach' ? 'Coach' :
+                          c.author_kind === 'human_manager' ? 'Greg Foster' : c.author_id;
+        return '<div class="comment comment-' + c.author_kind + '">' +
+          '<div class="comment-header">' +
+            '<span class="comment-author">' + escHtml(authorLabel) + '</span>' +
+            '<span class="comment-kind">' + c.author_kind.replace('_', ' ') + '</span>' +
+            '<span class="comment-time">' + formatDate(c.created_at) + '</span>' +
+          '</div>' +
+          '<div class="comment-body">' + escHtml(c.body) + '</div>' +
+        '</div>';
+      }).join('');
+    } else {
+      commentsHtml = '<p style="color:var(--text-light);font-size:0.88rem;">No comments yet.</p>';
+    }
+
+    var commentFormHtml = currentUser
+      ? '<div class="add-comment"><h4>Add a Comment</h4>' +
+          '<textarea id="comment-body" placeholder="Ask for clarification, add context, or follow up…"></textarea>' +
+          '<button class="comment-btn" id="comment-btn" onclick="postComment()">Post Comment</button>' +
+          '<div id="comment-msg" style="margin-top:8px;font-size:0.85rem;"></div>' +
+        '</div>'
+      : '<div class="login-prompt"><p>Log in to add a comment.</p><button class="btn btn-gold" onclick="netlifyIdentity.open(\'login\')">Sign In</button></div>';
+
+    area.innerHTML =
+      '<a href="' + backLink + '" class="back-link" style="font-size:0.8rem;opacity:0.7;">' + escHtml(backLabel) + '</a>' +
+      '<div class="rec-header">' +
+        '<div class="rec-badges">' +
+          '<span class="badge badge-' + rec.channel + '">' + rec.channel + '</span>' +
+          '<span class="badge badge-' + rec.status + '">' + statusLabel(rec.status) + '</span>' +
+        '</div>' +
+        '<h1 class="rec-title">' + escHtml(rec.title) + '</h1>' +
+        '<div class="rec-meta">Submitted by ' + escHtml(rec.submitter_name || rec.submitter_email) +
+          ' on ' + formatDate(rec.created_at) + '</div>' +
+      '</div>' +
+      '<div class="rec-body">' + escHtml(rec.body) + '</div>' +
+      (rec.page_context ? '<div class="rec-context">Page context: ' + escHtml(rec.page_context) + '</div>' : '') +
+      decisionPanel +
+      '<div class="comments-section">' +
+        '<div class="comments-heading">Discussion</div>' +
+        '<div class="gold-line"></div>' +
+        commentsHtml +
+        commentFormHtml +
+      '</div>';
+  }
+
+  function loadDetail() {
+    var params = new URLSearchParams(window.location.search);
+    recId = parseInt(params.get('id'), 10);
+    if (!recId) {
+      document.getElementById('detail-area').innerHTML = '<p>Invalid recommendation ID.</p>';
+      return;
+    }
+    fetch(API_BASE + '/' + recId)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) {
+          document.getElementById('detail-area').innerHTML = '<p>Recommendation not found.</p>';
+          return;
+        }
+        renderDetail(data.recommendation, data.comments || []);
+      })
+      .catch(function(e) {
+        document.getElementById('detail-area').innerHTML = '<p>Failed to load: ' + e.message + '</p>';
+      });
+  }
+
+  function postComment() {
+    var body = document.getElementById('comment-body');
+    var btn = document.getElementById('comment-btn');
+    var msg = document.getElementById('comment-msg');
+    if (!body || !body.value.trim()) return;
+    if (!currentUser) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Posting…';
+
+    currentUser.jwt().then(function(token) {
+      return fetch(API_BASE + '/' + recId + '/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ body: body.value.trim() })
+      });
+    }).then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
+    .then(function(res) {
+      if (res.status === 201) {
+        body.value = '';
+        msg.textContent = '';
+        setTimeout(loadDetail, 300);
+      } else {
+        msg.textContent = (res.data && res.data.error) || 'Failed to post comment.';
+        msg.style.color = '#991b1b';
+      }
+    }).catch(function(e) {
+      msg.textContent = 'Network error: ' + e.message;
+      msg.style.color = '#991b1b';
+    }).finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Post Comment';
+    });
+  }
+
+  function makeDecision(decision) {
+    if (!currentUser || !isManager()) return;
+    var note = document.getElementById('decision-note');
+    var msgEl = document.getElementById('decision-msg');
+
+    currentUser.jwt().then(function(token) {
+      return fetch(API_BASE + '/' + recId + '/decision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ decision: decision, note: note ? note.value.trim() : '' })
+      });
+    }).then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
+    .then(function(res) {
+      if (res.status === 200) {
+        msgEl.innerHTML = '<span style="color:#065f46;font-weight:600;">Decision recorded.</span>';
+        setTimeout(loadDetail, 600);
+      } else {
+        msgEl.innerHTML = '<span style="color:#991b1b;">' + ((res.data && res.data.error) || 'Failed.') + '</span>';
+      }
+    }).catch(function(e) {
+      msgEl.innerHTML = '<span style="color:#991b1b;">Network error: ' + e.message + '</span>';
+    });
+  }
+
+  netlifyIdentity.on('init', function(user) { updateAuthUI(user); loadDetail(); });
+  netlifyIdentity.on('login', function(user) { updateAuthUI(user); loadDetail(); });
+  netlifyIdentity.on('logout', function() { window.location.replace('/'); });
+  netlifyIdentity.init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature Forum | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    .page-hero {
+      background: var(--navy);
+      padding: 100px 24px 48px;
+      text-align: center;
+      color: var(--white);
+    }
+    .page-hero h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--gold); margin-bottom: 12px; }
+    .page-hero p { color: rgba(255,255,255,0.7); max-width: 560px; margin: 0 auto; }
+    .page-content { max-width: 800px; margin: 0 auto; padding: 40px 24px 60px; }
+    .auth-gate { background: var(--navy); border-radius: 12px; padding: 40px; text-align: center; color: var(--white); margin-bottom: 32px; }
+    .auth-gate h3 { font-family: 'Playfair Display', serif; color: var(--gold); margin-bottom: 12px; }
+    .auth-gate p { color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 0.9rem; }
+    .submit-form { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 36px; margin-bottom: 40px; }
+    .submit-form h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); margin-bottom: 8px; }
+    .submit-form .form-subtitle { color: var(--text-medium); font-size: 0.88rem; margin-bottom: 28px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--text-dark); transition: border-color 0.15s;
+    }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--navy); }
+    .form-group textarea { resize: vertical; min-height: 120px; }
+    .form-hint { font-size: 0.77rem; color: var(--text-light); margin-top: 4px; }
+    .submit-btn {
+      background: var(--gold); color: var(--navy); border: none; padding: 14px 32px;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 700;
+      letter-spacing: 0.04em; border-radius: 8px; cursor: pointer; transition: opacity 0.15s;
+    }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .form-msg { margin-top: 16px; padding: 12px 16px; border-radius: 8px; font-size: 0.88rem; display: none; }
+    .form-msg.success { background: #d1fae5; color: #065f46; display: block; }
+    .form-msg.error { background: #fee2e2; color: #991b1b; display: block; }
+    .section-heading { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--navy); margin-bottom: 4px; }
+    .gold-line { width: 48px; height: 3px; background: var(--gold); margin: 8px 0 24px; }
+    .rec-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 14px; cursor: pointer; transition: box-shadow 0.15s; }
+    .rec-item:hover { box-shadow: var(--shadow); }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; }
+    .badge-open { background: #f3f4f6; color: #6b7280; }
+    .badge-triaged { background: #ede9fe; color: #7c3aed; }
+    .badge-needs_revision { background: #fef3c7; color: #d97706; }
+    .badge-approved { background: #d1fae5; color: #065f46; }
+    .badge-rejected { background: #fee2e2; color: #991b1b; }
+    .badge-shipped { background: #f5e9c5; color: #92400e; }
+    .rec-item-title { font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .rec-item-summary { font-size: 0.85rem; color: var(--text-medium); margin-bottom: 8px; }
+    .rec-item-meta { font-size: 0.75rem; color: var(--text-light); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="members.html">Committee</a></li>
+      <li><a href="minutes.html">Minutes</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li><a href="login.html" id="nav-login-link" style="font-size:0.78rem;color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.18);padding:5px 11px;border-radius:4px;">Committee Login</a></li>
+      <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
+        <span id="auth-name" style="font-size:0.78rem;color:rgba(255,255,255,0.55);"></span>
+        <button onclick="netlifyIdentity.logout()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <h1>Feature Forum</h1>
+  <p>Have an idea for improving the site? Submit it here. Coach reviews every suggestion and Greg decides what gets built.</p>
+</div>
+
+<div class="page-content">
+
+  <div id="auth-gate" class="auth-gate" style="display:none;">
+    <h3>Login Required</h3>
+    <p>You need to be a committee member to suggest features.</p>
+    <button class="btn btn-gold" onclick="netlifyIdentity.open('login')">Sign In</button>
+  </div>
+
+  <div id="submit-section" style="display:none;">
+    <div class="submit-form">
+      <h2>Suggest a Feature</h2>
+      <p class="form-subtitle">What would make this site more useful for the committee? Big ideas welcome — Coach will triage and scope it.</p>
+
+      <div class="form-group">
+        <label for="feat-title">Title <span style="color:var(--gold);">*</span></label>
+        <input type="text" id="feat-title" placeholder="e.g. Add a calendar of events to the homepage" maxlength="120">
+      </div>
+
+      <div class="form-group">
+        <label for="feat-body">Description <span style="color:var(--gold);">*</span></label>
+        <textarea id="feat-body" placeholder="What do you want? Why would it help? What does success look like?"></textarea>
+        <div class="form-hint">The more specific, the faster Coach can triage and Greg can decide.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="feat-page">Related page (if any)</label>
+        <input type="text" id="feat-page" placeholder="e.g. homepage, members page, resources">
+      </div>
+
+      <button class="submit-btn" id="submit-btn" onclick="submitFeature()">Submit Feature Request</button>
+      <div id="form-msg" class="form-msg"></div>
+    </div>
+  </div>
+
+  <div id="list-section">
+    <div class="section-heading">Recent Feature Requests</div>
+    <div class="gold-line"></div>
+    <div id="feat-list">
+      <p style="color:var(--text-light);font-size:0.88rem;">Loading…</p>
+    </div>
+    <div style="margin-top:20px;">
+      <a href="recommendations.html" style="color:var(--navy);font-size:0.85rem;font-weight:500;">← View full recommendations board</a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="recommendations.html">Recommendations</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script>
+  var API_BASE = 'https://vpsmikewolf.duckdns.org/api/recommendations';
+  var currentUser = null;
+
+  (function instrument() {
+    var t0 = Date.now();
+    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
+    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
+      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
+    });
+    log('PAGE LOADED', window.location.href);
+  })();
+
+  function updateAuthUI(user) {
+    currentUser = user;
+    var authNav = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginLink = document.getElementById('nav-login-link');
+    var gate = document.getElementById('auth-gate');
+    var submitSec = document.getElementById('submit-section');
+    if (user) {
+      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (nm) nm.textContent = name;
+      if (authNav) authNav.style.display = 'flex';
+      if (loginLink) loginLink.style.display = 'none';
+      if (gate) gate.style.display = 'none';
+      if (submitSec) submitSec.style.display = 'block';
+    } else {
+      if (authNav) authNav.style.display = 'none';
+      if (gate) gate.style.display = 'block';
+      if (submitSec) submitSec.style.display = 'none';
+    }
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function formatDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+  }
+
+  function loadFeatures() {
+    fetch(API_BASE + '?app=legends&channel=feature')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var list = document.getElementById('feat-list');
+        var items = data.items || [];
+        if (!items.length) {
+          list.innerHTML = '<p style="color:var(--text-light);font-size:0.88rem;">No feature requests yet. Be the first!</p>';
+          return;
+        }
+        list.innerHTML = items.map(function(item) {
+          var preview = item.ai_summary || item.body;
+          if (preview && preview.length > 120) preview = preview.substring(0, 120) + '…';
+          return '<div class="rec-item" onclick="window.location.href=\'rec-detail.html?id=' + item.id + '\'">' +
+            '<span class="badge badge-' + item.status + '">' + item.status.replace('_', ' ') + '</span>' +
+            '<div class="rec-item-title">' + escHtml(item.title) + '</div>' +
+            '<div class="rec-item-summary">' + escHtml(preview || '') + '</div>' +
+            '<div class="rec-item-meta">' + formatDate(item.created_at) + ' · ' + escHtml(item.submitter_name || '') +
+              (item.comment_count > 0 ? ' · ' + item.comment_count + ' comment(s)' : '') +
+            '</div>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function() {
+        document.getElementById('feat-list').innerHTML = '<p style="color:var(--text-light);">Could not load feature requests.</p>';
+      });
+  }
+
+  function submitFeature() {
+    var title = document.getElementById('feat-title').value.trim();
+    var body = document.getElementById('feat-body').value.trim();
+    var pageField = document.getElementById('feat-page').value.trim();
+    var btn = document.getElementById('submit-btn');
+
+    if (!title) { showMsg('error', 'Please enter a title.'); return; }
+    if (!body) { showMsg('error', 'Please describe your feature idea.'); return; }
+    if (!currentUser) { showMsg('error', 'You must be logged in to submit.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    currentUser.jwt().then(function(token) {
+      var pageCtx = pageField || window.location.href;
+      return fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ app: 'legends', channel: 'feature', title: title, body: body, page_context: pageCtx })
+      });
+    }).then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
+    .then(function(res) {
+      if (res.status === 201) {
+        showMsg('success', 'Feature request submitted! Coach will review it shortly.');
+        document.getElementById('feat-title').value = '';
+        document.getElementById('feat-body').value = '';
+        document.getElementById('feat-page').value = '';
+        setTimeout(loadFeatures, 500);
+      } else {
+        showMsg('error', (res.data && res.data.error) || 'Submission failed. Please try again.');
+      }
+    }).catch(function(e) {
+      showMsg('error', 'Network error: ' + e.message);
+    }).finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Submit Feature Request';
+    });
+  }
+
+  function showMsg(type, text) {
+    var el = document.getElementById('form-msg');
+    el.className = 'form-msg ' + type;
+    el.textContent = text;
+  }
+
+  netlifyIdentity.on('init', function(user) { updateAuthUI(user); loadFeatures(); });
+  netlifyIdentity.on('login', function(user) { updateAuthUI(user); });
+  netlifyIdentity.on('logout', function() { window.location.replace('/'); });
+  netlifyIdentity.init();
+</script>
+
+</body>
+</html>
