@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Needs Assessment | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    /* Assessment-specific styles */
+    body { background: #f4f4f4; }
+
+    .assessment-header {
+      background: #1a1a2e;
+      color: white;
+      padding: 28px 24px 20px;
+      text-align: center;
+    }
+    .assessment-header .org-name {
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #e8a020;
+      margin-bottom: 6px;
+    }
+    .assessment-header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .assessment-header p {
+      font-size: 14px;
+      color: #ccc;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .progress-wrapper {
+      background: #1a1a2e;
+      padding: 0 24px 20px;
+    }
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .progress-label {
+      font-size: 10px;
+      color: #888;
+      text-align: center;
+      flex: 1;
+      transition: color 0.3s;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .progress-label.active { color: #e8a020; font-weight: 700; }
+    .progress-label.done { color: #5cb85c; }
+    .progress-bar-track {
+      background: #333;
+      border-radius: 10px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e8a020, #f0c040);
+      border-radius: 10px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    .a-section {
+      display: none;
+      max-width: 760px;
+      margin: 32px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+      overflow: hidden;
+    }
+    .a-section.active { display: block; }
+
+    .a-section-header {
+      padding: 22px 28px 16px;
+      border-bottom: 3px solid #e8a020;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .a-pillar-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .a-section-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .a-section-header p {
+      font-size: 13px;
+      color: #666;
+      margin-top: 2px;
+    }
+    .a-section-body {
+      padding: 24px 28px 28px;
+    }
+
+    .a-question { margin-bottom: 28px; }
+    .a-question:last-child { margin-bottom: 0; }
+    .a-question label.q-label {
+      display: block;
+      font-weight: 600;
+      font-size: 15px;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .a-question label.q-label span.req { color: #e8a020; margin-left: 2px; }
+    .a-hint { font-size: 12px; color: #888; margin-top: -6px; margin-bottom: 10px; font-style: italic; }
+
+    .a-scale-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .a-scale-row .scale-lbl { font-size: 12px; color: #888; min-width: 70px; }
+    .a-scale-row .scale-lbl.right { text-align: right; }
+    .scale-buttons { display: flex; gap: 6px; }
+    .scale-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+      background: white;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: #555;
+    }
+    .scale-btn:hover { border-color: #e8a020; color: #e8a020; }
+    .scale-btn.selected { background: #e8a020; border-color: #e8a020; color: white; }
+
+    .a-options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .a-options-list.two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .a-option-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 2px solid #e8e8e8;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 14px;
+      color: #333;
+    }
+    .a-option-item:hover { border-color: #e8a020; background: #fffbf2; }
+    .a-option-item input { accent-color: #e8a020; width: 16px; height: 16px; flex-shrink: 0; }
+    .a-option-item.selected { border-color: #e8a020; background: #fffbf2; }
+
+    .a-input, .a-select, .a-textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #333;
+      transition: border-color 0.15s;
+      background: white;
+      box-sizing: border-box;
+    }
+    .a-input:focus, .a-select:focus, .a-textarea:focus {
+      outline: none;
+      border-color: #e8a020;
+    }
+    .a-textarea { resize: vertical; min-height: 90px; }
+    .a-select { appearance: auto; }
+
+    .a-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .a-nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 28px;
+      background: #f9f9f9;
+      border-top: 1px solid #eee;
+    }
+    .a-btn {
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .a-btn-back { background: white; color: #555; border: 2px solid #ddd !important; }
+    .a-btn-back:hover { border-color: #aaa !important; color: #333; }
+    .a-btn-next { background: #e8a020; color: white; }
+    .a-btn-next:hover { background: #d4911a; }
+    .a-btn-submit { background: #1a1a2e; color: white; }
+    .a-btn-submit:hover { background: #2d2d50; }
+    .a-btn-print { background: #5cb85c; color: white; }
+    .a-btn-print:hover { background: #4cae4c; }
+
+    .summary-section { padding: 28px; }
+    .summary-section h3 { font-size: 18px; color: #1a1a2e; margin-bottom: 16px; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .summary-card {
+      background: #f9f9f9;
+      border-radius: 10px;
+      padding: 16px;
+      border-left: 4px solid #e8a020;
+    }
+    .summary-card h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 6px; }
+    .summary-card .score { font-size: 32px; font-weight: 800; color: #1a1a2e; line-height: 1; }
+    .summary-card .score-label { font-size: 12px; color: #999; margin-top: 4px; }
+    .score-bar-wrap { margin-top: 8px; background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden; }
+    .score-bar { height: 100%; border-radius: 10px; transition: width 0.6s ease; }
+    .priority-list { list-style: none; }
+    .priority-list li {
+      padding: 10px 14px;
+      background: #fffbf2;
+      border: 1px solid #f0d080;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .priority-list li::before { content: "⚑"; color: #e8a020; }
+    .a-thank-you {
+      text-align: center;
+      padding: 20px 0 10px;
+      color: #555;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .a-thank-you strong { color: #1a1a2e; }
+
+    @media (max-width: 600px) {
+      .a-form-row, .summary-grid, .a-options-list.two-col { grid-template-columns: 1fr; }
+      .a-section { margin: 16px; }
+      .a-section-body, .a-section-header { padding: 16px; }
+      .a-nav-buttons { padding: 14px 16px; }
+      .a-scale-row { gap: 4px; }
+      .scale-btn { width: 36px; height: 36px; font-size: 13px; }
+    }
+
+    @media print {
+      .a-nav-buttons, .progress-wrapper, .a-btn-print { display: none !important; }
+      .a-section { display: block !important; box-shadow: none; margin: 10px 0; }
+      nav, footer { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Netlify Forms detection form (hidden — Netlify reads this at build time) -->
+<form name="member-assessment" netlify netlify-honeypot="bot-field" hidden>
+  <input name="bot-field">
+  <input name="first_name">
+  <input name="last_name">
+  <input name="email">
+  <input name="leagues">
+  <input name="years_since_retirement">
+  <input name="membership_status">
+  <input name="location">
+  <input name="referral">
+  <input name="cam_connection">
+  <input name="cam_frequency">
+  <input name="cam_barriers">
+  <input name="cam_engagement">
+  <input name="cam_isolation">
+  <input name="cam_open">
+  <input name="health_physical">
+  <input name="health_mental">
+  <input name="health_access">
+  <input name="health_conditions">
+  <input name="health_support">
+  <input name="health_open">
+  <input name="fin_stability">
+  <input name="fin_income">
+  <input name="fin_plan">
+  <input name="fin_challenges">
+  <input name="fin_support">
+  <input name="com_local">
+  <input name="com_skills">
+  <input name="com_interests">
+  <input name="com_mentoring">
+  <input name="com_barriers">
+  <input name="fam_relationships">
+  <input name="fam_support">
+  <input name="fam_impact">
+  <input name="fam_support_needed">
+  <input name="fam_open">
+  <input name="tr_overall">
+  <input name="tr_unsettled">
+  <input name="tr_immediate">
+  <input name="tr_vision">
+  <input name="tr_readiness">
+  <input name="tr_open">
+</form>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="members.html">Committee</a></li>
+      <li><a href="minutes.html">Minutes</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="assessment.html" class="active">Assessment</a></li>
+      <li><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="assessment-header">
+  <div class="org-name">Legends of Basketball</div>
+  <h1>Member Needs Assessment</h1>
+  <p>This assessment helps us understand where you are and what you need — so we can build programs and support that truly meet you where you are.</p>
+</div>
+
+<div class="progress-wrapper">
+  <div class="progress-labels">
+    <span class="progress-label active" id="lbl-0">About You</span>
+    <span class="progress-label" id="lbl-1">Camaraderie</span>
+    <span class="progress-label" id="lbl-2">Health</span>
+    <span class="progress-label" id="lbl-3">Financial</span>
+    <span class="progress-label" id="lbl-4">Community</span>
+    <span class="progress-label" id="lbl-5">Family</span>
+    <span class="progress-label" id="lbl-6">Transition</span>
+    <span class="progress-label" id="lbl-7">Summary</span>
+  </div>
+  <div class="progress-bar-track">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+</div>
+
+<!-- ===== SECTION 0: About You ===== -->
+<div class="a-section active" id="sec-0">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#e8f0fe;">🏀</div>
+    <div>
+      <h2>About You</h2>
+      <p>Let's start with some basic information so we can better understand your background.</p>
+    </div>
+  </div>
+  <div class="a-section-body">
+
+    <div class="a-form-row">
+      <div class="a-question">
+        <label class="q-label">First Name <span class="req">*</span></label>
+        <input type="text" id="q_fname" class="a-input" placeholder="First name">
+      </div>
+      <div class="a-question">
+        <label class="q-label">Last Name <span class="req">*</span></label>
+        <input type="text" id="q_lname" class="a-input" placeholder="Last name">
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">Email Address</label>
+      <input type="email" id="q_email" class="a-input" placeholder="your@email.com">
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">Which league(s) did you play in? <span class="req">*</span></label>
+      <div class="a-options-list two-col" id="q_league">
+        <label class="a-option-item"><input type="checkbox" value="NBA"> NBA</label>
+        <label class="a-option-item"><input type="checkbox" value="WNBA"> WNBA</label>
+        <label class="a-option-item"><input type="checkbox" value="ABA"> ABA</label>
+        <label class="a-option-item"><input type="checkbox" value="Globetrotters"> Harlem Globetrotters</label>
+        <label class="a-option-item"><input type="checkbox" value="International"> International League</label>
+        <label class="a-option-item"><input type="checkbox" value="Other"> Other</label>
+      </div>
+    </div>
+
+    <div class="a-form-row">
+      <div class="a-question">
+        <label class="q-label">Approximate years since retirement / transition</label>
+        <select id="q_years" class="a-select">
+          <option value="">Select...</option>
+          <option>Less than 1 year</option>
+          <option>1–3 years</option>
+          <option>4–7 years</option>
+          <option>8–15 years</option>
+          <option>More than 15 years</option>
+          <option>Still actively playing</option>
+        </select>
+      </div>
+      <div class="a-question">
+        <label class="q-label">Membership status</label>
+        <select id="q_status" class="a-select">
+          <option value="">Select...</option>
+          <option>Current member</option>
+          <option>Prospective / new member</option>
+          <option>Former member interested in rejoining</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">Current city / state of residence</label>
+      <input type="text" id="q_location" class="a-input" placeholder="e.g. Chicago, IL">
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">How did you hear about this assessment?</label>
+      <div class="a-options-list" id="q_referral">
+        <label class="a-option-item"><input type="radio" name="referral" value="Email"> Email from Legends</label>
+        <label class="a-option-item"><input type="radio" name="referral" value="Chapter"> Chapter president / leader</label>
+        <label class="a-option-item"><input type="radio" name="referral" value="Fellow"> Fellow Legend</label>
+        <label class="a-option-item"><input type="radio" name="referral" value="Website"> Legends website</label>
+        <label class="a-option-item"><input type="radio" name="referral" value="Event"> Event or meeting</label>
+        <label class="a-option-item"><input type="radio" name="referral" value="Other"> Other</label>
+      </div>
+    </div>
+
+  </div>
+  <div class="a-nav-buttons">
+    <span></span>
+    <button class="a-btn a-btn-next" onclick="navigate(1)">Next: Camaraderie →</button>
+  </div>
+</div>
+
+<!-- ===== SECTION 1: Camaraderie ===== -->
+<div class="a-section" id="sec-1">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#fde8e8;">🤝</div>
+    <div>
+      <h2>Pillar 1 — Camaraderie</h2>
+      <p>Connection, brotherhood/sisterhood, and belonging within the Legends community.</p>
+    </div>
+  </div>
+  <div class="a-section-body">
+
+    <div class="a-question">
+      <label class="q-label">1. How connected do you currently feel to the Legends community?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Not at all</span>
+        <div class="scale-buttons" id="scale_cam1">
+          <button class="scale-btn" onclick="setScale('scale_cam1',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_cam1',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_cam1',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_cam1',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_cam1',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Deeply connected</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">2. How often do you interact with fellow Legends?</label>
+      <div class="a-options-list" id="q_cam2">
+        <label class="a-option-item"><input type="radio" name="cam2" value="weekly"> Weekly or more</label>
+        <label class="a-option-item"><input type="radio" name="cam2" value="monthly"> Monthly</label>
+        <label class="a-option-item"><input type="radio" name="cam2" value="few_year"> A few times per year</label>
+        <label class="a-option-item"><input type="radio" name="cam2" value="rarely"> Rarely</label>
+        <label class="a-option-item"><input type="radio" name="cam2" value="never"> Never / not at all</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">3. What barriers, if any, prevent you from connecting with other Legends? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_cam3">
+        <label class="a-option-item"><input type="checkbox" value="geography"> Geographic distance</label>
+        <label class="a-option-item"><input type="checkbox" value="info"> Lack of information about events</label>
+        <label class="a-option-item"><input type="checkbox" value="time"> Time / schedule conflicts</label>
+        <label class="a-option-item"><input type="checkbox" value="cost"> Cost of participation</label>
+        <label class="a-option-item"><input type="checkbox" value="health"> Health or mobility challenges</label>
+        <label class="a-option-item"><input type="checkbox" value="digital"> Limited access to digital platforms</label>
+        <label class="a-option-item"><input type="checkbox" value="none"> No barriers</label>
+        <label class="a-option-item"><input type="checkbox" value="other"> Other</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">4. What types of engagement would strengthen your sense of belonging? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_cam4">
+        <label class="a-option-item"><input type="checkbox" value="reunions"> In-person reunions / gatherings</label>
+        <label class="a-option-item"><input type="checkbox" value="virtual"> Virtual meetups / calls</label>
+        <label class="a-option-item"><input type="checkbox" value="mentoring"> Mentoring relationships</label>
+        <label class="a-option-item"><input type="checkbox" value="affinity"> Affinity groups (by league, era, region)</label>
+        <label class="a-option-item"><input type="checkbox" value="newsletter"> Regular newsletter / communications</label>
+        <label class="a-option-item"><input type="checkbox" value="app"> A dedicated Legends app or platform</label>
+        <label class="a-option-item"><input type="checkbox" value="events"> Mission events (All-Star, etc.)</label>
+        <label class="a-option-item"><input type="checkbox" value="social"> Social media community</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">5. Since transitioning from professional basketball, how much have you felt a sense of isolation or loss of identity?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Not at all</span>
+        <div class="scale-buttons" id="scale_cam5">
+          <button class="scale-btn" onclick="setScale('scale_cam5',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_cam5',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_cam5',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_cam5',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_cam5',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Significantly</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">6. In your own words, what would meaningful camaraderie look like for you through Legends?</label>
+      <textarea id="q_cam6" class="a-textarea" placeholder="Share your thoughts..."></textarea>
+    </div>
+
+  </div>
+  <div class="a-nav-buttons">
+    <button class="a-btn a-btn-back" onclick="navigate(0)">← Back</button>
+    <button class="a-btn a-btn-next" onclick="navigate(2)">Next: Health →</button>
+  </div>
+</div>
+
+<!-- ===== SECTION 2: Health ===== -->
+<div class="a-section" id="sec-2">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#e8f8e8;">💪</div>
+    <div>
+      <h2>Pillar 2 — Health &amp; Wellness</h2>
+      <p>Physical health, mental wellness, and access to care after a career in professional athletics.</p>
+    </div>
+  </div>
+  <div class="a-section-body">
+
+    <div class="a-question">
+      <label class="q-label">7. How would you rate your overall physical health today?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Poor</span>
+        <div class="scale-buttons" id="scale_hlth1">
+          <button class="scale-btn" onclick="setScale('scale_hlth1',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth1',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth1',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth1',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth1',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Excellent</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">8. How would you rate your current mental / emotional wellness?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Struggling</span>
+        <div class="scale-buttons" id="scale_hlth2">
+          <button class="scale-btn" onclick="setScale('scale_hlth2',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth2',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth2',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth2',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_hlth2',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Thriving</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">9. Do you have consistent access to quality healthcare?</label>
+      <div class="a-options-list" id="q_hlth3">
+        <label class="a-option-item"><input type="radio" name="hlth3" value="yes"> Yes, I have good coverage and access</label>
+        <label class="a-option-item"><input type="radio" name="hlth3" value="limited"> Limited — I have some access but it's not sufficient</label>
+        <label class="a-option-item"><input type="radio" name="hlth3" value="no"> No — I struggle to access adequate healthcare</label>
+        <label class="a-option-item"><input type="radio" name="hlth3" value="unsure"> Not sure / currently navigating this</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">10. Are you managing any ongoing physical conditions related to your playing career? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_hlth4">
+        <label class="a-option-item"><input type="checkbox" value="joint"> Joint / orthopedic issues</label>
+        <label class="a-option-item"><input type="checkbox" value="chronic"> Chronic pain</label>
+        <label class="a-option-item"><input type="checkbox" value="head"> Head / concussion-related concerns</label>
+        <label class="a-option-item"><input type="checkbox" value="heart"> Cardiovascular concerns</label>
+        <label class="a-option-item"><input type="checkbox" value="weight"> Weight management</label>
+        <label class="a-option-item"><input type="checkbox" value="mental_career"> Mental health related to career transition</label>
+        <label class="a-option-item"><input type="checkbox" value="none"> None currently</label>
+        <label class="a-option-item"><input type="checkbox" value="prefer_not"> Prefer not to say</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">11. What health and wellness support would be most valuable to you? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_hlth5">
+        <label class="a-option-item"><input type="checkbox" value="nav"> Healthcare navigation assistance</label>
+        <label class="a-option-item"><input type="checkbox" value="mental"> Mental health / counseling resources</label>
+        <label class="a-option-item"><input type="checkbox" value="fitness"> Fitness and conditioning programs</label>
+        <label class="a-option-item"><input type="checkbox" value="nutrition"> Nutrition guidance</label>
+        <label class="a-option-item"><input type="checkbox" value="specialist"> Access to sports medicine specialists</label>
+        <label class="a-option-item"><input type="checkbox" value="insurance"> Health insurance guidance</label>
+        <label class="a-option-item"><input type="checkbox" value="peer"> Peer support groups</label>
+        <label class="a-option-item"><input type="checkbox" value="workshops"> Health education workshops</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">12. Are there any specific health concerns you'd like Legends to help address?</label>
+      <textarea id="q_hlth6" class="a-textarea" placeholder="Optional — share any details you're comfortable providing..."></textarea>
+    </div>
+
+  </div>
+  <div class="a-nav-buttons">
+    <button class="a-btn a-btn-back" onclick="navigate(1)">← Back</button>
+    <button class="a-btn a-btn-next" onclick="navigate(3)">Next: Financial →</button>
+  </div>
+</div>
+
+<!-- ===== SECTION 3: Financial Stability ===== -->
+<div class="a-section" id="sec-3">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#e8f4fd;">💰</div>
+    <div>
+      <h2>Pillar 3 — Financial Stability</h2>
+      <p>Economic security, income, planning, and financial literacy after a professional career.</p>
+    </div>
+  </div>
+  <div class="a-section-body">
+
+    <div class="a-question">
+      <label class="q-label">13. How would you rate your current level of financial stability?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Very unstable</span>
+        <div class="scale-buttons" id="scale_fin1">
+          <button class="scale-btn" onclick="setScale('scale_fin1',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_fin1',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_fin1',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_fin1',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_fin1',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Very stable</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">14. What is your primary source of income currently? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_fin2">
+        <label class="a-option-item"><input type="checkbox" value="employment"> Full-time employment</label>
+        <label class="a-option-item"><input type="checkbox" value="business"> Own business / entrepreneurship</label>
+        <label class="a-option-item"><input type="checkbox" value="investments"> Investments / passive income</label>
+        <label class="a-option-item"><input type="checkbox" value="pension"> Pension / retirement benefits</label>
+        <label class="a-option-item"><input type="checkbox" value="speaking"> Speaking / appearances</label>
+        <label class="a-option-item"><input type="checkbox" value="coaching"> Coaching / sports-related work</label>
+        <label class="a-option-item"><input type="checkbox" value="parttime"> Part-time / contract work</label>
+        <label class="a-option-item"><input type="checkbox" value="none"> No current income source</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">15. Do you have a long-term financial plan in place?</label>
+      <div class="a-options-list" id="q_fin3">
+        <label class="a-option-item"><input type="radio" name="fin3" value="yes"> Yes, I have a solid plan</label>
+        <label class="a-option-item"><input type="radio" name="fin3" value="working"> I'm working on it</label>
+        <label class="a-option-item"><input type="radio" name="fin3" value="no"> No, I don't currently have a plan</label>
+        <label class="a-option-item"><input type="radio" name="fin3" value="unsure"> I'm not sure where to start</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">16. Have you experienced significant financial challenges since leaving professional basketball?</label>
+      <div class="a-options-list" id="q_fin4">
+        <label class="a-option-item"><input type="radio" name="fin4" value="no"> No, I've managed well</label>
+        <label class="a-option-item"><input type="radio" name="fin4" value="minor"> Minor challenges</label>
+        <label class="a-option-item"><input type="radio" name="fin4" value="significant"> Significant challenges</label>
+        <label class="a-option-item"><input type="radio" name="fin4" value="ongoing"> Ongoing financial difficulties</label>
+        <label class="a-option-item"><input type="radio" name="fin4" value="prefer_not"> Prefer not to say</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">17. What financial support or resources would be most helpful to you? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_fin5">
+        <label class="a-option-item"><input type="checkbox" value="advisor"> Access to a financial advisor</label>
+        <label class="a-option-item"><input type="checkbox" value="literacy"> Financial literacy workshops</label>
+        <label class="a-option-item"><input type="checkbox" value="business_dev"> Business development / entrepreneurship support</label>
+        <label class="a-option-item"><input type="checkbox" value="investment"> Investment guidance</label>
+        <label class="a-option-item"><input type="checkbox" value="debt"> Debt management support</label>
+        <label class="a-option-item"><input type="checkbox" value="benefits"> Understanding league / union benefits</label>
+        <label class="a-option-item"><input type="checkbox" value="employment"> Employment placement assistance</label>
+        <label class="a-option-item"><input type="checkbox" value="grants"> Information on grants or financial aid</label>
+      </div>
+    </div>
+
+  </div>
+  <div class="a-nav-buttons">
+    <button class="a-btn a-btn-back" onclick="navigate(2)">← Back</button>
+    <button class="a-btn a-btn-next" onclick="navigate(4)">Next: Community →</button>
+  </div>
+</div>
+
+<!-- ===== SECTION 4: Community ===== -->
+<div class="a-section" id="sec-4">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#f3e8ff;">🌍</div>
+    <div>
+      <h2>Pillar 4 — Community</h2>
+      <p>Local engagement, mentorship, civic involvement, and giving back through the Legends platform.</p>
+    </div>
+  </div>
+  <div class="a-section-body">
+
+    <div class="a-question">
+      <label class="q-label">18. How actively are you currently engaged in your local community?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Not at all</span>
+        <div class="scale-buttons" id="scale_com1">
+          <button class="scale-btn" onclick="setScale('scale_com1',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_com1',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_com1',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_com1',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_com1',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Very active</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">19. Do you feel your skills and experience as a professional athlete are being utilized in your community?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Not at all</span>
+        <div class="scale-buttons" id="scale_com2">
+          <button class="scale-btn" onclick="setScale('scale_com2',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_com2',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_com2',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_com2',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_com2',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Fully utilized</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">20. What types of community engagement interest you most? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_com3">
+        <label class="a-option-item"><input type="checkbox" value="youth_mentoring"> Youth mentoring / coaching</label>
+        <label class="a-option-item"><input type="checkbox" value="school"> School / education programs</label>
+        <label class="a-option-item"><input type="checkbox" value="civic"> Civic leadership / advocacy</label>
+        <label class="a-option-item"><input type="checkbox" value="health_comm"> Community health initiatives</label>
+        <label class="a-option-item"><input type="checkbox" value="economic"> Economic empowerment programs</label>
+        <label class="a-option-item"><input type="checkbox" value="speaking_comm"> Public speaking / storytelling</label>
+        <label class="a-option-item"><input type="checkbox" value="nonprofit"> Nonprofit / charitable work</label>
+        <label class="a-option-item"><input type="checkbox" value="sports_programs"> Community sports programs</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">21. Are you interested in mentoring youth through the Legends platform?</label>
+      <div class="a-options-list" id="q_com4">
+        <label class="a-option-item"><input type="radio" name="com4" value="yes_now"> Yes, I'm ready and available now</label>
+        <label class="a-option-item"><input type="radio" name="com4" value="yes_future"> Yes, but I'd need support / training first</label>
+        <label class="a-option-item"><input type="radio" name="com4" value="already"> I'm already doing this</label>
+        <label class="a-option-item"><input type="radio" name="com4" value="no"> Not at this time</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">22. What prevents you from being more involved in community efforts? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_com5">
+        <label class="a-option-item"><input type="checkbox" value="time_com"> Lack of time</label>
+        <label class="a-option-item"><input type="checkbox" value="opps"> Lack of opportunities or connections</label>
+        <label class="a-option-item"><input type="checkbox" value="health_com"> Personal health challenges</label>
+        <label class="a-option-item"><input type="checkbox" value="resources"> Lack of resources or funding</label>
+        <label class="a-option-item"><input type="checkbox" value="know_how"> Not sure how to get involved</label>
+        <label class="a-option-item"><input type="checkbox" value="nothing"> Nothing — I'm as involved as I want to be</label>
+      </div>
+    </div>
+
+  </div>
+  <div class="a-nav-buttons">
+    <button class="a-btn a-btn-back" onclick="navigate(3)">← Back</button>
+    <button class="a-btn a-btn-next" onclick="navigate(5)">Next: Family Support →</button>
+  </div>
+</div>
+
+<!-- ===== SECTION 5: Family Support ===== -->
+<div class="a-section" id="sec-5">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#fff3e0;">❤️</div>
+    <div>
+      <h2>Pillar 5 — Family Support</h2>
+      <p>The health of your family relationships and support systems during and after your transition.</p>
+    </div>
+  </div>
+  <div class="a-section-body">
+
+    <div class="a-question">
+      <label class="q-label">23. How would you rate the overall quality of your family relationships today?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Struggling</span>
+        <div class="scale-buttons" id="scale_fam1">
+          <button class="scale-btn" onclick="setScale('scale_fam1',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_fam1',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_fam1',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_fam1',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_fam1',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Thriving</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">24. Do you have a strong personal support system at home?</label>
+      <div class="a-options-list" id="q_fam2">
+        <label class="a-option-item"><input type="radio" name="fam2" value="strong"> Yes, a very strong support system</label>
+        <label class="a-option-item"><input type="radio" name="fam2" value="moderate"> Somewhat — it could be stronger</label>
+        <label class="a-option-item"><input type="radio" name="fam2" value="limited_fam"> Limited support at home</label>
+        <label class="a-option-item"><input type="radio" name="fam2" value="none_fam"> Little to no support system currently</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">25. Have family members been impacted by the challenges you've faced during your career transition?</label>
+      <div class="a-options-list" id="q_fam3">
+        <label class="a-option-item"><input type="radio" name="fam3" value="no_fam"> No, my family has been largely unaffected</label>
+        <label class="a-option-item"><input type="radio" name="fam3" value="somewhat"> Somewhat — there have been some ripple effects</label>
+        <label class="a-option-item"><input type="radio" name="fam3" value="yes_fam"> Yes, significantly</label>
+        <label class="a-option-item"><input type="radio" name="fam3" value="unsure_fam"> Not sure / still working through this</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">26. What family-related support would be most valuable to you? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_fam4">
+        <label class="a-option-item"><input type="checkbox" value="counseling"> Family counseling / therapy resources</label>
+        <label class="a-option-item"><input type="checkbox" value="parenting"> Parenting support</label>
+        <label class="a-option-item"><input type="checkbox" value="relationship"> Relationship / marriage support</label>
+        <label class="a-option-item"><input type="checkbox" value="education_fam"> Education planning for children</label>
+        <label class="a-option-item"><input type="checkbox" value="estate"> Estate planning / legacy planning</label>
+        <label class="a-option-item"><input type="checkbox" value="caregiver"> Support as a caregiver for aging parents</label>
+        <label class="a-option-item"><input type="checkbox" value="peer_fam"> Peer groups with other Legend families</label>
+        <label class="a-option-item"><input type="checkbox" value="none_fam"> No support needed at this time</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">27. Are there specific family dynamics or challenges related to your transition that you'd like Legends to help with?</label>
+      <textarea id="q_fam5" class="a-textarea" placeholder="Optional — share anything you're comfortable sharing..."></textarea>
+    </div>
+
+  </div>
+  <div class="a-nav-buttons">
+    <button class="a-btn a-btn-back" onclick="navigate(4)">← Back</button>
+    <button class="a-btn a-btn-next" onclick="navigate(6)">Next: Transition →</button>
+  </div>
+</div>
+
+<!-- ===== SECTION 6: Transition ===== -->
+<div class="a-section" id="sec-6">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#e8fdf0;">🚀</div>
+    <div>
+      <h2>Your Transition</h2>
+      <p>Help us understand your specific transition journey and your most immediate needs.</p>
+    </div>
+  </div>
+  <div class="a-section-body">
+
+    <div class="a-question">
+      <label class="q-label">28. Overall, how would you describe your experience transitioning out of professional basketball?</label>
+      <div class="a-options-list" id="q_tr1">
+        <label class="a-option-item"><input type="radio" name="tr1" value="smooth"> Smooth — I felt prepared and supported</label>
+        <label class="a-option-item"><input type="radio" name="tr1" value="mixed"> Mixed — some areas went well, others were difficult</label>
+        <label class="a-option-item"><input type="radio" name="tr1" value="difficult"> Difficult — it has been a significant challenge</label>
+        <label class="a-option-item"><input type="radio" name="tr1" value="ongoing"> I'm still in the middle of my transition</label>
+        <label class="a-option-item"><input type="radio" name="tr1" value="notyet"> I haven't transitioned yet</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">29. Which areas of your life feel most unsettled since your transition? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_tr2">
+        <label class="a-option-item"><input type="checkbox" value="purpose"> Sense of purpose / identity</label>
+        <label class="a-option-item"><input type="checkbox" value="career_tr"> Career / professional direction</label>
+        <label class="a-option-item"><input type="checkbox" value="finances_tr"> Finances</label>
+        <label class="a-option-item"><input type="checkbox" value="health_tr"> Physical health</label>
+        <label class="a-option-item"><input type="checkbox" value="mental_tr"> Mental health / emotional wellbeing</label>
+        <label class="a-option-item"><input type="checkbox" value="relationships_tr"> Relationships / social connections</label>
+        <label class="a-option-item"><input type="checkbox" value="family_tr"> Family dynamics</label>
+        <label class="a-option-item"><input type="checkbox" value="nothing_tr"> Nothing — I feel settled overall</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">30. What is your single most pressing immediate need right now?</label>
+      <div class="a-options-list" id="q_tr3">
+        <label class="a-option-item"><input type="radio" name="tr3" value="income"> Stable income / employment</label>
+        <label class="a-option-item"><input type="radio" name="tr3" value="healthcare_tr"> Healthcare access</label>
+        <label class="a-option-item"><input type="radio" name="tr3" value="mental_health_tr"> Mental health support</label>
+        <label class="a-option-item"><input type="radio" name="tr3" value="community_tr"> Connection and community</label>
+        <label class="a-option-item"><input type="radio" name="tr3" value="family_support_tr"> Family support resources</label>
+        <label class="a-option-item"><input type="radio" name="tr3" value="financial_tr"> Financial planning / stability</label>
+        <label class="a-option-item"><input type="radio" name="tr3" value="purpose_tr"> Sense of purpose / next chapter</label>
+        <label class="a-option-item"><input type="radio" name="tr3" value="other_tr"> Other</label>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">31. What does a successful transition look like for you personally?</label>
+      <textarea id="q_tr4" class="a-textarea" placeholder="Describe your vision for what thriving looks like in your next chapter..."></textarea>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">32. How ready do you feel to take on the next chapter of your life?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Not ready</span>
+        <div class="scale-buttons" id="scale_tr5">
+          <button class="scale-btn" onclick="setScale('scale_tr5',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_tr5',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_tr5',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_tr5',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_tr5',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Fully ready</span>
+      </div>
+    </div>
+
+    <div class="a-question">
+      <label class="q-label">33. Is there anything else you'd like Legends to know about your situation or needs?</label>
+      <textarea id="q_tr6" class="a-textarea" placeholder="Your voice matters — share anything you'd like us to know..."></textarea>
+    </div>
+
+  </div>
+  <div class="a-nav-buttons">
+    <button class="a-btn a-btn-back" onclick="navigate(5)">← Back</button>
+    <button class="a-btn a-btn-next a-btn-submit" onclick="submitAssessment()">Complete Assessment ✓</button>
+  </div>
+</div>
+
+<!-- ===== SECTION 7: Summary ===== -->
+<div class="a-section" id="sec-7">
+  <div class="a-section-header">
+    <div class="a-pillar-icon" style="background:#e8f0fe;">✅</div>
+    <div>
+      <h2>Your Assessment Summary</h2>
+      <p>Thank you for completing the Legends Member Needs Assessment.</p>
+    </div>
+  </div>
+  <div class="summary-section">
+    <div id="submission-status"></div>
+
+    <div class="a-thank-you">
+      <p>Thank you, <strong id="summary-name">Legend</strong>. Your responses will directly inform how Legends of Basketball designs programs and support to meet you where you are.</p>
+      <br>
+      <p>Below is a snapshot of your self-reported wellness across the five pillars.</p>
+    </div>
+
+    <br>
+    <h3>Your Five Pillars Snapshot</h3>
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <h3>Your Identified Priority Areas</h3>
+    <ul class="priority-list" id="priorityList"></ul>
+
+    <div class="a-thank-you" style="margin-top:20px;">
+      <p>A member of the Legends team will follow up with you based on your responses. In the meantime, please don't hesitate to reach out to us directly.</p>
+      <br>
+      <p><strong>Legends of Basketball</strong><br>
+      <a href="http://www.legendsofbasketball.com" style="color:#e8a020;">www.legendsofbasketball.com</a></p>
+    </div>
+  </div>
+  <div class="a-nav-buttons">
+    <button class="a-btn a-btn-back" onclick="navigate(6)">← Review Answers</button>
+    <button class="a-btn a-btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="assessment.html">Assessment</a>
+    <a href="recommendations.html">Recommendations</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script>
+  // Auth UI — public page, no login redirect
+  function updateAuthUI(user) {
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    if (!el) return;
+    if (user) {
+      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (nm) nm.textContent = name;
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  // Listeners registered BEFORE init()
+  netlifyIdentity.on('init', updateAuthUI);
+  netlifyIdentity.on('login', function(user) { updateAuthUI(user); });
+  netlifyIdentity.on('logout', function() { window.location.replace('/'); });
+  netlifyIdentity.init();
+
+  // ===== Assessment logic =====
+  let currentSection = 0;
+  const totalSections = 8;
+  const scaleValues = {};
+
+  function setScale(id, val) {
+    scaleValues[id] = val;
+    document.querySelectorAll('#' + id + ' .scale-btn').forEach(function(b, i) {
+      b.classList.toggle('selected', i < val);
+    });
+  }
+
+  function navigate(target) {
+    document.getElementById('sec-' + currentSection).classList.remove('active');
+    document.getElementById('lbl-' + currentSection).classList.remove('active');
+    document.getElementById('lbl-' + currentSection).classList.add('done');
+    currentSection = target;
+    document.getElementById('sec-' + currentSection).classList.add('active');
+    document.querySelectorAll('.progress-label').forEach(function(el, i) {
+      el.classList.remove('active');
+      if (i < currentSection) el.classList.add('done');
+    });
+    document.getElementById('lbl-' + currentSection).classList.add('active');
+    document.getElementById('lbl-' + currentSection).classList.remove('done');
+    var pct = (currentSection / (totalSections - 1)) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function getChecked(containerId) {
+    return Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(function(i) { return i.value; });
+  }
+
+  function getRadio(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  }
+
+  async function submitAssessment() {
+    var fname = document.getElementById('q_fname').value || 'Legend';
+
+    var payload = {
+      'form-name': 'member-assessment',
+      'bot-field': '',
+      first_name: fname,
+      last_name: document.getElementById('q_lname').value || '',
+      email: document.getElementById('q_email').value || '',
+      leagues: getChecked('q_league').join(', '),
+      years_since_retirement: document.getElementById('q_years').value,
+      membership_status: document.getElementById('q_status').value,
+      location: document.getElementById('q_location').value,
+      referral: getRadio('referral'),
+      cam_connection: String(scaleValues['scale_cam1'] || ''),
+      cam_frequency: getRadio('cam2'),
+      cam_barriers: getChecked('q_cam3').join(', '),
+      cam_engagement: getChecked('q_cam4').join(', '),
+      cam_isolation: String(scaleValues['scale_cam5'] || ''),
+      cam_open: document.getElementById('q_cam6').value,
+      health_physical: String(scaleValues['scale_hlth1'] || ''),
+      health_mental: String(scaleValues['scale_hlth2'] || ''),
+      health_access: getRadio('hlth3'),
+      health_conditions: getChecked('q_hlth4').join(', '),
+      health_support: getChecked('q_hlth5').join(', '),
+      health_open: document.getElementById('q_hlth6').value,
+      fin_stability: String(scaleValues['scale_fin1'] || ''),
+      fin_income: getChecked('q_fin2').join(', '),
+      fin_plan: getRadio('fin3'),
+      fin_challenges: getRadio('fin4'),
+      fin_support: getChecked('q_fin5').join(', '),
+      com_local: String(scaleValues['scale_com1'] || ''),
+      com_skills: String(scaleValues['scale_com2'] || ''),
+      com_interests: getChecked('q_com3').join(', '),
+      com_mentoring: getRadio('com4'),
+      com_barriers: getChecked('q_com5').join(', '),
+      fam_relationships: String(scaleValues['scale_fam1'] || ''),
+      fam_support: getRadio('fam2'),
+      fam_impact: getRadio('fam3'),
+      fam_support_needed: getChecked('q_fam4').join(', '),
+      fam_open: document.getElementById('q_fam5').value,
+      tr_overall: getRadio('tr1'),
+      tr_unsettled: getChecked('q_tr2').join(', '),
+      tr_immediate: getRadio('tr3'),
+      tr_vision: document.getElementById('q_tr4').value,
+      tr_readiness: String(scaleValues['scale_tr5'] || ''),
+      tr_open: document.getElementById('q_tr6').value
+    };
+
+    var submitted = false;
+    try {
+      var resp = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(payload).toString()
+      });
+      submitted = resp.ok;
+    } catch (e) {
+      submitted = false;
+    }
+
+    var statusEl = document.getElementById('submission-status');
+    if (statusEl) {
+      statusEl.innerHTML = submitted
+        ? '<div style="background:#d4edda;border:1px solid #28a745;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#155724;text-align:left;">✓ Assessment submitted successfully. The Legends team will follow up based on your responses.</div>'
+        : '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#856404;text-align:left;">⚠ Submission not recorded — please print or save this page as PDF for your records.</div>';
+    }
+
+    document.getElementById('summary-name').textContent = fname;
+
+    var pillars = [
+      { label: 'Camaraderie', color: '#e8a020', score: scaleValues['scale_cam1'] || 0, icon: '🤝' },
+      { label: 'Health', color: '#5cb85c', score: Math.round(((scaleValues['scale_hlth1'] || 0) + (scaleValues['scale_hlth2'] || 0)) / 2), icon: '💪' },
+      { label: 'Financial', color: '#337ab7', score: scaleValues['scale_fin1'] || 0, icon: '💰' },
+      { label: 'Community', color: '#9b59b6', score: Math.round(((scaleValues['scale_com1'] || 0) + (scaleValues['scale_com2'] || 0)) / 2), icon: '🌍' },
+      { label: 'Family', color: '#e74c3c', score: scaleValues['scale_fam1'] || 0, icon: '❤️' }
+    ];
+
+    var grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+    pillars.forEach(function(p) {
+      var lbl = p.score === 0 ? 'Not rated' : p.score <= 2 ? 'Needs support' : p.score === 3 ? 'Moderate' : 'Good';
+      grid.innerHTML += '<div class="summary-card"><h4>' + p.icon + ' ' + p.label + '</h4><div class="score">' + (p.score > 0 ? p.score + '/5' : '—') + '</div><div class="score-label">' + lbl + '</div><div class="score-bar-wrap"><div class="score-bar" style="width:' + (p.score * 20) + '%;background:' + p.color + ';"></div></div></div>';
+    });
+
+    var priorities = [];
+    var immediateNeed = getRadio('tr3');
+    var needLabels = { income: 'Stable income / employment', healthcare_tr: 'Healthcare access', mental_health_tr: 'Mental health support', community_tr: 'Connection and community', family_support_tr: 'Family support resources', financial_tr: 'Financial planning and stability', purpose_tr: 'Sense of purpose / next chapter', other_tr: 'Other (as noted)' };
+    if (immediateNeed && needLabels[immediateNeed]) priorities.push(needLabels[immediateNeed]);
+
+    pillars.forEach(function(p) {
+      if (p.score > 0 && p.score <= 2) priorities.push(p.label + ' support (self-rated ' + p.score + '/5)');
+    });
+
+    var unsettled = getChecked('q_tr2');
+    var unsettledLabels = { purpose: 'Identity & purpose', career_tr: 'Career direction', finances_tr: 'Finances', health_tr: 'Physical health', mental_tr: 'Mental/emotional wellbeing', relationships_tr: 'Relationships & connections', family_tr: 'Family dynamics' };
+    unsettled.forEach(function(u) { if (unsettledLabels[u]) priorities.push(unsettledLabels[u]); });
+
+    var pList = document.getElementById('priorityList');
+    var unique = priorities.filter(function(v, i, a) { return a.indexOf(v) === i; });
+    pList.innerHTML = unique.length > 0
+      ? unique.map(function(p) { return '<li>' + p + '</li>'; }).join('')
+      : '<li>No critical priority areas flagged — great foundation!</li>';
+
+    navigate(7);
+  }
+
+  // Style option items on change
+  document.querySelectorAll('.a-options-list').forEach(function(list) {
+    list.addEventListener('change', function() {
+      list.querySelectorAll('.a-option-item').forEach(function(item) {
+        var inp = item.querySelector('input');
+        item.classList.toggle('selected', inp && inp.checked);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
