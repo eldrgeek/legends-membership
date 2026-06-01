@@ -1,6 +1,11 @@
 [build]
   publish = "."
 
+[[redirects]]
+  from = "/systems-map/*"
+  to = "/systems-map/index.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
