@@ -1,6 +1,6 @@
+headersOrigin = "config"
+redirectsOrigin = "config"
 plugins = []
-headers = []
-redirects = []
 
 [functions]
 
@@ -8,7 +8,7 @@ redirects = []
 
 [build]
 publish = "/Users/mikewolf/Projects/legends-membership-site"
-publishOrigin = "default"
+publishOrigin = "config"
 
 [build.environment]
 
@@ -23,3 +23,22 @@ publishOrigin = "default"
 [build.processing.js]
 
 [build.services]
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+X-Frame-Options = "SAMEORIGIN"
+X-Content-Type-Options = "nosniff"
+
+[[redirects]]
+from = "/systems-map/*"
+to = "/systems-map/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

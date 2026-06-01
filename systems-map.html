@@ -7,13 +7,9 @@
   <link rel="stylesheet" href="css/style.css">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    document.documentElement.style.visibility = 'hidden';
+    // Public page — no auth gate. Track login state for "Edit this page" affordance only.
     netlifyIdentity.on('init', function(user) {
-      if (!user) {
-        window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
-      } else {
-        document.documentElement.style.visibility = '';
-      }
+      window.__levinUser = user;
     });
     netlifyIdentity.on('logout', function() { window.location.href = '/'; });
   </script>
