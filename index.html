@@ -153,6 +153,9 @@
     <a href="recommendations.html">Recommendations</a>
     <a href="about.html">About &amp; Contact</a>
   </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;">
+    <a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a>
+  </div>
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
 
@@ -170,6 +173,8 @@
     log('PAGE LOADED', window.location.href);
   })();
 
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+
   function updateAuthUI(user) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
@@ -181,6 +186,8 @@
     } else {
       el.style.display = 'none';
     }
+    var adminLink = document.getElementById('footer-admin-link');
+    if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';
   }
 
   // Handle recovery/invite/confirmation tokens BEFORE init() — log out any current user so the

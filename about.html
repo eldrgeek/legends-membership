@@ -189,6 +189,8 @@
     log('PAGE LOADED', window.location.href);
   })();
 
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+
   function updateAuthUI(user) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
@@ -200,6 +202,8 @@
     } else {
       el.style.display = 'none';
     }
+    var adminLink = document.getElementById('footer-admin-link');
+    if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';
   }
 
   // Handle recovery/invite tokens BEFORE init()

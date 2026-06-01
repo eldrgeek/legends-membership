@@ -145,12 +145,15 @@
   </div>
 </nav>
 <script>
+  var ADMIN_EMAILS_R = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
   netlifyIdentity.on('init', function(user) {
     if (user) {
       var el = document.getElementById('auth-nav');
       var nm = document.getElementById('auth-name');
       if (el) el.style.display = 'flex';
       if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      var adminLink = document.getElementById('footer-admin-link');
+      if (adminLink && ADMIN_EMAILS_R.indexOf(user.email) !== -1) adminLink.style.display = 'block';
     }
   });
 </script>
