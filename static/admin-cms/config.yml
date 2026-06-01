@@ -1,0 +1,50 @@
+backend:
+  name: git-gateway
+  branch: master
+
+# Media uploads go to a top-level assets folder
+media_folder: "static/uploads"
+public_folder: "/static/uploads"
+
+collections:
+  - name: "systems-map"
+    label: "Systems Map"
+    label_singular: "Bubble"
+    folder: "content/systems-map"
+    create: false
+    slug: "{{slug}}"
+    identifier_field: "slug"
+    extension: "md"
+    format: "frontmatter"
+    # Exclude the _structure.json data file
+    filter: {field: "slug", value: "_structure", pattern: "^(?!_structure)"}
+    fields:
+      - { label: "Slug", name: "slug", widget: "string", hint: "URL-safe identifier (do not change without regenerating the map)", required: true }
+      - label: "Label"
+        name: "label"
+        widget: "string"
+        required: true
+        hint: "Display name shown in the diagram bubble"
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        options:
+          - { label: "Center Hub",                 value: "center" }
+          - { label: "Board",                      value: "board" }
+          - { label: "Fund Development",           value: "fund-development" }
+          - { label: "Marketing & Communications", value: "marcomms" }
+          - { label: "Operations",                 value: "operations" }
+          - { label: "Membership",                 value: "membership" }
+          - { label: "Mission Events",             value: "mission-events" }
+          - { label: "Evaluation",                 value: "evaluation" }
+          - { label: "Community Engagement",       value: "community-engagement" }
+          - { label: "12 Chapters",                value: "chapters" }
+      - label: "Related Areas"
+        name: "related_slugs"
+        widget: "list"
+        hint: "Slugs of connected bubbles (controls diagram links)"
+        field: { label: "Slug", name: "slug", widget: "string" }
+      - label: "Description"
+        name: "body"
+        widget: "markdown"
+        hint: "Rich description shown on the bubble detail page. Supports markdown."
