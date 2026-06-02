@@ -26,6 +26,8 @@
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
         <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
         <button onclick="sessionStorage.setItem('legends_active_logout','1'); netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
@@ -218,7 +220,7 @@
             <span class="tag">All-EBA</span>
             <span class="tag">Dallas Chapter</span>
           </div>
-          <p>Professional player in the ABA and Eastern Basketball Association, earning All-EBA First Team honors. Has served as Dallas Chapter President of the NBRPA, bridging legends across generations.</p>
+          <p>Professional player in the ABA and Eastern Basketball Association, earning All-EBA First Team honors. Has served as Dallas Chapter President of Legends of Basketball, bridging legends across generations.</p>
         </div>
         <div class="card-footer">
           <a href="members/willie-davis.html" class="btn btn-navy">View Profile</a>
@@ -240,7 +242,7 @@
             <span class="tag">9 Seasons</span>
             <span class="tag">NBPA VP</span>
           </div>
-          <p>Nine-year NBA veteran who played for seven teams before becoming VP of the NBA Players Association. Now a certified NBA agent and NBRPA Houston chapter president, advocating for players at every level.</p>
+          <p>Nine-year NBA veteran who played for seven teams before becoming VP of the NBA Players Association. Now a certified NBA agent and Legends of Basketball Houston chapter president, advocating for players at every level.</p>
         </div>
         <div class="card-footer">
           <a href="members/mo-evans.html" class="btn btn-navy">View Profile</a>
@@ -262,6 +264,7 @@
     <a href="resources.html">Resources</a>
     <a href="about.html">About &amp; Contact</a>
   </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
 
@@ -284,13 +287,19 @@
   function updateAuthUI(user) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
     if (!el) return;
     if (user) {
       var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
       if (nm) nm.textContent = name;
       el.style.display = 'flex';
+      if (loginNav) loginNav.style.display = 'none';
+      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
     } else {
       el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
     }
     var adminLink = document.getElementById('footer-admin-link');
     if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';

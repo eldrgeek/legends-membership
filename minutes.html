@@ -37,6 +37,8 @@
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
         <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
         <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
@@ -47,13 +49,21 @@
 <script>
   var ADMIN_EMAILS_M = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
   netlifyIdentity.on('init', function(user) {
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
     if (user) {
-      var el = document.getElementById('auth-nav');
-      var nm = document.getElementById('auth-name');
       if (el) el.style.display = 'flex';
       if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS_M.indexOf(user.email) !== -1) ? 'list-item' : 'none';
       var adminLink = document.getElementById('footer-admin-link');
       if (adminLink && ADMIN_EMAILS_M.indexOf(user.email) !== -1) adminLink.style.display = 'block';
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
     }
   });
 </script>
@@ -190,6 +200,7 @@
     <a href="resources.html">Resources</a>
     <a href="about.html">About &amp; Contact</a>
   </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
 

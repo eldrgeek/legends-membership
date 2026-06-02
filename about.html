@@ -26,6 +26,8 @@
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html" class="active">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
         <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
         <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
@@ -53,14 +55,14 @@
     </div>
 
     <p class="section-lead">
-      The Membership Services Committee of Legends of Basketball is a standing body of the National Basketball Retired Players Association (NBRPA). We are committed to advocacy, programming, and community — serving former professional players across every era and every league.
+      The Membership Services Committee of Legends of Basketball is a standing body of Legends of Basketball. We are committed to advocacy, programming, and community — serving former professional players across every era and every league.
     </p>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 8px; margin-bottom: 64px;">
       <div style="border-left: 4px solid var(--gold); padding: 24px 28px; background: var(--off-white); border-radius: 0 10px 10px 0;">
         <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 12px;">Who We Are</h3>
         <p style="font-size: 0.9rem; color: var(--text-medium); line-height: 1.7;">
-          A nine-member committee of former professional basketball players — themselves legends — elected and appointed to serve the NBRPA membership. We represent the NBA, WNBA, ABA, and Harlem Globetrotters.
+          A nine-member committee of former professional basketball players — themselves legends — elected and appointed to serve the Legends of Basketball membership. We represent the NBA, WNBA, ABA, and Harlem Globetrotters.
         </p>
       </div>
       <div style="border-left: 4px solid var(--gold); padding: 24px 28px; background: var(--off-white); border-radius: 0 10px 10px 0;">
@@ -109,7 +111,7 @@
 
       <div class="contact-card">
         <h3>General Membership</h3>
-        <p>For general membership questions about the NBRPA / Legends of Basketball, contact the national organization through their official channels.</p>
+        <p>For general membership questions about Legends of Basketball, contact the national organization through their official channels.</p>
         <p style="margin-top: 12px;"><a href="mailto:memberalert@legendsofbasketball.com">memberalert@legendsofbasketball.com</a></p>
         <p style="margin-top: 4px; font-size: 0.92rem; color: var(--text-medium);">312-913-9400</p>
         <p style="margin-top: 4px; font-size: 0.88rem; color: var(--text-light);"><a href="https://www.legendsofbasketball.com" target="_blank" rel="noopener" style="color: var(--gold);">www.legendsofbasketball.com</a></p>
@@ -174,6 +176,7 @@
     <a href="resources.html">Resources</a>
     <a href="about.html">About &amp; Contact</a>
   </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
 
@@ -196,13 +199,19 @@
   function updateAuthUI(user) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
     if (!el) return;
     if (user) {
       var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
       if (nm) nm.textContent = name;
       el.style.display = 'flex';
+      if (loginNav) loginNav.style.display = 'none';
+      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
     } else {
       el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
     }
     var adminLink = document.getElementById('footer-admin-link');
     if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';

@@ -75,7 +75,8 @@
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
-      <li><a href="login.html" id="nav-login-link" style="font-size:0.78rem;color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.18);padding:5px 11px;border-radius:4px;">Committee Login</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size:0.78rem;color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.18);padding:5px 11px;border-radius:4px;">Committee Login</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size:0.78rem;color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.35);padding:5px 11px;border-radius:4px;">Admin</a></li>
       <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
         <span id="auth-name" style="font-size:0.78rem;color:rgba(255,255,255,0.55);"></span>
         <button onclick="netlifyIdentity.logout()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
@@ -164,25 +165,33 @@
     log('PAGE LOADED', window.location.href);
   })();
 
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+
   function updateAuthUI(user) {
     currentUser = user;
     var authNav = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
-    var loginLink = document.getElementById('nav-login-link');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
     var gate = document.getElementById('auth-gate');
     var submitSec = document.getElementById('submit-section');
     if (user) {
       var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
       if (nm) nm.textContent = name;
       if (authNav) authNav.style.display = 'flex';
-      if (loginLink) loginLink.style.display = 'none';
+      if (loginNav) loginNav.style.display = 'none';
+      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
       if (gate) gate.style.display = 'none';
       if (submitSec) submitSec.style.display = 'block';
     } else {
       if (authNav) authNav.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
       if (gate) gate.style.display = 'block';
       if (submitSec) submitSec.style.display = 'none';
     }
+    var adminLink = document.getElementById('footer-admin-link');
+    if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';
   }
 
   function escHtml(s) {
