@@ -135,10 +135,15 @@
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="members.html">Committee</a></li>
-      <li><a href="minutes.html">Minutes</a></li>
-      <li><a href="resources.html">Resources</a></li>
-      <li><a href="systems-map.html">Systems Map</a></li>
-      <li><a href="assessment.html">Assessment</a></li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+        </ul>
+      </li>
       <li><a href="recommendations.html" class="active">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
@@ -154,7 +159,7 @@
 
 <div class="page-hero">
   <h1>Recommendations Board</h1>
-  <p>Every suggestion and bug report from committee members — with Coach's triage and Greg's decisions. The site evolves here.</p>
+  <p>Every suggestion and bug report from committee members — with Bill's triage and Greg's decisions. The site evolves here.</p>
 </div>
 
 <div style="max-width:1200px;margin:0 auto;">
@@ -180,7 +185,7 @@
 
 <div class="cta-strip">
   <h2>Shape This Site</h2>
-  <p>Committee members can submit bug reports and feature requests. Coach triages every submission; Greg approves changes.</p>
+  <p>Committee members can submit bug reports and feature requests. Bill triages every submission; Greg approves changes.</p>
   <div class="cta-btns">
     <a href="bugs.html" class="btn btn-gold">Report a Bug</a>
     <a href="features.html" class="btn btn-outline">Suggest a Feature</a>
@@ -317,5 +322,6 @@
   netlifyIdentity.init();
 </script>
 
+<script src="js/nav-dropdown.js"></script>
 </body>
 </html>

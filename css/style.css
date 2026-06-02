@@ -96,6 +96,41 @@ nav {
   cursor: pointer;
   padding: 8px;
 }
+
+/* ── NAV DROPDOWN ─────────────────────────────────────── */
+.nav-dropdown { position: relative; }
+.nav-dropdown-toggle { display: flex; align-items: center; gap: 4px; }
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--navy);
+  border: 1px solid rgba(192,192,192,0.22);
+  border-radius: 8px;
+  min-width: 190px;
+  padding: 6px 0;
+  list-style: none;
+  z-index: 1010;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+}
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu li { display: block; }
+.nav-dropdown-menu a {
+  display: block;
+  padding: 11px 18px;
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.82);
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 0;
+  letter-spacing: 0.02em;
+}
+.nav-dropdown-menu a:hover { color: var(--gold); background: rgba(201,168,76,0.1); }
+.nav-dropdown-menu a:first-child { border-radius: 8px 8px 0 0; }
+.nav-dropdown-menu a:last-child { border-radius: 0 0 8px 8px; }
+
 @media (max-width: 700px) {
   .nav-toggle { display: block; }
   .nav-links {
@@ -110,6 +145,22 @@ nav {
   }
   .nav-links.open { display: flex; }
   .nav-links a { border-radius: 0; padding: 12px 24px; }
+  /* Dropdown: disable hover/focus-within on mobile; use .open class via JS */
+  .nav-dropdown:hover .nav-dropdown-menu,
+  .nav-dropdown:focus-within .nav-dropdown-menu { display: none; }
+  .nav-dropdown.open .nav-dropdown-menu {
+    display: block;
+    position: static;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    min-width: unset;
+    background: rgba(255,255,255,0.04);
+  }
+  .nav-dropdown-menu a { padding: 10px 24px 10px 44px; font-size: 0.84rem; }
+  .nav-dropdown-menu a:first-child,
+  .nav-dropdown-menu a:last-child { border-radius: 0; }
 }
 
 /* ── HERO ─────────────────────────────────────────────── */

@@ -18,10 +18,16 @@
     <ul class="nav-links">
       <li><a href="../index.html">Home</a></li>
       <li><a href="../members.html" class="active">Committee</a></li>
-      <li><a href="../minutes.html">Minutes</a></li>
-      <li><a href="../resources.html">Resources</a></li>
-      <li><a href="../assessment.html">Assessment</a></li>
-      <li><a href="../resources.html#share-ideas">Share Ideas</a></li>
+      <li class="nav-dropdown">
+        <a href="../resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="../resources.html" role="menuitem">Resources</a></li>
+          <li><a href="../minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="../systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="../assessment.html" role="menuitem">Assessment</a></li>
+        </ul>
+      </li>
+      <li><a href="../recommendations.html">Recommendations</a></li>
       <li><a href="../about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
     </ul>
@@ -119,5 +125,6 @@
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
 
+<script src="../js/nav-dropdown.js"></script>
 </body>
 </html>

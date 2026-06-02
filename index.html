@@ -19,10 +19,15 @@
     <ul class="nav-links">
       <li><a href="index.html" class="active">Home</a></li>
       <li><a href="members.html">Committee</a></li>
-      <li><a href="minutes.html">Minutes</a></li>
-      <li><a href="resources.html">Resources</a></li>
-      <li><a href="systems-map.html">Systems Map</a></li>
-      <li><a href="assessment.html">Assessment</a></li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+        </ul>
+      </li>
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
@@ -135,7 +140,7 @@
     <h2 class="section-title">Shape This Site</h2>
     <div class="gold-line" style="margin: 0 auto 24px;"></div>
     <p style="color: var(--text-medium); max-width: 580px; margin: 0 auto 32px; font-size: 1rem; line-height: 1.7;">
-      Committee members can report bugs or suggest features. Coach — the site's AI manager — reviews every submission and Greg approves changes. Your feedback drives the roadmap.
+      Committee members can report bugs or suggest features. Bill — the site's AI manager — reviews every submission and Greg approves changes. Your feedback drives the roadmap.
     </p>
     <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
       <a href="bugs.html" class="btn btn-gold" style="font-size: 0.95rem;">Report a Bug</a>
@@ -263,6 +268,7 @@
   netlifyIdentity.init();
 </script>
 
+<script src="js/nav-dropdown.js"></script>
 </body>
 </html>
 <!-- cd-test Mon Jun  1 19:48:03 EDT 2026 -->

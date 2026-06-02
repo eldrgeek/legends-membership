@@ -301,3 +301,151 @@ describe('Task 3 — NBRPA replacement in site copy', () => {
     assert.ok(!html.includes('NBRPA'), 'Found NBRPA in members/choo-smith.html');
   });
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Task 4: Resources dropdown nav restructure
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Task 4 — Resources dropdown nav restructure', () => {
+  // Pages that had Minutes / Systems Map / Assessment as standalone top-level items
+  const RESTRUCTURED_PAGES = [
+    'index.html', 'about.html', 'members.html', 'minutes.html',
+    'resources.html', 'systems-map.html', 'assessment.html',
+    'recommendations.html', 'bugs.html', 'features.html',
+    'rec-detail.html', 'admin.html', 'admin-recommendations.html',
+  ];
+
+  const MEMBER_PAGES = [
+    'members/bruce-capers.html', 'members/choo-smith.html',
+    'members/george-tinsley.html', 'members/greg-foster.html',
+    'members/herb-lang.html', 'members/leslie-johnson.html',
+    'members/lionel-hollins.html', 'members/major-jones.html',
+    'members/mo-evans.html', 'members/willie-davis.html',
+  ];
+
+  const ALL_NAV_PAGES = [...RESTRUCTURED_PAGES, ...MEMBER_PAGES];
+
+  for (const page of RESTRUCTURED_PAGES) {
+    test(`${page}: Minutes is NOT a top-level nav <li> outside the dropdown`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const navLinks = doc.querySelector('ul.nav-links');
+      assert.ok(navLinks, `ul.nav-links must exist on ${page}`);
+      const topLevelLinks = Array.from(navLinks.querySelectorAll(':scope > li > a'));
+      const minutesTopLevel = topLevelLinks.some(a => a.href && a.href.includes('minutes.html') && a.textContent.trim() === 'Minutes');
+      assert.ok(!minutesTopLevel, `Minutes should not be a top-level nav item on ${page}`);
+    });
+
+    test(`${page}: Systems Map is NOT a top-level nav <li> outside the dropdown`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const navLinks = doc.querySelector('ul.nav-links');
+      assert.ok(navLinks, `ul.nav-links must exist on ${page}`);
+      const topLevelLinks = Array.from(navLinks.querySelectorAll(':scope > li > a'));
+      const sysMapTopLevel = topLevelLinks.some(a => a.href && a.href.includes('systems-map.html') && a.textContent.trim() === 'Systems Map');
+      assert.ok(!sysMapTopLevel, `Systems Map should not be a top-level nav item on ${page}`);
+    });
+
+    test(`${page}: Assessment is NOT a top-level nav <li> outside the dropdown`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const navLinks = doc.querySelector('ul.nav-links');
+      assert.ok(navLinks, `ul.nav-links must exist on ${page}`);
+      const topLevelLinks = Array.from(navLinks.querySelectorAll(':scope > li > a'));
+      const assessTopLevel = topLevelLinks.some(a => a.href && a.href.includes('assessment.html') && a.textContent.trim() === 'Assessment');
+      assert.ok(!assessTopLevel, `Assessment should not be a top-level nav item on ${page}`);
+    });
+  }
+
+  for (const page of ALL_NAV_PAGES) {
+    test(`${page}: Resources dropdown container (.nav-dropdown) exists in nav`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const dropdown = doc.querySelector('ul.nav-links .nav-dropdown');
+      assert.ok(dropdown, `nav-dropdown must exist in nav on ${page}`);
+    });
+
+    test(`${page}: dropdown contains link to resources.html`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const menu = doc.querySelector('.nav-dropdown-menu');
+      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const links = Array.from(menu.querySelectorAll('a'));
+      const hasResources = links.some(a => a.href && a.href.includes('resources.html') && !a.href.includes('#'));
+      assert.ok(hasResources, `dropdown must contain link to resources.html on ${page}`);
+    });
+
+    test(`${page}: dropdown contains link to minutes.html`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const menu = doc.querySelector('.nav-dropdown-menu');
+      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const links = Array.from(menu.querySelectorAll('a'));
+      const hasMinutes = links.some(a => a.href && a.href.includes('minutes.html'));
+      assert.ok(hasMinutes, `dropdown must contain link to minutes.html on ${page}`);
+    });
+
+    test(`${page}: dropdown contains link to systems-map.html`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const menu = doc.querySelector('.nav-dropdown-menu');
+      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const links = Array.from(menu.querySelectorAll('a'));
+      const hasSysMap = links.some(a => a.href && a.href.includes('systems-map.html'));
+      assert.ok(hasSysMap, `dropdown must contain link to systems-map.html on ${page}`);
+    });
+
+    test(`${page}: dropdown contains link to assessment.html`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const menu = doc.querySelector('.nav-dropdown-menu');
+      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const links = Array.from(menu.querySelectorAll('a'));
+      const hasAssessment = links.some(a => a.href && a.href.includes('assessment.html'));
+      assert.ok(hasAssessment, `dropdown must contain link to assessment.html on ${page}`);
+    });
+  }
+
+  // Auth elements still exist on standard pages (regression guard)
+  for (const page of RESTRUCTURED_PAGES) {
+    test(`${page}: #login-nav still exists after nav restructure`, () => {
+      const dom = parsePage(page);
+      const el = dom.window.document.getElementById('login-nav');
+      assert.ok(el, `#login-nav must still exist on ${page} after nav restructure`);
+    });
+
+    test(`${page}: #auth-nav still exists after nav restructure`, () => {
+      const dom = parsePage(page);
+      const el = dom.window.document.getElementById('auth-nav');
+      assert.ok(el, `#auth-nav must still exist on ${page} after nav restructure`);
+    });
+
+    test(`${page}: #nav-admin-link still exists after nav restructure`, () => {
+      const dom = parsePage(page);
+      const el = dom.window.document.getElementById('nav-admin-link');
+      assert.ok(el, `#nav-admin-link must still exist on ${page} after nav restructure`);
+    });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Task 5: Coach → Bill naming on AI-manager references
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Task 5 — Bill (not Coach) as AI-manager name', () => {
+  test('index.html: AI-manager reference uses "Bill" not "Coach"', () => {
+    const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    assert.ok(!html.includes('Coach — the site'), 'index.html should not use "Coach — the site" naming');
+    assert.ok(html.includes('Bill — the site'), 'index.html must use "Bill — the site" naming');
+  });
+
+  const AI_MANAGER_PAGES = ['features.html', 'bugs.html', 'recommendations.html', 'admin.html'];
+
+  for (const page of AI_MANAGER_PAGES) {
+    test(`${page}: AI-manager triage/review references use "Bill" not "Coach"`, () => {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      const coachAsManager = /\bCoach\b(?:'s)?\s+(reviews?|triages?|analyzes?|will review|will triage)/.test(html);
+      assert.ok(!coachAsManager, `${page} should not use "Coach" as AI-manager name in review/triage context`);
+    });
+  }
+});
