@@ -6,13 +6,11 @@
 
     var menu = dropdown.querySelector('.nav-dropdown-menu');
 
-    // Mobile tap: expand inline instead of navigating away
+    // Click-to-toggle: prevent navigation, expand dropdown inline (desktop and mobile)
     toggle.addEventListener('click', function (e) {
-      if (window.matchMedia('(max-width: 700px)').matches) {
-        e.preventDefault();
-        var isOpen = dropdown.classList.toggle('open');
-        toggle.setAttribute('aria-expanded', String(isOpen));
-      }
+      e.preventDefault();
+      var isOpen = dropdown.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(isOpen));
     });
 
     // Keyboard: Escape closes dropdown

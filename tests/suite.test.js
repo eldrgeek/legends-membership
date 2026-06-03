@@ -45,6 +45,7 @@ function applyAuth(dom, user) {
   const navAdmin   = doc.getElementById('nav-admin-link');
   const footerAdmin = doc.getElementById('footer-admin-link');
   const nm          = doc.getElementById('auth-name');
+  const askBillNav  = doc.getElementById('ask-bill-nav');
 
   if (user) {
     const name = (user.user_metadata && user.user_metadata.full_name) || user.email;
@@ -55,11 +56,13 @@ function applyAuth(dom, user) {
       ADMIN_EMAILS.indexOf(user.email) !== -1 ? 'list-item' : 'none';
     if (footerAdmin) footerAdmin.style.display =
       ADMIN_EMAILS.indexOf(user.email) !== -1 ? 'block' : 'none';
+    if (askBillNav)  askBillNav.style.display  = '';
   } else {
     if (authNav)    authNav.style.display    = 'none';
     if (loginNav)   loginNav.style.display   = '';
     if (navAdmin)   navAdmin.style.display   = 'none';
     if (footerAdmin) footerAdmin.style.display = 'none';
+    if (askBillNav)  askBillNav.style.display  = 'none';
   }
 }
 
@@ -446,6 +449,151 @@ describe('Task 5 — Bill (not Coach) as AI-manager name', () => {
       const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
       const coachAsManager = /\bCoach\b(?:'s)?\s+(reviews?|triages?|analyzes?|will review|will triage)/.test(html);
       assert.ok(!coachAsManager, `${page} should not use "Coach" as AI-manager name in review/triage context`);
+    });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Punchlist Jun 3 — Item 1: Admin page robustness
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Punchlist — Admin page robustness', () => {
+  test('admin.html: #admin-content initially hidden', () => {
+    const dom = parsePage('admin.html');
+    const el = dom.window.document.getElementById('admin-content');
+    assert.ok(el, '#admin-content must exist in admin.html');
+    assert.strictEqual(el.style.display, 'none', 'admin-content should start hidden');
+  });
+
+  test('admin.html: #not-authorized initially hidden', () => {
+    const dom = parsePage('admin.html');
+    const el = dom.window.document.getElementById('not-authorized');
+    assert.ok(el, '#not-authorized must exist in admin.html');
+    assert.strictEqual(el.style.display, 'none', 'not-authorized should start hidden');
+  });
+
+  test('admin.html: has netlifyIdentity error handler', () => {
+    const html = fs.readFileSync(path.join(ROOT, 'admin.html'), 'utf8');
+    assert.ok(
+      html.includes("netlifyIdentity.on('error'") || html.includes('netlifyIdentity.on("error"'),
+      'admin.html must register a netlifyIdentity error handler to prevent blank page on widget failure'
+    );
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Punchlist Jun 3 — Item 2: Ask Bill committee-only gating
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Punchlist — Ask Bill committee-gated', () => {
+  for (const page of NAV_PAGES) {
+    test(`${page}: #ask-bill-nav exists`, () => {
+      const dom = parsePage(page);
+      const el = dom.window.document.getElementById('ask-bill-nav');
+      assert.ok(el, `#ask-bill-nav must exist on ${page}`);
+    });
+
+    test(`${page}: #ask-bill-nav hidden when signed out`, () => {
+      const dom = parsePage(page);
+      applyAuth(dom, ANON);
+      const el = dom.window.document.getElementById('ask-bill-nav');
+      assert.ok(el, `#ask-bill-nav must exist on ${page}`);
+      assert.strictEqual(el.style.display, 'none',
+        `ask-bill-nav should be hidden when signed out on ${page}`);
+    });
+
+    test(`${page}: #ask-bill-nav visible when signed in`, () => {
+      const dom = parsePage(page);
+      applyAuth(dom, REGULAR_USER);
+      const el = dom.window.document.getElementById('ask-bill-nav');
+      assert.ok(el, `#ask-bill-nav must exist on ${page}`);
+      assert.notStrictEqual(el.style.display, 'none',
+        `ask-bill-nav should be visible when signed in on ${page}`);
+    });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Punchlist Jun 3 — Item 3: Resources dropdown click-toggle (no hover)
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Punchlist — Resources dropdown click-toggle (no hover)', () => {
+  test('css/style.css: hover open rule removed (no .nav-dropdown:hover .nav-dropdown-menu)', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+    assert.ok(
+      !css.includes('.nav-dropdown:hover .nav-dropdown-menu'),
+      'Hover-based dropdown open rule must be removed — desktop should use click-toggle only'
+    );
+  });
+
+  test('css/style.css: .nav-dropdown.open .nav-dropdown-menu display:block rule exists', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+    assert.ok(
+      css.includes('.nav-dropdown.open .nav-dropdown-menu'),
+      '.nav-dropdown.open .nav-dropdown-menu rule must exist in CSS for click-toggle to work'
+    );
+  });
+
+  test('js/nav-dropdown.js: click handler not mobile-only (no matchMedia mobile check on click)', () => {
+    const js = fs.readFileSync(path.join(ROOT, 'js/nav-dropdown.js'), 'utf8');
+    assert.ok(
+      !js.includes("matchMedia('(max-width: 700px)')"),
+      'nav-dropdown.js click handler must not be gated behind a mobile-only matchMedia check'
+    );
+  });
+
+  for (const page of NAV_PAGES) {
+    test(`${page}: .nav-dropdown-toggle has aria-expanded attribute`, () => {
+      const dom = parsePage(page);
+      const toggle = dom.window.document.querySelector('.nav-dropdown-toggle');
+      assert.ok(toggle, `.nav-dropdown-toggle must exist on ${page}`);
+      assert.ok(toggle.hasAttribute('aria-expanded'),
+        `nav-dropdown-toggle must have aria-expanded on ${page}`);
+    });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Punchlist Jun 3 — Item 4: No redundant "Home" nav item
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Punchlist — No redundant Home nav item', () => {
+  const ALL_CHECKED_PAGES = [
+    ...NAV_PAGES,
+    'members/bruce-capers.html', 'members/choo-smith.html',
+    'members/george-tinsley.html', 'members/greg-foster.html',
+    'members/herb-lang.html', 'members/leslie-johnson.html',
+    'members/lionel-hollins.html', 'members/major-jones.html',
+    'members/mo-evans.html', 'members/willie-davis.html',
+  ];
+
+  for (const page of ALL_CHECKED_PAGES) {
+    test(`${page}: no standalone "Home" top-level nav link`, () => {
+      const dom = parsePage(page);
+      const doc = dom.window.document;
+      const navLinks = doc.querySelector('ul.nav-links');
+      assert.ok(navLinks, `ul.nav-links must exist on ${page}`);
+      const topLevelLinks = Array.from(navLinks.querySelectorAll(':scope > li > a'));
+      const hasHomeLink = topLevelLinks.some(a => {
+        const href = (a.getAttribute('href') || '').replace(/^\.\.\//, '');
+        const text = a.textContent.trim();
+        return href === 'index.html' && text === 'Home';
+      });
+      assert.ok(!hasHomeLink,
+        `"Home" must not be a top-level nav item on ${page} — use the brand logo as the home link`);
+    });
+  }
+
+  for (const page of ALL_CHECKED_PAGES) {
+    test(`${page}: .nav-brand links to home (index.html)`, () => {
+      const dom = parsePage(page);
+      const brand = dom.window.document.querySelector('a.nav-brand');
+      assert.ok(brand, `.nav-brand must exist on ${page}`);
+      const href = brand.getAttribute('href') || '';
+      assert.ok(
+        href.includes('index.html') || href === '/',
+        `.nav-brand must link to index.html on ${page} (got "${href}")`
+      );
     });
   }
 });

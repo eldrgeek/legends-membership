@@ -58,7 +58,6 @@
     </a>
     <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
       <li class="nav-dropdown">
         <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
         <ul class="nav-dropdown-menu" role="menu">
@@ -70,7 +69,7 @@
       </li>
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About</a></li>
-      <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
+      <li id="ask-bill-nav" style="display:none;"><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
       <li id="login-nav"><a href="login.html" style="font-size:0.78rem;color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.18);padding:5px 11px;border-radius:4px;">Login</a></li>
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size:0.78rem;color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.35);padding:5px 11px;border-radius:4px;">Admin</a></li>
       <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
@@ -160,6 +159,7 @@
     var nm = document.getElementById('auth-name');
     var loginNav = document.getElementById('login-nav');
     var navAdmin = document.getElementById('nav-admin-link');
+    var askBillNav = document.getElementById('ask-bill-nav');
     var notLoggedIn = document.getElementById('not-logged-in');
     var accessDenied = document.getElementById('access-denied');
     var adminPanel = document.getElementById('admin-panel');
@@ -168,6 +168,7 @@
       if (authNav) authNav.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
       if (navAdmin) navAdmin.style.display = 'none';
+      if (askBillNav) askBillNav.style.display = 'none';
       if (notLoggedIn) notLoggedIn.style.display = 'block';
       if (accessDenied) accessDenied.style.display = 'none';
       if (adminPanel) adminPanel.style.display = 'none';
@@ -179,6 +180,7 @@
     if (authNav) authNav.style.display = 'flex';
     if (loginNav) loginNav.style.display = 'none';
     if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
+    if (askBillNav) askBillNav.style.display = '';
     if (notLoggedIn) notLoggedIn.style.display = 'none';
 
     var adminLink = document.getElementById('footer-admin-link');

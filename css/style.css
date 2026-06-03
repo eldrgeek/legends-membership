@@ -114,8 +114,7 @@ nav {
   z-index: 1010;
   box-shadow: 0 8px 28px rgba(0,0,0,0.35);
 }
-.nav-dropdown:hover .nav-dropdown-menu,
-.nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+.nav-dropdown.open .nav-dropdown-menu { display: block; }
 .nav-dropdown-menu li { display: block; }
 .nav-dropdown-menu a {
   display: block;
@@ -145,9 +144,6 @@ nav {
   }
   .nav-links.open { display: flex; }
   .nav-links a { border-radius: 0; padding: 12px 24px; }
-  /* Dropdown: disable hover/focus-within on mobile; use .open class via JS */
-  .nav-dropdown:hover .nav-dropdown-menu,
-  .nav-dropdown:focus-within .nav-dropdown-menu { display: none; }
   .nav-dropdown.open .nav-dropdown-menu {
     display: block;
     position: static;
