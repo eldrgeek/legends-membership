@@ -31,7 +31,7 @@ window.SomaGuideConfig = {
   /* ── TTS narration proxy ─────────────────────────────────────────────── */
   /* Routes walkthrough narration TTS through bill-talk's existing proxy.
    * The EL API key stays on that site; this site exposes nothing. */
-  ttsProxyUrl: 'https://levinese-preview.netlify.app/.netlify/functions/el-proxy',
+  ttsProxyUrl: 'https://bill-talk.netlify.app/.netlify/functions/el-proxy',
 
   /* ── Site map (grounding context for Bill) ───────────────────────────── */
   siteMap: [
