@@ -115,6 +115,7 @@ window.SomaGuideConfig = {
         {
           target: '.nav-inner',
           label: 'Navigation',
+          demo: 'hover',
           narration:
             'Welcome! Let\'s start at the top. This navigation bar is your map to the whole site.',
           instruction:
@@ -141,6 +142,7 @@ window.SomaGuideConfig = {
         {
           target: 'a[href="recommendations.html"]',
           label: 'Recommendations',
+          demo: 'click',
           narration:
             'The Recommendations board shows current committee proposals and their status. ' +
             'Let me take you there.',
@@ -150,6 +152,7 @@ window.SomaGuideConfig = {
           target: '#rec-grid',
           page: 'recommendations.html',
           label: 'Recommendations board',
+          demo: 'hover',
           narration:
             'Here\'s the Recommendations board — a living record of committee decisions and initiatives. ' +
             'Each card shows a proposal and its current status.',
@@ -158,6 +161,7 @@ window.SomaGuideConfig = {
         {
           target: 'a[href="about.html"]',
           label: 'About & Contact',
+          demo: 'hover',
           narration:
             'About & Contact tells you more about the committee\'s mission and who to reach out to.',
           instruction: 'Click "About & Contact" for more information.'
@@ -165,6 +169,7 @@ window.SomaGuideConfig = {
         {
           target: '#ask-bill-nav',
           label: 'Ask Bill nav',
+          demo: 'hover',
           narration:
             'The "Ask Bill" link in the nav opens this very widget — so you can reach me from any page, anytime.',
           instruction: 'Click "Ask Bill" in the nav to open this guide widget on any page of the site.'
@@ -181,6 +186,7 @@ window.SomaGuideConfig = {
         {
           target: 'a[href="members.html"]',
           label: 'Go to Committee',
+          demo: 'click',
           narration:
             'To find a committee member, head to the Committee page. I\'ll take you there now.',
           instruction: 'Heading to the Committee page…'
@@ -189,6 +195,7 @@ window.SomaGuideConfig = {
           target: '.members-grid',
           page: 'members.html',
           label: 'Member grid',
+          demo: 'hover',
           narration:
             'Here\'s the Committee page — you\'ll find cards for each member with their photo, ' +
             'NBA career highlights, and contact information.',
@@ -214,6 +221,7 @@ window.SomaGuideConfig = {
         {
           target: '.nav-dropdown-menu',
           label: 'Resources dropdown menu',
+          demo: 'hover',
           narration:
             'You\'ll see a menu with Resources, Minutes, Systems Map, and Assessment. ' +
             'Feature Requests is reachable from the main Resources page.',
@@ -231,6 +239,7 @@ window.SomaGuideConfig = {
         {
           target: '#ask-bill-section',
           label: 'Ask Bill section',
+          demo: 'hover',
           narration:
             'The "Have a Question? Ask Bill" section on the home page is a shortcut to me. ' +
             'I\'m an AI trained on Legends of Basketball materials.',
@@ -239,6 +248,7 @@ window.SomaGuideConfig = {
         {
           target: '#ask-bill-nav',
           label: 'Ask Bill nav link',
+          demo: 'hover',
           narration:
             'The "Ask Bill" link in the nav is always visible — clicking it opens this widget ' +
             'so you can chat with me on any page.',
@@ -247,6 +257,7 @@ window.SomaGuideConfig = {
         {
           target: '#soma-guide',
           label: 'This guide widget',
+          demo: 'hover',
           narration:
             'And of course — you\'re already talking to me right here! Use this widget anytime for ' +
             'a quick question, or switch to text mode for a longer conversation.',

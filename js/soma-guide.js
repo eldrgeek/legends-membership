@@ -475,12 +475,12 @@
     this._autoStopped = !this._autoStopped;
     this._updateAutoPlayBtn();
     if (this._autoStopped) {
+      /* Pause: stop audio and cancel pending advance timer */
       this._autoClear();
+      this._ttsStop();
     } else {
-      /* Resume auto-advance from the next step after a short pause */
-      this._autoTimer = setTimeout(function () {
-        if (!self._autoStopped && self.wt) self._wtNext();
-      }, 800);
+      /* Resume: re-narrate and re-arm auto-advance for the current step */
+      if (self.wt) self._renderWtStep();
     }
   };
 
@@ -788,10 +788,11 @@
   SomaGuide.prototype._ttsSpeak = function (text, onEnded) {
     var self = this;
     this._ttsStop();
+    var fallbackMs = Math.max(3500, (text || '').length * 45);
     if (!this._ttsEnabled() || !text) {
-      /* No audio — schedule auto-advance via timer if caller wants it */
+      /* No audio — schedule auto-advance via fallback timer if caller wants it */
       if (onEnded) {
-        self._autoTimer = setTimeout(onEnded, 5000);
+        self._autoTimer = setTimeout(onEnded, fallbackMs);
       }
       return;
     }
@@ -807,27 +808,37 @@
       return r.blob();
     }).then(function (blob) {
       if (!blob || !self._ttsEnabled()) {
-        if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
+        if (onEnded) self._autoTimer = setTimeout(onEnded, fallbackMs);
         return;
       }
       var objUrl = (typeof URL !== 'undefined' && URL.createObjectURL)
         ? URL.createObjectURL(blob) : null;
       if (!objUrl) {
-        if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
+        if (onEnded) self._autoTimer = setTimeout(onEnded, fallbackMs);
         return;
       }
       var audio = new Audio(objUrl);
       self._ttsAudio = audio;
       if (onEnded) {
-        audio.addEventListener('ended', onEnded, { once: true });
+        /* Fallback timer in case audio never fires 'ended' (decode error, browser block) */
+        self._autoTimer = setTimeout(onEnded, fallbackMs + 2000);
+        audio.addEventListener('ended', function () {
+          /* Cancel fallback and advance — audio finished naturally */
+          clearTimeout(self._autoTimer);
+          self._autoTimer = null;
+          onEnded();
+        }, { once: true });
       }
       audio.play().catch(function () {
-        /* Autoplay blocked — fall back to timer */
-        if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
+        /* Autoplay blocked — reschedule at nominal fallback delay */
+        if (onEnded) {
+          clearTimeout(self._autoTimer);
+          self._autoTimer = setTimeout(onEnded, fallbackMs);
+        }
       });
     }).catch(function (e) {
       console.warn('[SomaGuide] TTS error', e);
-      if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
+      if (onEnded) self._autoTimer = setTimeout(onEnded, fallbackMs);
     });
   };
 
