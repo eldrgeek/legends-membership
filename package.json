@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Legends of Basketball Membership Services Committee site",
   "scripts": {
-    "test": "node --test tests/suite.test.js"
+    "test": "node --test tests/suite.test.js tests/soma-guide.test.js"
   },
   "devDependencies": {
     "jsdom": "^26.0.0"
