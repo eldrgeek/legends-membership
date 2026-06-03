@@ -113,7 +113,7 @@ window.SomaGuideConfig = {
       keywords: ['tour', 'overview', 'show me', 'around', 'what is this', 'help me navigate'],
       steps: [
         {
-          target: 'nav',
+          target: '.nav-inner',
           label: 'Navigation',
           narration:
             'Welcome! Let\'s start at the top. This navigation bar is your map to the whole site.',
@@ -155,9 +155,8 @@ window.SomaGuideConfig = {
           target: '#ask-bill-nav',
           label: 'Ask Bill nav',
           narration:
-            'Once you\'re signed in, the "Ask Bill" link in the nav takes you to my full conversation mode ' +
-            'where you can ask anything via voice or text.',
-          instruction: 'Sign in to activate the Ask Bill link. It links to bill-talk.netlify.app.'
+            'The "Ask Bill" link in the nav opens this very widget — so you can reach me from any page, anytime.',
+          instruction: 'Click "Ask Bill" in the nav to open this guide widget on any page of the site.'
         }
       ]
     },
@@ -228,9 +227,9 @@ window.SomaGuideConfig = {
           target: '#ask-bill-nav',
           label: 'Ask Bill nav link',
           narration:
-            'You can also reach the full Bill conversation interface via the nav link. ' +
-            'It opens bill-talk.netlify.app where you can talk to me by voice or text.',
-          instruction: 'Click "Ask Bill" in the navigation (visible when signed in).'
+            'The "Ask Bill" link in the nav is always visible — clicking it opens this widget ' +
+            'so you can chat with me on any page.',
+          instruction: 'Click "Ask Bill" in the navigation to open this guide widget.'
         },
         {
           target: '#soma-guide',

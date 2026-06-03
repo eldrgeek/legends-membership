@@ -45,7 +45,7 @@ function applyAuth(dom, user) {
   const navAdmin   = doc.getElementById('nav-admin-link');
   const footerAdmin = doc.getElementById('footer-admin-link');
   const nm          = doc.getElementById('auth-name');
-  const askBillNav  = doc.getElementById('ask-bill-nav');
+  // askBillNav is no longer auth-gated — widget is always accessible
 
   if (user) {
     const name = (user.user_metadata && user.user_metadata.full_name) || user.email;
@@ -56,13 +56,11 @@ function applyAuth(dom, user) {
       ADMIN_EMAILS.indexOf(user.email) !== -1 ? 'list-item' : 'none';
     if (footerAdmin) footerAdmin.style.display =
       ADMIN_EMAILS.indexOf(user.email) !== -1 ? 'block' : 'none';
-    if (askBillNav)  askBillNav.style.display  = '';
   } else {
     if (authNav)    authNav.style.display    = 'none';
     if (loginNav)   loginNav.style.display   = '';
     if (navAdmin)   navAdmin.style.display   = 'none';
     if (footerAdmin) footerAdmin.style.display = 'none';
-    if (askBillNav)  askBillNav.style.display  = 'none';
   }
 }
 
@@ -485,7 +483,7 @@ describe('Punchlist — Admin page robustness', () => {
 // Punchlist Jun 3 — Item 2: Ask Bill committee-only gating
 // ──────────────────────────────────────────────────────────────────────────────
 
-describe('Punchlist — Ask Bill committee-gated', () => {
+describe('Ask Bill nav — always visible, opens widget', () => {
   for (const page of NAV_PAGES) {
     test(`${page}: #ask-bill-nav exists`, () => {
       const dom = parsePage(page);
@@ -493,52 +491,75 @@ describe('Punchlist — Ask Bill committee-gated', () => {
       assert.ok(el, `#ask-bill-nav must exist on ${page}`);
     });
 
-    test(`${page}: #ask-bill-nav hidden when signed out`, () => {
+    test(`${page}: #ask-bill-nav is always visible (no auth-gate)`, () => {
       const dom = parsePage(page);
-      applyAuth(dom, ANON);
-      const el = dom.window.document.getElementById('ask-bill-nav');
-      assert.ok(el, `#ask-bill-nav must exist on ${page}`);
-      assert.strictEqual(el.style.display, 'none',
-        `ask-bill-nav should be hidden when signed out on ${page}`);
-    });
-
-    test(`${page}: #ask-bill-nav visible when signed in`, () => {
-      const dom = parsePage(page);
-      applyAuth(dom, REGULAR_USER);
       const el = dom.window.document.getElementById('ask-bill-nav');
       assert.ok(el, `#ask-bill-nav must exist on ${page}`);
       assert.notStrictEqual(el.style.display, 'none',
-        `ask-bill-nav should be visible when signed in on ${page}`);
+        `ask-bill-nav must not be hidden — widget is always accessible on ${page}`);
+    });
+
+    test(`${page}: #ask-bill-nav opens widget (href="#", onclick somaGuide.open)`, () => {
+      const dom = parsePage(page);
+      const el = dom.window.document.getElementById('ask-bill-nav');
+      assert.ok(el, `#ask-bill-nav must exist on ${page}`);
+      const link = el.querySelector('a');
+      assert.ok(link, `#ask-bill-nav must contain an <a> tag on ${page}`);
+      assert.ok(
+        link.getAttribute('href') === '#',
+        `#ask-bill-nav link must have href="#", not an external URL on ${page}`
+      );
+      assert.ok(
+        (link.getAttribute('onclick') || '').includes('somaGuide') &&
+        (link.getAttribute('onclick') || '').includes('open'),
+        `#ask-bill-nav link must have onclick calling somaGuide.open() on ${page}`
+      );
     });
   }
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Punchlist Jun 3 — Item 3: Resources dropdown click-toggle (no hover)
+// Resources dropdown: hover-open on desktop, click-toggle on mobile
 // ──────────────────────────────────────────────────────────────────────────────
 
-describe('Punchlist — Resources dropdown click-toggle (no hover)', () => {
-  test('css/style.css: hover open rule removed (no .nav-dropdown:hover .nav-dropdown-menu)', () => {
+describe('Resources dropdown — hover-open (desktop), click-toggle (mobile)', () => {
+  test('css/style.css: hover-open rule exists for desktop (.nav-dropdown:hover .nav-dropdown-menu)', () => {
     const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
     assert.ok(
-      !css.includes('.nav-dropdown:hover .nav-dropdown-menu'),
-      'Hover-based dropdown open rule must be removed — desktop should use click-toggle only'
+      css.includes('.nav-dropdown:hover .nav-dropdown-menu'),
+      'Hover-open rule must exist in CSS — desktop opens dropdown on hover'
     );
   });
 
-  test('css/style.css: .nav-dropdown.open .nav-dropdown-menu display:block rule exists', () => {
+  test('css/style.css: focus-within rule exists for keyboard accessibility', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+    assert.ok(
+      css.includes('.nav-dropdown:focus-within .nav-dropdown-menu'),
+      'focus-within rule must exist so keyboard users can open the dropdown'
+    );
+  });
+
+  test('css/style.css: .nav-dropdown.open .nav-dropdown-menu rule exists (for mobile click-toggle)', () => {
     const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
     assert.ok(
       css.includes('.nav-dropdown.open .nav-dropdown-menu'),
-      '.nav-dropdown.open .nav-dropdown-menu rule must exist in CSS for click-toggle to work'
+      '.nav-dropdown.open .nav-dropdown-menu rule must exist for mobile click-toggle'
     );
   });
 
-  test('js/nav-dropdown.js: click handler not mobile-only (no matchMedia mobile check on click)', () => {
+  test('js/nav-dropdown.js: click handler is mobile-only (desktop uses CSS hover)', () => {
     const js = fs.readFileSync(path.join(ROOT, 'js/nav-dropdown.js'), 'utf8');
     assert.ok(
-      !js.includes("matchMedia('(max-width: 700px)')"),
-      'nav-dropdown.js click handler must not be gated behind a mobile-only matchMedia check'
+      js.includes('isMobile') || js.includes('innerWidth'),
+      'nav-dropdown.js click handler must be gated for mobile only — desktop uses CSS :hover'
+    );
+  });
+
+  test('css/style.css: .nav-links has align-items: center (Resources aligned with other nav items)', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'css/style.css'), 'utf8');
+    assert.ok(
+      css.includes('align-items: center'),
+      '.nav-links must have align-items: center so the Resources dropdown aligns with other nav items'
     );
   });
 
@@ -714,4 +735,71 @@ describe('Task 7 — Ask Bill gating: no fake committee-role check', () => {
         `${page} must not have #ask-bill-nav — public member profiles have no auth and must not expose Ask Bill`);
     }
   });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Ask Bill widget — present on all pages
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Ask Bill widget — present on all pages', () => {
+  const ALL_MAIN_PAGES = [
+    'index.html', 'about.html', 'members.html', 'minutes.html',
+    'resources.html', 'systems-map.html', 'assessment.html',
+    'bugs.html', 'features.html', 'recommendations.html',
+    'rec-detail.html', 'admin.html', 'admin-recommendations.html',
+  ];
+  const MEMBER_PAGES = [
+    'members/bruce-capers.html', 'members/choo-smith.html',
+    'members/george-tinsley.html', 'members/greg-foster.html',
+    'members/herb-lang.html', 'members/leslie-johnson.html',
+    'members/lionel-hollins.html', 'members/major-jones.html',
+    'members/mo-evans.html', 'members/willie-davis.html',
+  ];
+
+  for (const page of ALL_MAIN_PAGES) {
+    test(`${page}: soma-guide.css is linked`, () => {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      assert.ok(
+        html.includes('soma-guide.css'),
+        `${page} must link css/soma-guide.css`
+      );
+    });
+
+    test(`${page}: legends-guide-config.js script is present`, () => {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      assert.ok(
+        html.includes('legends-guide-config.js'),
+        `${page} must include js/legends-guide-config.js`
+      );
+    });
+
+    test(`${page}: soma-guide.js script is present`, () => {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      assert.ok(
+        html.includes('soma-guide.js'),
+        `${page} must include js/soma-guide.js`
+      );
+    });
+  }
+
+  for (const page of MEMBER_PAGES) {
+    test(`${page}: soma-guide widget scripts present`, () => {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      assert.ok(html.includes('soma-guide.css'), `${page} must link soma-guide.css`);
+      assert.ok(html.includes('legends-guide-config.js'), `${page} must include legends-guide-config.js`);
+      assert.ok(html.includes('soma-guide.js'), `${page} must include soma-guide.js`);
+    });
+
+    test(`${page}: Ask Bill link opens widget (no bill-talk external link)`, () => {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      assert.ok(
+        !html.includes('href="https://bill-talk.netlify.app"'),
+        `${page} must not link to bill-talk.netlify.app — Ask Bill should open the widget`
+      );
+      assert.ok(
+        html.includes('somaGuide') && html.includes('open()'),
+        `${page} Ask Bill link must call somaGuide.open()`
+      );
+    });
+  }
 });

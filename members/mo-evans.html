@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mo Evans | Legends of Basketball</title>
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/soma-guide.css">
 </head>
 <body>
 
@@ -28,7 +29,7 @@
       </li>
       <li><a href="../recommendations.html">Recommendations</a></li>
       <li><a href="../about.html">About &amp; Contact</a></li>
-      <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
+      <li><a href="#" onclick="event.preventDefault(); window.somaGuide && window.somaGuide.open();">Ask Bill</a></li>
     </ul>
   </div>
 </nav>
@@ -163,6 +164,8 @@
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
 
+<script src="../js/legends-guide-config.js"></script>
+<script type="module" src="../js/soma-guide.js"></script>
 <script src="../js/nav-dropdown.js"></script>
 </body>
 </html>

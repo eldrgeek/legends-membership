@@ -70,6 +70,7 @@ nav {
 }
 .nav-links {
   display: flex;
+  align-items: center;
   gap: 8px;
   list-style: none;
 }
@@ -103,17 +104,23 @@ nav {
 .nav-dropdown-menu {
   display: none;
   position: absolute;
-  top: calc(100% + 4px);
+  top: 100%;
   left: 0;
   background: var(--navy);
   border: 1px solid rgba(192,192,192,0.22);
   border-radius: 8px;
   min-width: 190px;
-  padding: 6px 0;
+  padding: 10px 0 6px;
   list-style: none;
   z-index: 1010;
   box-shadow: 0 8px 28px rgba(0,0,0,0.35);
 }
+/* Desktop: open on hover (no gap — menu starts flush at li bottom) */
+@media (min-width: 701px) {
+  .nav-dropdown:hover .nav-dropdown-menu,
+  .nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+}
+/* Mobile / explicit open (JS-toggled) */
 .nav-dropdown.open .nav-dropdown-menu { display: block; }
 .nav-dropdown-menu li { display: block; }
 .nav-dropdown-menu a {

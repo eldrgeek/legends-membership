@@ -1,16 +1,20 @@
 (function () {
+  function isMobile() {
+    return window.innerWidth <= 700;
+  }
+
   function init() {
     var dropdown = document.querySelector('.nav-dropdown');
     var toggle = document.querySelector('.nav-dropdown-toggle');
     if (!toggle || !dropdown) return;
 
-    var menu = dropdown.querySelector('.nav-dropdown-menu');
-
-    // Click-to-toggle: prevent navigation, expand dropdown inline (desktop and mobile)
+    // Mobile: click-to-toggle (desktop uses CSS :hover)
     toggle.addEventListener('click', function (e) {
       e.preventDefault();
-      var isOpen = dropdown.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', String(isOpen));
+      if (isMobile()) {
+        var isOpen = dropdown.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(isOpen));
+      }
     });
 
     // Keyboard: Escape closes dropdown
@@ -22,9 +26,9 @@
       }
     });
 
-    // Close on outside click (desktop)
+    // Close on outside click (mobile)
     document.addEventListener('click', function (e) {
-      if (!dropdown.contains(e.target)) {
+      if (!dropdown.contains(e.target) && isMobile()) {
         dropdown.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
       }
@@ -34,7 +38,6 @@
     var hamburger = document.querySelector('.nav-toggle');
     if (hamburger) {
       hamburger.addEventListener('click', function () {
-        // Give the toggle a tick to update .open on nav-links
         setTimeout(function () {
           var navOpen = document.querySelector('.nav-links.open');
           if (!navOpen) {

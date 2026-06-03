@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/soma-guide.css">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
     document.documentElement.style.visibility = 'hidden';
@@ -114,7 +115,7 @@
       </li>
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
-      <li id="ask-bill-nav" style="display:none;"><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
+      <li id="ask-bill-nav"><a href="#" onclick="event.preventDefault(); window.somaGuide && window.somaGuide.open();">Ask Bill</a></li>
       <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
@@ -225,7 +226,6 @@
     var nm = document.getElementById('auth-name');
     var loginNav = document.getElementById('login-nav');
     var navAdmin = document.getElementById('nav-admin-link');
-    var askBillNav = document.getElementById('ask-bill-nav');
     if (!el) return;
     if (user) {
       var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
@@ -233,12 +233,10 @@
       el.style.display = 'flex';
       if (loginNav) loginNav.style.display = 'none';
       if (navAdmin) navAdmin.style.display = (isAdmin(user)) ? 'list-item' : 'none';
-      if (askBillNav) askBillNav.style.display = '';
     } else {
       el.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
       if (navAdmin) navAdmin.style.display = 'none';
-      if (askBillNav) askBillNav.style.display = 'none';
     }
     var adminLink = document.getElementById('footer-admin-link');
     if (adminLink) adminLink.style.display = (user && isAdmin(user)) ? 'block' : 'none';
@@ -282,6 +280,8 @@
   netlifyIdentity.init();
 </script>
 
+<script src="js/legends-guide-config.js"></script>
+<script type="module" src="js/soma-guide.js"></script>
 <script src="js/nav-dropdown.js"></script>
 </body>
 </html>

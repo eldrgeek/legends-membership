@@ -306,6 +306,12 @@
     if (step.target) {
       var target = document.querySelector(step.target);
       if (target) {
+        /* Inline elements (e.g. <a> in nav) need a block context for outline rings */
+        var displayVal = (typeof window !== 'undefined' && window.getComputedStyle)
+          ? window.getComputedStyle(target).display : '';
+        if (displayVal === 'inline') {
+          target.dataset.sgWasInline = '1';
+        }
         target.classList.add('sg-highlight');
         if (typeof target.scrollIntoView === 'function') {
           target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -370,6 +376,9 @@
   SomaGuide.prototype._clearHighlight = function () {
     document.querySelectorAll('.sg-highlight').forEach(function (el) {
       el.classList.remove('sg-highlight');
+      if (el.dataset.sgWasInline) {
+        delete el.dataset.sgWasInline;
+      }
     });
   };
 

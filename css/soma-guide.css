@@ -38,7 +38,9 @@
 .sg-panel {
   display: none;
   flex-direction: column;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.93);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 14px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
   overflow: hidden;
@@ -412,9 +414,13 @@
 .sg-highlight {
   outline: 3px solid #c9a84c !important;
   outline-offset: 4px;
-  border-radius: 4px;
-  box-shadow: 0 0 0 8px rgba(201, 168, 76, 0.15) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 8px rgba(201, 168, 76, 0.18), 0 0 20px rgba(201, 168, 76, 0.35) !important;
   position: relative;
   z-index: 1000;
   transition: outline 0.25s ease, box-shadow 0.25s ease;
+}
+/* Inline elements (e.g. <a> in nav) need a block context to show the full ring */
+.sg-highlight[data-sg-was-inline] {
+  display: inline-block !important;
 }
