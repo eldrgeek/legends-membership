@@ -18,13 +18,21 @@
     this.cfg = cfg;
     this.ConvClass = null;     // ElevenLabs Conversation class, lazy-loaded
     this.conversation = null;  // active ElevenLabs session
+    this._convConnected = false; // true after onConnect fires
+    this._convBuffer = null;   // message buffered before onConnect
     this.mode = 'minimized';   // minimized | idle | voice | text | walkthrough
     this.wt = null;            // { id, stepIndex } active walkthrough
     this.pendingResume = null; // { id, stepIndex } saved on exit
 
-    var lsKey = 'soma-guide:' + (cfg.persona.id || cfg.persona.name);
-    this._lsGet = function (k) { try { return localStorage.getItem(lsKey + ':' + k); } catch(e) { return null; } };
-    this._lsSet = function (k, v) { try { localStorage.setItem(lsKey + ':' + k, v); } catch(e) {} };
+    var lsBase = 'soma-guide:' + (cfg.persona.id || cfg.persona.name);
+    this._lsGet = function (k) { try { return localStorage.getItem(lsBase + ':' + k); } catch(e) { return null; } };
+    this._lsSet = function (k, v) { try { localStorage.setItem(lsBase + ':' + k, v); } catch(e) {} };
+
+    /* sessionStorage — survives same-session page navigations */
+    var ssBase = 'soma-guide-xp:' + (cfg.persona.id || cfg.persona.name);
+    this._ssGet = function (k) { try { return sessionStorage.getItem(ssBase + ':' + k); } catch(e) { return null; } };
+    this._ssSet = function (k, v) { try { sessionStorage.setItem(ssBase + ':' + k, v); } catch(e) {} };
+    this._ssDel = function (k) { try { sessionStorage.removeItem(ssBase + ':' + k); } catch(e) {} };
 
     this.introduced = this._lsGet('introduced') === '1';
     this._ttsMuted = this._lsGet('tts-muted') === '1';
@@ -42,9 +50,34 @@
     }
   }
 
+  /* Overridable navigation hook — tests can replace this to intercept. */
+  SomaGuide.prototype._navigate = function (page) {
+    if (typeof location !== 'undefined') {
+      location.href = page;
+    }
+  };
+
   SomaGuide.prototype._onReady = function () {
+    var self = this;
+
+    /* Check for a cross-page walkthrough that was in progress */
+    var xpId   = this._ssGet('wt-id');
+    var xpStep = this._ssGet('wt-step');
+    if (xpId) {
+      this._ssDel('wt-id');
+      this._ssDel('wt-step');
+      setTimeout(function () { self._wtStart(xpId, parseInt(xpStep, 10) || 0); }, 100);
+      return;
+    }
+
+    /* Restore persisted pendingResume from sessionStorage */
+    var prId   = this._ssGet('resume-id');
+    var prStep = this._ssGet('resume-step');
+    if (prId) {
+      this.pendingResume = { id: prId, stepIndex: parseInt(prStep, 10) || 0 };
+    }
+
     if (!this.introduced) {
-      var self = this;
       setTimeout(function () { self._openIdle(true); }, 500);
     }
   };
@@ -104,7 +137,7 @@
       '    </div>',
       '  </div>',
       '  <div class="sg-wt-bar" hidden>',
-      '    <button class="sg-wt-exit">Exit</button>',
+      '    <button class="sg-wt-exit" title="Pause tour and save your progress">⏸ Pause</button>',
       '    <span class="sg-wt-prog"></span>',
       '    <button class="sg-wt-next">Next →</button>',
       '  </div>',
@@ -112,6 +145,7 @@
       '    <p>Pick up where you left off?</p>',
       '    <div class="sg-resume-steps"></div>',
       '    <div class="sg-resume-btns">',
+      '      <button class="sg-wt-resume">▶ Resume</button>',
       '      <button class="sg-wt-restart">Start over</button>',
       '    </div>',
       '  </div>',
@@ -176,6 +210,9 @@
 
     this._$('.sg-wt-next').addEventListener('click', function () { self._wtNext(); });
     this._$('.sg-wt-exit').addEventListener('click', function () { self._wtExit(); });
+    this._$('.sg-wt-resume').addEventListener('click', function () {
+      if (self.pendingResume) self._wtStart(self.pendingResume.id, self.pendingResume.stepIndex);
+    });
     this._$('.sg-wt-restart').addEventListener('click', function () {
       if (self.pendingResume) self._wtStart(self.pendingResume.id, 0);
     });
@@ -239,8 +276,16 @@
   };
 
   SomaGuide.prototype._openText = function () {
-    this._setMode('text');
+    var self = this;
+    this._setMode('text');  // stops any existing conversation
     this._$('.sg-input').focus();
+    /* Eagerly start a text session so it's ready when the user types.
+     * Mirrors bill-talk's pattern: connection is established before first send. */
+    if (this.cfg.voiceAgentId) {
+      this._startConversation(true).catch(function (e) {
+        console.warn('[SomaGuide] text session pre-start error', e);
+      });
+    }
   };
 
   SomaGuide.prototype._openVoice = function () {
@@ -282,6 +327,9 @@
     this._clearHighlight();
     this.wt = { id: id, stepIndex: stepIndex || 0 };
     this.pendingResume = null;
+    /* Clear persisted resume — we're actively running the tour now */
+    this._ssDel('resume-id');
+    this._ssDel('resume-step');
     this._setMode('walkthrough');
     this._renderWtStep();
   };
@@ -292,6 +340,18 @@
     if (!wt) return;
     var step = wt.steps[this.wt.stepIndex];
     if (!step) return;
+
+    /* Cross-page navigation: if this step belongs on a different page, navigate there.
+     * State is saved to sessionStorage so _onReady() can auto-resume on arrival. */
+    if (step.page && typeof location !== 'undefined') {
+      var currentFile = location.pathname.split('/').pop() || 'index.html';
+      if (currentFile !== step.page) {
+        this._ssSet('wt-id',   this.wt.id);
+        this._ssSet('wt-step', String(this.wt.stepIndex));
+        this._navigate(step.page);
+        return; // page is loading; nothing more to do here
+      }
+    }
 
     this._$('.sg-wt-narration').textContent  = step.narration || '';
     this._$('.sg-wt-instruction').textContent = step.instruction || '';
@@ -337,6 +397,11 @@
 
   SomaGuide.prototype._wtFinish = function () {
     this._clearHighlight();
+    /* Clear all tour state from sessionStorage */
+    this._ssDel('wt-id');
+    this._ssDel('wt-step');
+    this._ssDel('resume-id');
+    this._ssDel('resume-step');
     var done = this.cfg.persona.walkthroughDone || 'All done! Ask me anything.';
     this.wt = null;
     this.pendingResume = null;
@@ -347,6 +412,9 @@
   SomaGuide.prototype._wtExit = function () {
     if (this.wt) {
       this.pendingResume = { id: this.wt.id, stepIndex: this.wt.stepIndex };
+      /* Persist to sessionStorage so resume survives page navigations */
+      this._ssSet('resume-id',   this.wt.id);
+      this._ssSet('resume-step', String(this.wt.stepIndex));
     }
     this._clearHighlight();
     this.wt = null;
@@ -388,7 +456,11 @@
     var self = this;
     if (self.ConvClass) return Promise.resolve(self.ConvClass);
     var esmUrl = self.cfg.voiceAgentEsmUrl || ELEVENLABS_ESM;
-    return import(esmUrl).then(function (mod) {
+    /* Allow test environments to provide a stub via global.__importStub */
+    var imp = (typeof global.__importStub === 'function')
+      ? global.__importStub
+      : function (u) { return import(u); };
+    return imp(esmUrl).then(function (mod) {
       self.ConvClass = mod.Conversation;
       return self.ConvClass;
     });
@@ -399,10 +471,26 @@
     var agentId = this.cfg.voiceAgentId;
     if (!agentId) return Promise.reject(new Error('No voiceAgentId configured'));
 
+    self._convConnected = false;
+    self._convBuffer = null;
+
     return this._loadConvClass().then(function (Conversation) {
       return Conversation.startSession({
         agentId: agentId,
         textOnly: textOnly === true ? true : undefined,
+        onConnect: function () {
+          self._convConnected = true;
+          /* Flush any message that was sent before the connection was ready */
+          if (self._convBuffer) {
+            var buffered = self._convBuffer;
+            self._convBuffer = null;
+            try {
+              if (self.conversation && typeof self.conversation.sendUserMessage === 'function') {
+                self.conversation.sendUserMessage(buffered);
+              }
+            } catch (e) { console.warn('[SomaGuide] buffered send error', e); }
+          }
+        },
         onMessage: function (data) {
           if (data && data.source === 'ai') self._onAgentMessage(data.message || data.text || '');
         },
@@ -429,6 +517,8 @@
   };
 
   SomaGuide.prototype._stopConversation = function () {
+    this._convConnected = false;
+    this._convBuffer = null;
     if (this.conversation) {
       try { this.conversation.endSession(); } catch (e) {}
       this.conversation = null;
@@ -461,14 +551,25 @@
       return;
     }
 
-    /* route to ElevenLabs text agent */
+    /* Route to ElevenLabs text agent */
     var self = this;
     var send = function () {
-      if (self.conversation && typeof self.conversation.sendUserMessage === 'function') {
-        return Promise.resolve(self.conversation.sendUserMessage(text));
+      if (self.conversation) {
+        if (self._convConnected) {
+          /* Session is live — send immediately */
+          return Promise.resolve(self.conversation.sendUserMessage(text));
+        }
+        /* Session exists but hasn't connected yet — buffer for onConnect */
+        self._convBuffer = text;
+        return Promise.resolve();
       }
+      /* No session yet — start one (eager start in _openText should have fired,
+       * but guard here in case text mode was entered programmatically) */
       return self._startConversation(true).then(function (conv) {
-        return conv.sendUserMessage(text);
+        if (self._convConnected) {
+          return conv.sendUserMessage(text);
+        }
+        self._convBuffer = text; // will be sent in onConnect
       });
     };
 

@@ -140,9 +140,18 @@ window.SomaGuideConfig = {
           target: 'a[href="recommendations.html"]',
           label: 'Recommendations',
           narration:
-            'The Recommendations board shows current committee proposals and their status — ' +
-            'a living record of decisions and initiatives.',
-          instruction: 'Click "Recommendations" to view the board.'
+            'The Recommendations board shows current committee proposals and their status. ' +
+            'Let me take you there.',
+          instruction: 'Heading to the Recommendations page…'
+        },
+        {
+          target: '#rec-grid',
+          page: 'recommendations.html',
+          label: 'Recommendations board',
+          narration:
+            'Here\'s the Recommendations board — a living record of committee decisions and initiatives. ' +
+            'Each card shows a proposal and its current status.',
+          instruction: 'Browse the proposals, or click any card for details.'
         },
         {
           target: 'a[href="about.html"]',
@@ -171,16 +180,17 @@ window.SomaGuideConfig = {
           target: 'a[href="members.html"]',
           label: 'Go to Committee',
           narration:
-            'To find a committee member, head to the Committee page from the nav.',
-          instruction: 'Click "Committee" in the navigation bar above.'
+            'To find a committee member, head to the Committee page. I\'ll take you there now.',
+          instruction: 'Heading to the Committee page…'
         },
         {
-          target: '.nav-links',
-          label: 'Member list',
+          target: '.members-grid',
+          page: 'members.html',
+          label: 'Member grid',
           narration:
-            'On the Committee page you\'ll find cards for each member with their photo, NBA career highlights, ' +
-            'and contact information. Click any card to open their full profile.',
-          instruction: 'Navigate to the Committee page and click any member card.'
+            'Here\'s the Committee page — you\'ll find cards for each member with their photo, ' +
+            'NBA career highlights, and contact information.',
+          instruction: 'Click any member card to open their full profile.'
         }
       ]
     },
