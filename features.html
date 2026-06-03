@@ -68,10 +68,15 @@
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="members.html">Committee</a></li>
-      <li><a href="minutes.html">Minutes</a></li>
-      <li><a href="resources.html">Resources</a></li>
-      <li><a href="systems-map.html">Systems Map</a></li>
-      <li><a href="assessment.html">Assessment</a></li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+        </ul>
+      </li>
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
@@ -87,7 +92,7 @@
 
 <div class="page-hero">
   <h1>Feature Forum</h1>
-  <p>Have an idea for improving the site? Submit it here. Coach reviews every suggestion and Greg decides what gets built.</p>
+  <p>Have an idea for improving the site? Submit it here. Bill reviews every suggestion and Greg decides what gets built.</p>
 </div>
 
 <div class="page-content">
@@ -101,7 +106,7 @@
   <div id="submit-section" style="display:none;">
     <div class="submit-form">
       <h2>Suggest a Feature</h2>
-      <p class="form-subtitle">What would make this site more useful for the committee? Big ideas welcome — Coach will triage and scope it.</p>
+      <p class="form-subtitle">What would make this site more useful for the committee? Big ideas welcome — Bill will triage and scope it.</p>
 
       <div class="form-group">
         <label for="feat-title">Title <span style="color:var(--gold);">*</span></label>
@@ -111,7 +116,7 @@
       <div class="form-group">
         <label for="feat-body">Description <span style="color:var(--gold);">*</span></label>
         <textarea id="feat-body" placeholder="What do you want? Why would it help? What does success look like?"></textarea>
-        <div class="form-hint">The more specific, the faster Coach can triage and Greg can decide.</div>
+        <div class="form-hint">The more specific, the faster Bill can triage and Greg can decide.</div>
       </div>
 
       <div class="form-group">
@@ -253,7 +258,7 @@
     }).then(function(r) { return r.json().then(function(d) { return {status: r.status, data: d}; }); })
     .then(function(res) {
       if (res.status === 201) {
-        showMsg('success', 'Feature request submitted! Coach will review it shortly.');
+        showMsg('success', 'Feature request submitted! Bill will review it shortly.');
         document.getElementById('feat-title').value = '';
         document.getElementById('feat-body').value = '';
         document.getElementById('feat-page').value = '';
@@ -281,5 +286,6 @@
   netlifyIdentity.init();
 </script>
 
+<script src="js/nav-dropdown.js"></script>
 </body>
 </html>

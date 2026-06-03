@@ -72,10 +72,15 @@
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="members.html">Committee</a></li>
-      <li><a href="minutes.html">Minutes</a></li>
-      <li><a href="resources.html">Resources</a></li>
-      <li><a href="systems-map.html">Systems Map</a></li>
-      <li><a href="assessment.html">Assessment</a></li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+        </ul>
+      </li>
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
       <li><a href="https://bill-talk.netlify.app">Ask Bill</a></li>
@@ -188,7 +193,7 @@
     var commentsHtml = '';
     if (comments.length) {
       commentsHtml = comments.map(function(c) {
-        var authorLabel = c.author_kind === 'coach' ? 'Coach' :
+        var authorLabel = c.author_kind === 'coach' ? 'Bill' :
                           c.author_kind === 'human_manager' ? 'Greg Foster' : c.author_id;
         return '<div class="comment comment-' + c.author_kind + '">' +
           '<div class="comment-header">' +
@@ -319,5 +324,6 @@
   netlifyIdentity.init();
 </script>
 
+<script src="js/nav-dropdown.js"></script>
 </body>
 </html>
