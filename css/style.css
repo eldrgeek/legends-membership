@@ -640,6 +640,38 @@ footer .footer-links a { color: rgba(255,255,255,0.55); text-decoration: none; f
 footer .footer-links a:hover { color: var(--gold); }
 footer .footer-copy { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
 
+/* ── HEADING RHYTHM ──────────────────────────────────────── */
+/* Card / box h3 headings — Playfair, navy, consistent size */
+.box-heading {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: var(--navy);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+/* Sub-section h4 headings within content cards */
+.sub-section-heading {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  color: var(--navy);
+  margin: 28px 0 14px;
+  font-weight: 700;
+}
+/* Centered gold-line for hero / centered sections */
+.gold-line-center {
+  width: 56px;
+  height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+  margin: 0 auto 28px;
+}
+/* Section divider between major blocks */
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 56px 0;
+}
+
 /* ── UTILITIES ───────────────────────────────────────── */
 .breadcrumb { font-size: 0.82rem; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
 .breadcrumb a { color: rgba(255,255,255,0.5); text-decoration: none; }

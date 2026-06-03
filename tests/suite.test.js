@@ -597,3 +597,121 @@ describe('Punchlist — No redundant Home nav item', () => {
     });
   }
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Task 6: Leslie card drill-down (resources.html)
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Task 6 — Leslie card drill-down', () => {
+  test('resources.html: #leslie-card element exists', () => {
+    const dom = parsePage('resources.html');
+    const el = dom.window.document.getElementById('leslie-card');
+    assert.ok(el, '#leslie-card must exist in resources.html');
+  });
+
+  test('resources.html: #leslie-card is initially collapsed (aria-expanded=false)', () => {
+    const dom = parsePage('resources.html');
+    const el = dom.window.document.getElementById('leslie-card');
+    assert.ok(el, '#leslie-card must exist in resources.html');
+    assert.strictEqual(el.getAttribute('aria-expanded'), 'false',
+      '#leslie-card must start with aria-expanded="false"');
+  });
+
+  test('resources.html: #leslie-card is visible (not display:none) by default', () => {
+    const dom = parsePage('resources.html');
+    const el = dom.window.document.getElementById('leslie-card');
+    assert.ok(el, '#leslie-card must exist in resources.html');
+    assert.notStrictEqual(el.style.display, 'none',
+      '#leslie-card should be visible (not hidden) by default');
+  });
+
+  test('resources.html: #leslie-card has aria-controls pointing to detail panel', () => {
+    const dom = parsePage('resources.html');
+    const el = dom.window.document.getElementById('leslie-card');
+    assert.ok(el, '#leslie-card must exist');
+    assert.strictEqual(el.getAttribute('aria-controls'), 'leslie-ideas-detail',
+      '#leslie-card must have aria-controls="leslie-ideas-detail"');
+  });
+
+  test('resources.html: #leslie-ideas-detail exists', () => {
+    const dom = parsePage('resources.html');
+    const el = dom.window.document.getElementById('leslie-ideas-detail');
+    assert.ok(el, '#leslie-ideas-detail must exist in resources.html');
+  });
+
+  test('resources.html: #leslie-ideas-detail is initially hidden', () => {
+    const dom = parsePage('resources.html');
+    const el = dom.window.document.getElementById('leslie-ideas-detail');
+    assert.ok(el, '#leslie-ideas-detail must exist in resources.html');
+    assert.strictEqual(el.style.display, 'none',
+      '#leslie-ideas-detail should be hidden by default');
+  });
+
+  test('resources.html: #leslie-ideas-detail starts with aria-hidden=true', () => {
+    const dom = parsePage('resources.html');
+    const el = dom.window.document.getElementById('leslie-ideas-detail');
+    assert.ok(el, '#leslie-ideas-detail must exist');
+    assert.strictEqual(el.getAttribute('aria-hidden'), 'true',
+      '#leslie-ideas-detail must start aria-hidden="true"');
+  });
+
+  test('resources.html: ideas-list is inside #leslie-ideas-detail', () => {
+    const dom = parsePage('resources.html');
+    const detail = dom.window.document.getElementById('leslie-ideas-detail');
+    assert.ok(detail, '#leslie-ideas-detail must exist');
+    const list = detail.querySelector('ul.ideas-list');
+    assert.ok(list, 'ul.ideas-list must be inside #leslie-ideas-detail');
+  });
+
+  test('resources.html: back button (.leslie-back-btn) exists inside detail panel', () => {
+    const dom = parsePage('resources.html');
+    const detail = dom.window.document.getElementById('leslie-ideas-detail');
+    assert.ok(detail, '#leslie-ideas-detail must exist');
+    const btn = detail.querySelector('.leslie-back-btn');
+    assert.ok(btn, '.leslie-back-btn must exist inside #leslie-ideas-detail');
+  });
+
+  test('resources.html: ideas-list has 15 items (all proposals present)', () => {
+    const dom = parsePage('resources.html');
+    const list = dom.window.document.querySelector('ul.ideas-list');
+    assert.ok(list, 'ul.ideas-list must exist in resources.html');
+    const items = list.querySelectorAll('li');
+    assert.strictEqual(items.length, 15, 'ideas-list must contain all 15 proposals');
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Task 7: Committee-role gating investigation guard
+// Confirms no fake committee-role check was introduced — gating stays at
+// "any signed-in user" until real Netlify Identity roles are provisioned.
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Task 7 — Ask Bill gating: no fake committee-role check', () => {
+  test('no page contains app_metadata.roles committee check', () => {
+    const pages = [...NAV_PAGES, 'index.html'];
+    for (const page of pages) {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      assert.ok(
+        !html.includes("roles.indexOf('committee')") &&
+        !html.includes('roles.includes(\'committee\')'),
+        `${page} must not contain a fake committee-role check — use real Netlify Identity roles`
+      );
+    }
+  });
+
+  test('member profile pages have no #ask-bill-nav element', () => {
+    const memberPages = [
+      'members/bruce-capers.html', 'members/choo-smith.html',
+      'members/george-tinsley.html', 'members/greg-foster.html',
+      'members/herb-lang.html', 'members/leslie-johnson.html',
+      'members/lionel-hollins.html', 'members/major-jones.html',
+      'members/mo-evans.html', 'members/willie-davis.html',
+    ];
+    for (const page of memberPages) {
+      const dom = parsePage(page);
+      const el = dom.window.document.getElementById('ask-bill-nav');
+      assert.ok(!el,
+        `${page} must not have #ask-bill-nav — public member profiles have no auth and must not expose Ask Bill`);
+    }
+  });
+});
