@@ -16,19 +16,27 @@
   /* ── SomaGuide class ────────────────────────────────────────────────────── */
   function SomaGuide(cfg) {
     this.cfg = cfg;
-    this.ConvClass = null;     // ElevenLabs Conversation class, lazy-loaded
-    this.conversation = null;  // active ElevenLabs session
-    this._convConnected = false; // true after onConnect fires
-    this._convBuffer = null;   // message buffered before onConnect
-    this.mode = 'minimized';   // minimized | idle | voice | text | walkthrough
-    this.wt = null;            // { id, stepIndex } active walkthrough
-    this.pendingResume = null; // { id, stepIndex } saved on exit
+    this.ConvClass = null;
+    this.conversation = null;
+    this._convConnected = false;
+    this._convBuffer = null;
+    this.mode = 'minimized';
+    this.wt = null;
+    this.pendingResume = null;
+
+    /* Auto-advance state */
+    this._autoPlay = true;      // auto-advance steps when tour is active
+    this._autoStopped = false;  // user paused auto-advance within walkthrough
+    this._autoTimer = null;     // pending setTimeout handle
+
+    /* Demo cursor state */
+    this._demoCursor = null;
+    this._demoCursorTimer = null;
 
     var lsBase = 'soma-guide:' + (cfg.persona.id || cfg.persona.name);
     this._lsGet = function (k) { try { return localStorage.getItem(lsBase + ':' + k); } catch(e) { return null; } };
     this._lsSet = function (k, v) { try { localStorage.setItem(lsBase + ':' + k, v); } catch(e) {} };
 
-    /* sessionStorage — survives same-session page navigations */
     var ssBase = 'soma-guide-xp:' + (cfg.persona.id || cfg.persona.name);
     this._ssGet = function (k) { try { return sessionStorage.getItem(ssBase + ':' + k); } catch(e) { return null; } };
     this._ssSet = function (k, v) { try { sessionStorage.setItem(ssBase + ':' + k, v); } catch(e) {} };
@@ -36,7 +44,7 @@
 
     this.introduced = this._lsGet('introduced') === '1';
     this._ttsMuted = this._lsGet('tts-muted') === '1';
-    this._ttsAudio = null;     // currently playing Audio object
+    this._ttsAudio = null;
 
     this._build();
     this._enableDrag();
@@ -60,7 +68,6 @@
   SomaGuide.prototype._onReady = function () {
     var self = this;
 
-    /* Check for a cross-page walkthrough that was in progress */
     var xpId   = this._ssGet('wt-id');
     var xpStep = this._ssGet('wt-step');
     if (xpId) {
@@ -70,7 +77,6 @@
       return;
     }
 
-    /* Restore persisted pendingResume from sessionStorage */
     var prId   = this._ssGet('resume-id');
     var prStep = this._ssGet('resume-step');
     if (prId) {
@@ -139,6 +145,7 @@
       '  <div class="sg-wt-bar" hidden>',
       '    <button class="sg-wt-exit" title="Pause tour and save your progress">⏸ Pause</button>',
       '    <span class="sg-wt-prog"></span>',
+      '    <button class="sg-wt-playpause sg-btn-icon" title="Pause auto-play" aria-label="Pause auto-play">⏸</button>',
       '    <button class="sg-wt-next">Next →</button>',
       '  </div>',
       '  <div class="sg-resume-bar" hidden>',
@@ -210,6 +217,7 @@
 
     this._$('.sg-wt-next').addEventListener('click', function () { self._wtNext(); });
     this._$('.sg-wt-exit').addEventListener('click', function () { self._wtExit(); });
+    this._$('.sg-wt-playpause').addEventListener('click', function () { self._wtAutoPlayToggle(); });
     this._$('.sg-wt-resume').addEventListener('click', function () {
       if (self.pendingResume) self._wtStart(self.pendingResume.id, self.pendingResume.stepIndex);
     });
@@ -250,6 +258,15 @@
   SomaGuide.prototype._minimize = function () {
     this._ttsStop();
     this._stopConversation();
+    this._autoClear();
+    this._demoStop();
+    /* Save walkthrough progress so Resume works after minimizing */
+    if (this.mode === 'walkthrough' && this.wt) {
+      this.pendingResume = { id: this.wt.id, stepIndex: this.wt.stepIndex };
+      this._ssSet('resume-id',   this.wt.id);
+      this._ssSet('resume-step', String(this.wt.stepIndex));
+      this.wt = null;
+    }
     this._clearHighlight();
     this.mode = 'minimized';
     this.el.className = 'sg sg--min';
@@ -277,10 +294,8 @@
 
   SomaGuide.prototype._openText = function () {
     var self = this;
-    this._setMode('text');  // stops any existing conversation
+    this._setMode('text');
     this._$('.sg-input').focus();
-    /* Eagerly start a text session so it's ready when the user types.
-     * Mirrors bill-talk's pattern: connection is established before first send. */
     if (this.cfg.voiceAgentId) {
       this._startConversation(true).catch(function (e) {
         console.warn('[SomaGuide] text session pre-start error', e);
@@ -303,6 +318,8 @@
   SomaGuide.prototype._setMode = function (mode) {
     this._ttsStop();
     this._stopConversation();
+    this._autoClear();
+    this._demoStop();
     this.mode = mode;
     this.el.className = 'sg sg--' + mode;
     this._$('.sg-panel').removeAttribute('aria-hidden');
@@ -325,31 +342,33 @@
     var wt = this._wtById(id);
     if (!wt) return;
     this._clearHighlight();
-    this.wt = { id: id, stepIndex: stepIndex || 0 };
+    /* Use strict number check so stepIndex=0 is honoured (not coerced to falsy) */
+    this.wt = { id: id, stepIndex: typeof stepIndex === 'number' ? stepIndex : 0 };
+    this._autoPlay = true;
+    this._autoStopped = false;
     this.pendingResume = null;
-    /* Clear persisted resume — we're actively running the tour now */
     this._ssDel('resume-id');
     this._ssDel('resume-step');
     this._setMode('walkthrough');
+    this._updateAutoPlayBtn();
     this._renderWtStep();
   };
 
   SomaGuide.prototype._renderWtStep = function () {
     if (!this.wt) return;
+    var self = this;
     var wt   = this._wtById(this.wt.id);
     if (!wt) return;
     var step = wt.steps[this.wt.stepIndex];
     if (!step) return;
 
-    /* Cross-page navigation: if this step belongs on a different page, navigate there.
-     * State is saved to sessionStorage so _onReady() can auto-resume on arrival. */
     if (step.page && typeof location !== 'undefined') {
       var currentFile = location.pathname.split('/').pop() || 'index.html';
       if (currentFile !== step.page) {
         this._ssSet('wt-id',   this.wt.id);
         this._ssSet('wt-step', String(this.wt.stepIndex));
         this._navigate(step.page);
-        return; // page is loading; nothing more to do here
+        return;
       }
     }
 
@@ -363,29 +382,48 @@
     this._$('.sg-wt-next').textContent   = isLast ? 'Finish ✓' : 'Next →';
 
     this._clearHighlight();
+    var targetEl = null;
     if (step.target) {
-      var target = document.querySelector(step.target);
-      if (target) {
-        /* Inline elements (e.g. <a> in nav) need a block context for outline rings */
+      targetEl = document.querySelector(step.target);
+      if (targetEl) {
         var displayVal = (typeof window !== 'undefined' && window.getComputedStyle)
-          ? window.getComputedStyle(target).display : '';
+          ? window.getComputedStyle(targetEl).display : '';
         if (displayVal === 'inline') {
-          target.dataset.sgWasInline = '1';
+          targetEl.dataset.sgWasInline = '1';
         }
-        target.classList.add('sg-highlight');
-        if (typeof target.scrollIntoView === 'function') {
-          target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        targetEl.classList.add('sg-highlight');
+        if (typeof targetEl.scrollIntoView === 'function') {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }
     }
 
-    this._ttsSpeak(step.narration || '');
+    /* Animated demo cursor */
+    if (targetEl && step.demo) {
+      this._demoMoveTo(targetEl, step.demo);
+    } else {
+      this._demoStop();
+    }
+
+    /* TTS + auto-advance: build onEnded callback when auto-play is active */
+    this._autoClear();
+    var onEnded = null;
+    if (this._autoPlay && !this._autoStopped) {
+      onEnded = function () {
+        if (self._autoPlay && !self._autoStopped && self.wt) {
+          self._wtNext();
+        }
+      };
+    }
+    this._ttsSpeak(step.narration || '', onEnded);
   };
 
   SomaGuide.prototype._wtNext = function () {
     if (!this.wt) return;
-    var wt     = this._wtById(this.wt.id);
+    var wt = this._wtById(this.wt.id);
     if (!wt) return;
+    this._autoClear();
+    this._demoStop();
     var isLast = this.wt.stepIndex >= wt.steps.length - 1;
     if (isLast) {
       this._wtFinish();
@@ -397,7 +435,8 @@
 
   SomaGuide.prototype._wtFinish = function () {
     this._clearHighlight();
-    /* Clear all tour state from sessionStorage */
+    this._autoClear();
+    this._demoStop();
     this._ssDel('wt-id');
     this._ssDel('wt-step');
     this._ssDel('resume-id');
@@ -410,15 +449,155 @@
   };
 
   SomaGuide.prototype._wtExit = function () {
+    this._autoClear();
+    this._demoStop();
     if (this.wt) {
       this.pendingResume = { id: this.wt.id, stepIndex: this.wt.stepIndex };
-      /* Persist to sessionStorage so resume survives page navigations */
       this._ssSet('resume-id',   this.wt.id);
       this._ssSet('resume-step', String(this.wt.stepIndex));
     }
     this._clearHighlight();
     this.wt = null;
     this._openIdle(false);
+  };
+
+  /* ── Auto-advance helpers ─────────────────────────────────────────────────── */
+
+  SomaGuide.prototype._autoClear = function () {
+    if (this._autoTimer) {
+      clearTimeout(this._autoTimer);
+      this._autoTimer = null;
+    }
+  };
+
+  SomaGuide.prototype._wtAutoPlayToggle = function () {
+    var self = this;
+    this._autoStopped = !this._autoStopped;
+    this._updateAutoPlayBtn();
+    if (this._autoStopped) {
+      this._autoClear();
+    } else {
+      /* Resume auto-advance from the next step after a short pause */
+      this._autoTimer = setTimeout(function () {
+        if (!self._autoStopped && self.wt) self._wtNext();
+      }, 800);
+    }
+  };
+
+  SomaGuide.prototype._updateAutoPlayBtn = function () {
+    var btn = this._$('.sg-wt-playpause');
+    if (!btn) return;
+    if (this._autoStopped) {
+      btn.textContent = '▶';
+      btn.setAttribute('title', 'Resume auto-play');
+      btn.setAttribute('aria-label', 'Resume auto-play');
+    } else {
+      btn.textContent = '⏸';
+      btn.setAttribute('title', 'Pause auto-play');
+      btn.setAttribute('aria-label', 'Pause auto-play');
+    }
+  };
+
+  /* ── Demo cursor ──────────────────────────────────────────────────────────── */
+
+  SomaGuide.prototype._demoBuild = function () {
+    if (this._demoCursor || typeof document === 'undefined') return;
+    var el = document.createElement('div');
+    el.className = 'sg-demo-cursor';
+    /* SVG cursor arrow in the site's gold colour */
+    el.innerHTML = '<svg width="20" height="24" viewBox="0 0 20 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 2L2 20L7 15L11 23L14 22L10 14L18 14Z" fill="#c9a84c" stroke="#060e18" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+    document.body.appendChild(el);
+    this._demoCursor = el;
+  };
+
+  SomaGuide.prototype._demoStop = function () {
+    if (this._demoCursorTimer) {
+      clearTimeout(this._demoCursorTimer);
+      this._demoCursorTimer = null;
+    }
+    if (this._demoCursor) {
+      this._demoCursor.classList.remove('sg-demo-cursor--visible');
+    }
+  };
+
+  SomaGuide.prototype._demoMoveTo = function (target, action) {
+    var self = this;
+    if (!target || typeof document === 'undefined') return;
+    this._demoBuild();
+    var cursor = this._demoCursor;
+    if (!cursor) return;
+
+    /* Target centre (approximate — JSDOM returns zeros, real browsers give coords) */
+    var rect = target.getBoundingClientRect();
+    var destX = Math.round(rect.left + rect.width * 0.5 - 10);
+    var destY = Math.round(rect.top - 8);
+
+    /* On first appearance: jump to near the widget with no transition */
+    if (!cursor.classList.contains('sg-demo-cursor--visible')) {
+      cursor.style.transition = 'none';
+      var wx = (typeof window !== 'undefined' ? window.innerWidth  : 800) - 80;
+      var wy = (typeof window !== 'undefined' ? window.innerHeight : 600) - 120;
+      cursor.style.left = wx + 'px';
+      cursor.style.top  = wy + 'px';
+      cursor.classList.add('sg-demo-cursor--visible');
+      /* Force reflow so starting position registers before transition re-enabled */
+      cursor.getBoundingClientRect();
+      cursor.style.transition = '';
+    }
+
+    /* Glide to target */
+    cursor.style.left = destX + 'px';
+    cursor.style.top  = destY + 'px';
+
+    /* After glide (~700ms), perform the demo action */
+    if (this._demoCursorTimer) clearTimeout(this._demoCursorTimer);
+    this._demoCursorTimer = setTimeout(function () {
+      self._demoCursorTimer = null;
+      self._demoDoAction(target, action);
+    }, 800);
+  };
+
+  SomaGuide.prototype._demoDoAction = function (target, action) {
+    if (action === 'openDropdown') {
+      /* Try clicking a toggle button within the target */
+      var toggle = null;
+      if (target.querySelector) {
+        toggle = target.querySelector('[aria-expanded], .nav-dropdown-toggle, .dropdown-toggle');
+      }
+      if (!toggle && target.matches && target.matches('.nav-dropdown-toggle, .dropdown-toggle')) {
+        toggle = target;
+      }
+      if (toggle) {
+        toggle.click();
+        /* Auto-close after display window */
+        setTimeout(function () {
+          if (toggle.getAttribute('aria-expanded') === 'true') toggle.click();
+        }, 2500);
+      } else {
+        /* Fallback: add class to nearest dropdown container */
+        var container = (target.closest && target.closest('.nav-dropdown, .dropdown')) || target.parentElement;
+        if (container) {
+          container.classList.add('sg-demo-open');
+          setTimeout(function () { container.classList.remove('sg-demo-open'); }, 2500);
+        }
+      }
+    } else if (action === 'click') {
+      this._demoRipple();
+    }
+    /* 'hover' — cursor presence at the target is sufficient visual */
+  };
+
+  SomaGuide.prototype._demoRipple = function () {
+    if (!this._demoCursor || typeof document === 'undefined') return;
+    var rect = this._demoCursor.getBoundingClientRect();
+    var ripple = document.createElement('div');
+    ripple.className = 'sg-demo-ripple';
+    ripple.style.left = (rect.left - 6) + 'px';
+    ripple.style.top  = (rect.top  - 6) + 'px';
+    document.body.appendChild(ripple);
+    setTimeout(function () {
+      if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
+    }, 700);
   };
 
   SomaGuide.prototype._renderResumeSteps = function () {
@@ -456,7 +635,6 @@
     var self = this;
     if (self.ConvClass) return Promise.resolve(self.ConvClass);
     var esmUrl = self.cfg.voiceAgentEsmUrl || ELEVENLABS_ESM;
-    /* Allow test environments to provide a stub via global.__importStub */
     var imp = (typeof global.__importStub === 'function')
       ? global.__importStub
       : function (u) { return import(u); };
@@ -480,7 +658,6 @@
         textOnly: textOnly === true ? true : undefined,
         onConnect: function () {
           self._convConnected = true;
-          /* Flush any message that was sent before the connection was ready */
           if (self._convBuffer) {
             var buffered = self._convBuffer;
             self._convBuffer = null;
@@ -544,32 +721,27 @@
 
     this._appendMessage('user', text);
 
-    /* intent: check if question matches a walkthrough */
+    /* Intent: if question matches a walkthrough keyword, run the demo tour */
     var match = this._matchWalkthrough(text);
     if (match) {
       this._wtStart(match.id, 0);
       return;
     }
 
-    /* Route to ElevenLabs text agent */
     var self = this;
     var send = function () {
       if (self.conversation) {
         if (self._convConnected) {
-          /* Session is live — send immediately */
           return Promise.resolve(self.conversation.sendUserMessage(text));
         }
-        /* Session exists but hasn't connected yet — buffer for onConnect */
         self._convBuffer = text;
         return Promise.resolve();
       }
-      /* No session yet — start one (eager start in _openText should have fired,
-       * but guard here in case text mode was entered programmatically) */
       return self._startConversation(true).then(function (conv) {
         if (self._convConnected) {
           return conv.sendUserMessage(text);
         }
-        self._convBuffer = text; // will be sent in onConnect
+        self._convBuffer = text;
       });
     };
 
@@ -610,10 +782,19 @@
     }
   };
 
-  SomaGuide.prototype._ttsSpeak = function (text) {
+  /* _ttsSpeak(text, onEnded?)
+   * onEnded: optional callback fired when audio finishes (or after fallback timer).
+   * Used by _renderWtStep to drive auto-advance. Not passed by replay/mute paths. */
+  SomaGuide.prototype._ttsSpeak = function (text, onEnded) {
     var self = this;
     this._ttsStop();
-    if (!this._ttsEnabled() || !text) return;
+    if (!this._ttsEnabled() || !text) {
+      /* No audio — schedule auto-advance via timer if caller wants it */
+      if (onEnded) {
+        self._autoTimer = setTimeout(onEnded, 5000);
+      }
+      return;
+    }
 
     var url = this.cfg.ttsProxyUrl +
       '?action=tts' +
@@ -625,15 +806,28 @@
       if (!r.ok) return null;
       return r.blob();
     }).then(function (blob) {
-      if (!blob || !self._ttsEnabled()) return;
+      if (!blob || !self._ttsEnabled()) {
+        if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
+        return;
+      }
       var objUrl = (typeof URL !== 'undefined' && URL.createObjectURL)
         ? URL.createObjectURL(blob) : null;
-      if (!objUrl) return;
+      if (!objUrl) {
+        if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
+        return;
+      }
       var audio = new Audio(objUrl);
       self._ttsAudio = audio;
-      audio.play().catch(function () { /* autoplay blocked */ });
+      if (onEnded) {
+        audio.addEventListener('ended', onEnded, { once: true });
+      }
+      audio.play().catch(function () {
+        /* Autoplay blocked — fall back to timer */
+        if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
+      });
     }).catch(function (e) {
       console.warn('[SomaGuide] TTS error', e);
+      if (onEnded) self._autoTimer = setTimeout(onEnded, 3000);
     });
   };
 

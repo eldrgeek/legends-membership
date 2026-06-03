@@ -126,7 +126,8 @@ window.SomaGuideConfig = {
           narration:
             'The Committee page shows all members of the Membership Services Committee — ' +
             'former NBA, WNBA, ABA, and Globetrotter legends.',
-          instruction: 'Click "Committee" to browse member profiles.'
+          instruction: 'Click "Committee" to browse member profiles.',
+          demo: 'click'
         },
         {
           target: '.nav-dropdown',
@@ -134,7 +135,8 @@ window.SomaGuideConfig = {
           narration:
             'Resources is a dropdown with several sub-sections: meeting minutes, the systems map, ' +
             'assessment, and committee documents.',
-          instruction: 'Click "Resources ▾" to see the dropdown menu options.'
+          instruction: 'Click "Resources ▾" to see the dropdown menu options.',
+          demo: 'openDropdown'
         },
         {
           target: 'a[href="recommendations.html"]',
@@ -206,7 +208,8 @@ window.SomaGuideConfig = {
           label: 'Open Resources',
           narration:
             'Feature requests live under the Resources section. Click Resources to open the dropdown.',
-          instruction: 'Click "Resources ▾" in the navigation to open the dropdown menu.'
+          instruction: 'Click "Resources ▾" in the navigation to open the dropdown menu.',
+          demo: 'openDropdown'
         },
         {
           target: '.nav-dropdown-menu',

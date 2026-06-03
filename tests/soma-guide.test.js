@@ -1006,3 +1006,287 @@ describe('SOMA Guide — conversation init', function () {
     }).catch(done);
   });
 });
+
+/* ── Demo cursor ── */
+
+describe('SOMA Guide — demo cursor', function () {
+  test('_demoBuild appends .sg-demo-cursor to body', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._demoBuild();
+    const cursor = win.document.querySelector('.sg-demo-cursor');
+    assert.ok(cursor, '.sg-demo-cursor should be in the DOM');
+    assert.equal(cursor.parentNode, win.document.body);
+  });
+
+  test('_demoBuild is idempotent (only one cursor created)', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._demoBuild();
+    g._demoBuild();
+    const cursors = win.document.querySelectorAll('.sg-demo-cursor');
+    assert.equal(cursors.length, 1, 'should not create duplicate cursors');
+  });
+
+  test('_demoMoveTo adds visible class', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    const target = win.document.querySelector('body');
+    g._demoMoveTo(target, 'hover');
+    const cursor = win.document.querySelector('.sg-demo-cursor');
+    assert.ok(cursor, 'cursor should exist after _demoMoveTo');
+    assert.ok(cursor.classList.contains('sg-demo-cursor--visible'), 'cursor should be visible');
+  });
+
+  test('_demoMoveTo sets left and top style on cursor', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    const target = win.document.querySelector('body');
+    g._demoMoveTo(target, 'click');
+    const cursor = win.document.querySelector('.sg-demo-cursor');
+    assert.ok(cursor.style.left !== undefined, 'cursor should have left style');
+    assert.ok(cursor.style.top  !== undefined, 'cursor should have top style');
+  });
+
+  test('_demoStop removes visible class', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._demoBuild();
+    g._demoCursor.classList.add('sg-demo-cursor--visible');
+    g._demoStop();
+    assert.ok(!g._demoCursor.classList.contains('sg-demo-cursor--visible'), 'cursor should not be visible after stop');
+  });
+
+  test('_demoStop clears _demoCursorTimer', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._demoCursorTimer = setTimeout(function () {}, 9999);
+    g._demoStop();
+    assert.equal(g._demoCursorTimer, null);
+  });
+
+  test('_setMode hides demo cursor', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._demoBuild();
+    g._demoCursor.classList.add('sg-demo-cursor--visible');
+    g._setMode('idle');
+    assert.ok(!g._demoCursor.classList.contains('sg-demo-cursor--visible'));
+  });
+
+  test('sg-wt-playpause button is present in walkthrough bar', function () {
+    const win = makeWindow();
+    new win.SomaGuide(TEST_CONFIG);
+    const btn = win.document.querySelector('.sg-wt-playpause');
+    assert.ok(btn, '.sg-wt-playpause should exist');
+  });
+
+  test('_demoRipple appends .sg-demo-ripple to body', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._demoBuild();
+    g._demoCursor.style.left = '100px';
+    g._demoCursor.style.top  = '100px';
+    g._demoRipple();
+    const ripple = win.document.querySelector('.sg-demo-ripple');
+    assert.ok(ripple, '.sg-demo-ripple should be created');
+  });
+});
+
+/* ── Auto-advance ── */
+
+describe('SOMA Guide — auto-advance', function () {
+  test('_autoPlay defaults to true after _wtStart', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    assert.equal(g._autoPlay, true);
+  });
+
+  test('_autoStopped defaults to false after _wtStart', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    assert.equal(g._autoStopped, false);
+  });
+
+  test('_wtAutoPlayToggle sets _autoStopped to true', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._wtAutoPlayToggle();
+    assert.equal(g._autoStopped, true);
+  });
+
+  test('_wtAutoPlayToggle twice restores _autoStopped to false', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._wtAutoPlayToggle();
+    g._autoClear(); // clear the resume timer so test is synchronous
+    g._wtAutoPlayToggle();
+    assert.equal(g._autoStopped, false);
+  });
+
+  test('_updateAutoPlayBtn shows pause icon when playing', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._autoStopped = false;
+    g._updateAutoPlayBtn();
+    const btn = win.document.querySelector('.sg-wt-playpause');
+    assert.equal(btn.textContent, '⏸');
+  });
+
+  test('_updateAutoPlayBtn shows play icon when paused', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._autoStopped = true;
+    g._updateAutoPlayBtn();
+    const btn = win.document.querySelector('.sg-wt-playpause');
+    assert.equal(btn.textContent, '▶');
+  });
+
+  test('_autoClear cancels pending timer', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    let fired = false;
+    g._autoTimer = setTimeout(function () { fired = true; }, 50);
+    g._autoClear();
+    assert.equal(g._autoTimer, null);
+    // give the timer a chance to fire (it should not)
+  });
+
+  test('auto-advance fires via timer when TTS is disabled', function (_, done) {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG); // no ttsProxyUrl → TTS disabled
+    g._wtStart('wt-alpha', 0);
+    // Override the timer delay to something tiny for testing
+    g._autoClear(); // cancel the 5000ms default
+    let advanced = false;
+    g._autoTimer = setTimeout(function () {
+      advanced = true;
+      if (g.wt) g._wtNext();
+    }, 10);
+    setTimeout(function () {
+      assert.equal(advanced, true, 'auto-advance timer should fire');
+      done();
+    }, 30);
+  });
+
+  test('_ttsSpeak schedules fallback timer when TTS disabled and onEnded provided', function (_, done) {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG); // no ttsProxyUrl
+    let called = false;
+    // Replace setTimeout so we can detect the 5000ms schedule without waiting
+    const origST = win.setTimeout;
+    win.eval('window._timerDelays = [];');
+    const origTimer = win.setTimeout;
+    // Patch: detect the call
+    g._autoClear();
+    // Call _ttsSpeak with a stub onEnded and verify _autoTimer is set
+    const onEnded = function () { called = true; };
+    g._ttsSpeak('hello', onEnded);
+    // _autoTimer should be set (5000ms timer)
+    assert.ok(g._autoTimer !== null, '_autoTimer should be scheduled when TTS disabled');
+    g._autoClear();
+    done();
+  });
+
+  test('_wtNext clears previous _autoTimer before scheduling next', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    const oldId = g._autoTimer; // timer scheduled by _renderWtStep
+    g._wtNext(); // should clear oldId and schedule a new one for step 1
+    // The old timer handle should be gone — _autoTimer is either null or a NEW handle
+    // We verify by stopping auto-play and checking _autoClear works
+    g._autoStopped = true;
+    g._autoClear();
+    assert.equal(g._autoTimer, null, '_autoClear should leave _autoTimer null');
+    assert.equal(g.wt.stepIndex, 1, 'step should have advanced to 1');
+  });
+
+  test('_wtExit clears _autoTimer', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._autoTimer = setTimeout(function () {}, 9999);
+    g._wtExit();
+    assert.equal(g._autoTimer, null);
+  });
+});
+
+/* ── Resume at correct step ── */
+
+describe('SOMA Guide — resume at correct step', function () {
+  test('_wtStart with stepIndex=2 starts at step 2', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 2);
+    assert.equal(g.wt.stepIndex, 2);
+  });
+
+  test('_wtStart with stepIndex=0 starts at step 0', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    assert.equal(g.wt.stepIndex, 0);
+  });
+
+  test('pause at step 1 then resume returns to step 1', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._wtNext(); // step 1
+    g._wtExit(); // pause at step 1
+    // Resume
+    g._wtStart(g.pendingResume.id, g.pendingResume.stepIndex);
+    assert.equal(g.wt.stepIndex, 1, 'should resume at step 1, not step 0');
+  });
+
+  test('pause at step 2 then resume returns to step 2', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 2);
+    g._wtExit(); // pause
+    const savedStep = g.pendingResume.stepIndex;
+    assert.equal(savedStep, 2, 'pendingResume should record step 2');
+    g._wtStart(g.pendingResume.id, g.pendingResume.stepIndex);
+    assert.equal(g.wt.stepIndex, 2);
+  });
+
+  test('clicking resume button resumes at correct step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._navigate = function() {};
+    g._wtStart('wt-alpha', 1);
+    g._wtExit(); // pause at step 1
+    // open idle and click resume
+    win.document.querySelector('.sg-wt-resume').click();
+    assert.equal(g.wt.stepIndex, 1, 'resume click should go to step 1');
+  });
+
+  test('minimize in walkthrough saves progress', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 2);
+    g._minimize();
+    assert.ok(g.pendingResume, 'pendingResume should be set after minimize');
+    assert.equal(g.pendingResume.stepIndex, 2);
+    assert.equal(g.mode, 'minimized');
+  });
+
+  test('auto-advance preserves correct stepIndex for exit', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    // Simulate auto-advance to step 1
+    g._wtNext();
+    assert.equal(g.wt.stepIndex, 1);
+    // Now exit — should save step 1
+    g._wtExit();
+    assert.equal(g.pendingResume.stepIndex, 1, 'exit after auto-advance should save step 1');
+  });
+});

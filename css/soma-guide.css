@@ -424,3 +424,65 @@
 .sg-highlight[data-sg-was-inline] {
   display: inline-block !important;
 }
+
+/* ── Demo cursor ── */
+.sg-demo-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  width: 20px;
+  height: 24px;
+  opacity: 0;
+  transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              top  0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s;
+}
+.sg-demo-cursor--visible {
+  opacity: 1;
+}
+.sg-demo-cursor svg {
+  display: block;
+  filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.45));
+}
+
+/* Click ripple animation */
+.sg-demo-ripple {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99998;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(201, 168, 76, 0.55);
+  animation: sg-ripple 0.65s ease-out forwards;
+}
+@keyframes sg-ripple {
+  to { transform: scale(3.5); opacity: 0; }
+}
+
+/* Generic dropdown open class used by demo cursor */
+.sg-demo-open > .nav-dropdown-menu,
+.sg-demo-open > [role="menu"],
+.sg-demo-open > .dropdown-menu {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ── Play/pause auto-advance button in walkthrough bar ── */
+.sg-wt-playpause {
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 5px;
+  background: none;
+  color: #c9a84c;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sg-wt-playpause:hover {
+  background: rgba(201,168,76,0.12);
+  border-color: #c9a84c;
+}
