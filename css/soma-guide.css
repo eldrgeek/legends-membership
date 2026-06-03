@@ -295,6 +295,30 @@
   font-style: italic;
 }
 
+/* ── TTS narration bar ── */
+.sg-tts-bar {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+.sg-btn-icon {
+  background: none;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 5px;
+  color: #c9a84c;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 3px 7px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sg-btn-icon:hover {
+  background: rgba(201, 168, 76, 0.14);
+  border-color: #c9a84c;
+}
+
 /* ── Walkthrough bar (Next/Exit controls) ── */
 .sg-wt-bar {
   display: flex;

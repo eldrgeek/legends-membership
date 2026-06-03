@@ -431,3 +431,264 @@ describe('SOMA Guide — mode transitions', function () {
     assert.equal(win.document.querySelector('.sg-wt-bar').hidden, false);
   });
 });
+
+/* ── TTS helpers ── */
+
+const TTS_CONFIG = {
+  persona: {
+    name: 'TestBot',
+    id: 'test-bot',
+    avatar: '🤖',
+    greeting: 'Hello!',
+    shortGreeting: 'Back!',
+    walkthroughDone: 'Done!'
+  },
+  voiceAgentId: 'test-agent-id',
+  ttsProxyUrl: 'https://example.com/.netlify/functions/el-proxy',
+  siteMap: [],
+  walkthroughs: [
+    {
+      id: 'wt-alpha',
+      label: 'Alpha Tour',
+      keywords: ['alpha'],
+      steps: [
+        { target: 'body', label: 'Step A1', narration: 'Step one narration',   instruction: 'Do this' },
+        { target: 'body', label: 'Step A2', narration: 'Step two narration',   instruction: 'Then that' },
+      ]
+    }
+  ]
+};
+
+/** Make a window with Audio + fetch mocks suitable for TTS tests */
+function makeWindowWithTTS() {
+  const win = makeWindow();
+  win.eval(`
+    window._ttsRequests = [];
+    window._audioInstances = [];
+    window._ttsBlob = { type: 'audio/mpeg', _mock: true };
+    window.fetch = function(url) {
+      window._ttsRequests.push(url);
+      return Promise.resolve({
+        ok: true,
+        blob: function() { return Promise.resolve(window._ttsBlob); }
+      });
+    };
+    window.URL = window.URL || {};
+    window.URL.createObjectURL = function(blob) { return 'blob:mock'; };
+    window.Audio = function MockAudio(src) {
+      this.src = src || '';
+      this.paused = true;
+      this._plays = 0;
+      window._audioInstances.push(this);
+    };
+    window.Audio.prototype.play = function() { this.paused = false; this._plays++; return Promise.resolve(); };
+    window.Audio.prototype.pause = function() { this.paused = true; };
+  `);
+  return win;
+}
+
+describe('SOMA Guide — TTS narration', function () {
+  test('_ttsEnabled returns false when no ttsProxyUrl', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG); // TEST_CONFIG has no ttsProxyUrl
+    assert.equal(g._ttsEnabled(), false);
+  });
+
+  test('_ttsEnabled returns true when proxy configured and not muted', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuted = false;
+    assert.equal(g._ttsEnabled(), true);
+  });
+
+  test('_ttsEnabled returns false when muted', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuted = true;
+    assert.equal(g._ttsEnabled(), false);
+  });
+
+  test('_ttsMuted loaded from localStorage', function () {
+    const win = makeWindow({ 'soma-guide:test-bot:tts-muted': '1' });
+    const g = new win.SomaGuide(TTS_CONFIG);
+    assert.equal(g._ttsMuted, true);
+  });
+
+  test('_ttsMuted defaults to false when not in localStorage', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    assert.equal(g._ttsMuted, false);
+  });
+
+  test('_ttsMuteToggle flips _ttsMuted true', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuteToggle();
+    assert.equal(g._ttsMuted, true);
+  });
+
+  test('_ttsMuteToggle persists to localStorage', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuteToggle();
+    assert.equal(win.localStorage.getItem('soma-guide:test-bot:tts-muted'), '1');
+  });
+
+  test('_ttsMuteToggle back to false on second call', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuteToggle();
+    g._ttsMuteToggle();
+    assert.equal(g._ttsMuted, false);
+  });
+
+  test('_ttsStop clears _ttsAudio', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    // Place a mock audio object
+    const fakeAudio = new win.Audio('blob:x');
+    g._ttsAudio = fakeAudio;
+    g._ttsStop();
+    assert.equal(g._ttsAudio, null);
+  });
+
+  test('_ttsStop pauses playing audio', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const fakeAudio = new win.Audio('blob:x');
+    fakeAudio.paused = false;
+    g._ttsAudio = fakeAudio;
+    g._ttsStop();
+    assert.equal(fakeAudio.paused, true);
+  });
+
+  test('_ttsSpeak does nothing when no ttsProxyUrl', function () {
+    const win = makeWindowWithTTS();
+    // Use TEST_CONFIG which has no ttsProxyUrl
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._ttsSpeak('hello world');
+    assert.equal(win._ttsRequests.length, 0);
+  });
+
+  test('_ttsSpeak issues fetch with correct action param', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsSpeak('Hello narration');
+    // fetch is async; wait a tick
+    setTimeout(function () {
+      assert.ok(win._ttsRequests.length > 0, 'fetch should have been called');
+      assert.ok(win._ttsRequests[0].includes('action=tts'), 'URL should include action=tts');
+      done();
+    }, 20);
+  });
+
+  test('_ttsSpeak encodes text in URL', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsSpeak('Hello & goodbye');
+    setTimeout(function () {
+      assert.ok(win._ttsRequests[0].includes('Hello'), 'URL should contain text');
+      done();
+    }, 20);
+  });
+
+  test('_ttsSpeak includes agent_id in URL', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsSpeak('test text');
+    setTimeout(function () {
+      assert.ok(win._ttsRequests[0].includes('agent_id=test-agent-id'), 'URL should include agent_id');
+      done();
+    }, 20);
+  });
+
+  test('_ttsSpeak stops previous audio before starting new', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const prev = new win.Audio('blob:prev');
+    prev.paused = false;
+    g._ttsAudio = prev;
+    g._ttsSpeak('new narration');
+    assert.equal(prev.paused, true, 'previous audio should be paused');
+  });
+
+  test('_ttsSpeak does nothing when muted', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuted = true;
+    g._ttsSpeak('should not speak');
+    assert.equal(win._ttsRequests.length, 0, 'no fetch when muted');
+  });
+
+  test('_setMode calls _ttsStop', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const prev = new win.Audio('blob:prev');
+    prev.paused = false;
+    g._ttsAudio = prev;
+    g._setMode('idle');
+    assert.equal(g._ttsAudio, null);
+  });
+
+  test('_minimize calls _ttsStop', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const prev = new win.Audio('blob:prev');
+    prev.paused = false;
+    g._ttsAudio = prev;
+    g._minimize();
+    assert.equal(g._ttsAudio, null);
+  });
+
+  test('tts-bar is hidden when no ttsProxyUrl', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    const bar = win.document.querySelector('.sg-tts-bar');
+    assert.equal(bar.hidden, true);
+  });
+
+  test('tts-bar is visible when ttsProxyUrl configured', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const bar = win.document.querySelector('.sg-tts-bar');
+    assert.equal(bar.hidden, false);
+  });
+
+  test('mute button shows speaker icon when unmuted', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuted = false;
+    g._updateMuteBtn();
+    const btn = win.document.querySelector('.sg-btn-mute');
+    assert.equal(btn.textContent, '🔊');
+  });
+
+  test('mute button shows muted icon when muted', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsMuted = true;
+    g._updateMuteBtn();
+    const btn = win.document.querySelector('.sg-btn-mute');
+    assert.equal(btn.textContent, '🔇');
+  });
+
+  test('unmuting replays current step narration', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._ttsMuted = true;
+    win._ttsRequests.length = 0; // clear any requests from _wtStart
+    g._ttsMuteToggle(); // unmute → should replay
+    setTimeout(function () {
+      assert.ok(win._ttsRequests.length > 0, 'should have fetched TTS on unmute');
+      done();
+    }, 20);
+  });
+
+  test('_ttsReplay does nothing outside walkthrough', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsReplay(); // no active walkthrough
+    assert.equal(win._ttsRequests.length, 0);
+  });
+});

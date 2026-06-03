@@ -27,6 +27,8 @@
     this._lsSet = function (k, v) { try { localStorage.setItem(lsKey + ':' + k, v); } catch(e) {} };
 
     this.introduced = this._lsGet('introduced') === '1';
+    this._ttsMuted = this._lsGet('tts-muted') === '1';
+    this._ttsAudio = null;     // currently playing Audio object
 
     this._build();
     this._enableDrag();
@@ -95,6 +97,10 @@
       '    <div class="sg-wt-ui" hidden>',
       '      <p class="sg-wt-narration"></p>',
       '      <p class="sg-wt-instruction"></p>',
+      '      <div class="sg-tts-bar">',
+      '        <button class="sg-btn-mute sg-btn-icon" title="Mute narration" aria-label="Mute narration">🔊</button>',
+      '        <button class="sg-btn-replay sg-btn-icon" title="Replay narration" aria-label="Replay narration">↺</button>',
+      '      </div>',
       '    </div>',
       '  </div>',
       '  <div class="sg-wt-bar" hidden>',
@@ -173,6 +179,13 @@
     this._$('.sg-wt-restart').addEventListener('click', function () {
       if (self.pendingResume) self._wtStart(self.pendingResume.id, 0);
     });
+    this._$('.sg-btn-mute').addEventListener('click', function () { self._ttsMuteToggle(); });
+    this._$('.sg-btn-replay').addEventListener('click', function () { self._ttsReplay(); });
+    this._updateMuteBtn();
+    if (!this.cfg.ttsProxyUrl) {
+      var ttsBar = this._$('.sg-tts-bar');
+      if (ttsBar) ttsBar.hidden = true;
+    }
 
     var input = this._$('.sg-input');
     this._$('.sg-send').addEventListener('click', function () { self._sendText(input.value); });
@@ -198,6 +211,7 @@
   /* ── Mode transitions ────────────────────────────────────────────────────── */
 
   SomaGuide.prototype._minimize = function () {
+    this._ttsStop();
     this._stopConversation();
     this._clearHighlight();
     this.mode = 'minimized';
@@ -242,6 +256,7 @@
   };
 
   SomaGuide.prototype._setMode = function (mode) {
+    this._ttsStop();
     this._stopConversation();
     this.mode = mode;
     this.el.className = 'sg sg--' + mode;
@@ -297,6 +312,8 @@
         }
       }
     }
+
+    this._ttsSpeak(step.narration || '');
   };
 
   SomaGuide.prototype._wtNext = function () {
@@ -467,6 +484,78 @@
     div.textContent = text;
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
+  };
+
+  /* ── TTS narration ──────────────────────────────────────────────────────────── */
+
+  SomaGuide.prototype._ttsEnabled = function () {
+    return !!(this.cfg.ttsProxyUrl && this.cfg.voiceAgentId) && !this._ttsMuted;
+  };
+
+  SomaGuide.prototype._ttsStop = function () {
+    if (this._ttsAudio) {
+      this._ttsAudio.pause();
+      this._ttsAudio.src = '';
+      this._ttsAudio = null;
+    }
+  };
+
+  SomaGuide.prototype._ttsSpeak = function (text) {
+    var self = this;
+    this._ttsStop();
+    if (!this._ttsEnabled() || !text) return;
+
+    var url = this.cfg.ttsProxyUrl +
+      '?action=tts' +
+      '&text=' + encodeURIComponent(text) +
+      '&agent_id=' + encodeURIComponent(this.cfg.voiceAgentId);
+
+    var fetchFn = (typeof global !== 'undefined' && global.fetch) || fetch;
+    fetchFn(url).then(function (r) {
+      if (!r.ok) return null;
+      return r.blob();
+    }).then(function (blob) {
+      if (!blob || !self._ttsEnabled()) return;
+      var objUrl = (typeof URL !== 'undefined' && URL.createObjectURL)
+        ? URL.createObjectURL(blob) : null;
+      if (!objUrl) return;
+      var audio = new Audio(objUrl);
+      self._ttsAudio = audio;
+      audio.play().catch(function () { /* autoplay blocked */ });
+    }).catch(function (e) {
+      console.warn('[SomaGuide] TTS error', e);
+    });
+  };
+
+  SomaGuide.prototype._ttsMuteToggle = function () {
+    this._ttsMuted = !this._ttsMuted;
+    this._lsSet('tts-muted', this._ttsMuted ? '1' : '0');
+    this._updateMuteBtn();
+    if (this._ttsMuted) {
+      this._ttsStop();
+    } else if (this.mode === 'walkthrough' && this.wt) {
+      var wt = this._wtById(this.wt.id);
+      if (wt) {
+        var step = wt.steps[this.wt.stepIndex];
+        if (step) this._ttsSpeak(step.narration || '');
+      }
+    }
+  };
+
+  SomaGuide.prototype._ttsReplay = function () {
+    if (!this.wt) return;
+    var wt = this._wtById(this.wt.id);
+    if (!wt) return;
+    var step = wt.steps[this.wt.stepIndex];
+    if (step) this._ttsSpeak(step.narration || '');
+  };
+
+  SomaGuide.prototype._updateMuteBtn = function () {
+    var btn = this._$('.sg-btn-mute');
+    if (!btn) return;
+    btn.textContent = this._ttsMuted ? '🔇' : '🔊';
+    btn.setAttribute('title', this._ttsMuted ? 'Unmute narration' : 'Mute narration');
+    btn.setAttribute('aria-label', this._ttsMuted ? 'Unmute narration' : 'Mute narration');
   };
 
   /* ── Public API ── */
