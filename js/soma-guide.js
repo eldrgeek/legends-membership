@@ -32,6 +32,7 @@
     /* Demo cursor state */
     this._demoCursor = null;
     this._demoCursorTimer = null;
+    this._demoCursorLeadInTimer = null;
 
     var lsBase = 'soma-guide:' + (cfg.persona.id || cfg.persona.name);
     this._lsGet = function (k) { try { return localStorage.getItem(lsBase + ':' + k); } catch(e) { return null; } };
@@ -398,11 +399,17 @@
       }
     }
 
-    /* Animated demo cursor */
+    /* Animated demo cursor — delayed lead-in so cursor appears mid-narration.
+     * Lead-in = min(1200ms, 40% of estimated narration duration), min 400ms. */
+    this._demoStop();
     if (targetEl && step.demo) {
-      this._demoMoveTo(targetEl, step.demo);
-    } else {
-      this._demoStop();
+      var leadInMs = Math.min(1200, Math.max(400, (step.narration || '').length * 32));
+      var _capturedTarget = targetEl;
+      var _capturedDemo   = step.demo;
+      self._demoCursorLeadInTimer = setTimeout(function () {
+        self._demoCursorLeadInTimer = null;
+        self._demoMoveTo(_capturedTarget, _capturedDemo);
+      }, leadInMs);
     }
 
     /* TTS + auto-advance: build onEnded callback when auto-play is active */
@@ -511,6 +518,10 @@
   };
 
   SomaGuide.prototype._demoStop = function () {
+    if (this._demoCursorLeadInTimer) {
+      clearTimeout(this._demoCursorLeadInTimer);
+      this._demoCursorLeadInTimer = null;
+    }
     if (this._demoCursorTimer) {
       clearTimeout(this._demoCursorTimer);
       this._demoCursorTimer = null;
@@ -784,11 +795,19 @@
 
   /* _ttsSpeak(text, onEnded?)
    * onEnded: optional callback fired when audio finishes (or after fallback timer).
-   * Used by _renderWtStep to drive auto-advance. Not passed by replay/mute paths. */
+   * Used by _renderWtStep to drive auto-advance. Not passed by replay/mute paths.
+   *
+   * Auto-advance policy:
+   *  - When audio plays: advance ONLY on the audio element's real 'ended' event.
+   *    A very generous safety-net timer (3× estimated + 10 s) fires only if 'ended'
+   *    never arrives (e.g. browser decode error after play starts).
+   *  - When audio is blocked/unavailable: use a text-length-based fallback timer
+   *    generous enough to never under-run the real narration. */
   SomaGuide.prototype._ttsSpeak = function (text, onEnded) {
     var self = this;
     this._ttsStop();
-    var fallbackMs = Math.max(3500, (text || '').length * 45);
+    /* ~80 ms/char matches typical TTS speech rate; 5000 ms absolute floor */
+    var fallbackMs = Math.max(5000, (text || '').length * 80);
     if (!this._ttsEnabled() || !text) {
       /* No audio — schedule auto-advance via fallback timer if caller wants it */
       if (onEnded) {
@@ -820,17 +839,21 @@
       var audio = new Audio(objUrl);
       self._ttsAudio = audio;
       if (onEnded) {
-        /* Fallback timer in case audio never fires 'ended' (decode error, browser block) */
-        self._autoTimer = setTimeout(onEnded, fallbackMs + 2000);
+        /* Primary trigger: audio ended naturally */
         audio.addEventListener('ended', function () {
-          /* Cancel fallback and advance — audio finished naturally */
           clearTimeout(self._autoTimer);
           self._autoTimer = null;
           onEnded();
         }, { once: true });
       }
-      audio.play().catch(function () {
-        /* Autoplay blocked — reschedule at nominal fallback delay */
+      audio.play().then(function () {
+        /* Audio is playing — rely on the ended event above.
+         * Safety-net fires only if ended never arrives (3× estimate + 10 s). */
+        if (onEnded) {
+          self._autoTimer = setTimeout(onEnded, fallbackMs * 3 + 10000);
+        }
+      }).catch(function () {
+        /* Autoplay blocked — fall back to text-length estimate */
         if (onEnded) {
           clearTimeout(self._autoTimer);
           self._autoTimer = setTimeout(onEnded, fallbackMs);

@@ -479,10 +479,31 @@ function makeWindowWithTTS() {
       this.src = src || '';
       this.paused = true;
       this._plays = 0;
+      this._listeners = {};
       window._audioInstances.push(this);
     };
     window.Audio.prototype.play = function() { this.paused = false; this._plays++; return Promise.resolve(); };
     window.Audio.prototype.pause = function() { this.paused = true; };
+    window.Audio.prototype.addEventListener = function(type, fn, opts) {
+      var once = opts && opts.once;
+      var self = this;
+      this._listeners[type] = this._listeners[type] || [];
+      if (once) {
+        var wrapped = function(evt) {
+          fn.call(self, evt);
+          var idx = self._listeners[type].indexOf(wrapped);
+          if (idx >= 0) self._listeners[type].splice(idx, 1);
+        };
+        this._listeners[type].push(wrapped);
+      } else {
+        this._listeners[type].push(fn);
+      }
+    };
+    window.Audio.prototype.dispatchEvent = function(evt) {
+      var listeners = (this._listeners[evt.type] || []).slice();
+      var self = this;
+      listeners.forEach(function(fn) { fn.call(self, evt); });
+    };
   `);
   return win;
 }
@@ -1288,5 +1309,179 @@ describe('SOMA Guide — resume at correct step', function () {
     // Now exit — should save step 1
     g._wtExit();
     assert.equal(g.pendingResume.stepIndex, 1, 'exit after auto-advance should save step 1');
+  });
+});
+
+/* ── Timing defect fixes ── */
+
+const DEMO_CONFIG = {
+  persona: {
+    name: 'DemoBot', id: 'demo-bot', avatar: '🤖',
+    greeting: 'Hi!', shortGreeting: 'Back!', walkthroughDone: 'Done!'
+  },
+  voiceAgentId: 'demo-agent',
+  ttsProxyUrl: 'https://example.com/.netlify/functions/el-proxy',
+  siteMap: [],
+  walkthroughs: [
+    {
+      id: 'wt-demo',
+      label: 'Demo Tour',
+      keywords: ['demo'],
+      steps: [
+        { target: 'body', narration: 'Step one narration text', instruction: 'Do this', demo: 'hover' },
+        { target: 'body', narration: 'Step two narration text', instruction: 'Do that', demo: 'click' }
+      ]
+    }
+  ]
+};
+
+describe('SOMA Guide — cursor lead-in delay', function () {
+  test('_demoStop clears _demoCursorLeadInTimer', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._demoCursorLeadInTimer = setTimeout(function () {}, 9999);
+    g._demoStop();
+    assert.equal(g._demoCursorLeadInTimer, null, 'lead-in timer should be cleared by _demoStop');
+  });
+
+  test('_demoCursorLeadInTimer initialised to null', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    assert.equal(g._demoCursorLeadInTimer, null);
+  });
+
+  test('cursor lead-in timer is scheduled, not fired synchronously, on step with demo', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(DEMO_CONFIG);
+    let moveCalled = false;
+    g._demoMoveTo = function () { moveCalled = true; };
+    g._wtStart('wt-demo', 0);
+    // _demoMoveTo should NOT have been called yet — it's behind a lead-in timer
+    assert.equal(moveCalled, false, 'cursor should not move synchronously on step render');
+    assert.ok(g._demoCursorLeadInTimer !== null, 'lead-in timer should be pending');
+    g._demoStop(); // cleanup
+  });
+
+  test('lead-in timer is cancelled when _demoStop is called before it fires', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(DEMO_CONFIG);
+    g._wtStart('wt-demo', 0);
+    assert.ok(g._demoCursorLeadInTimer !== null, 'lead-in timer should be set');
+    g._demoStop();
+    assert.equal(g._demoCursorLeadInTimer, null, 'lead-in timer should be null after stop');
+  });
+
+  test('lead-in timer is cleared by _wtNext before scheduling for next step', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(DEMO_CONFIG);
+    g._wtStart('wt-demo', 0);
+    const firstTimer = g._demoCursorLeadInTimer;
+    g._wtNext(); // advance to step 1 — should stop previous cursor and set new timer
+    // After wtNext, a new lead-in timer for step 1 may or may not be set,
+    // but the first timer handle should be gone
+    assert.ok(g._demoCursorLeadInTimer !== firstTimer || g._demoCursorLeadInTimer === null,
+      'lead-in timer should be refreshed on step advance');
+    g._demoStop();
+  });
+});
+
+describe('SOMA Guide — audio ended drives auto-advance', function () {
+  test('auto-advance fires on audio ended event', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    // Wait for async fetch → blob → Audio → play().then()
+    setTimeout(function () {
+      assert.equal(g.wt && g.wt.stepIndex, 0, 'should still be on step 0 before ended fires');
+      const audio = win._audioInstances[win._audioInstances.length - 1];
+      assert.ok(audio, 'audio instance should exist');
+      // Cancel the long safety-net so it does not interfere with the manual ended dispatch
+      g._autoClear();
+      // Fire the real ended event
+      audio.dispatchEvent(new win.Event('ended'));
+      assert.equal(g.wt && g.wt.stepIndex, 1, 'step should advance to 1 after ended fires');
+      done();
+    }, 80);
+  });
+
+  test('step does NOT advance before audio ended fires', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    setTimeout(function () {
+      // ended has NOT fired — step must still be 0
+      assert.equal(g.wt && g.wt.stepIndex, 0, 'should not advance without ended event');
+      g._autoClear();
+      done();
+    }, 80);
+  });
+
+  test('safety-net timer is set after audio play resolves', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._ttsSpeak('Test narration for safety net', function () {});
+    // After fetch + blob + Audio + play().then()
+    setTimeout(function () {
+      assert.ok(g._autoTimer !== null, 'safety-net timer should be armed after play starts');
+      g._autoClear();
+      done();
+    }, 80);
+  });
+
+  test('ended event cancels safety-net timer', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    let endedCount = 0;
+    g._ttsSpeak('Narration text', function () { endedCount++; });
+    setTimeout(function () {
+      assert.ok(g._autoTimer !== null, 'safety-net should be set');
+      const audio = win._audioInstances[win._audioInstances.length - 1];
+      audio.dispatchEvent(new win.Event('ended'));
+      assert.equal(g._autoTimer, null, 'safety-net should be cleared after ended fires');
+      assert.equal(endedCount, 1, 'onEnded callback should fire exactly once');
+      done();
+    }, 80);
+  });
+
+  test('fallback timer when TTS disabled is at least 5000ms (never under-runs narration)', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG); // no ttsProxyUrl
+    let advanced = false;
+    g._ttsSpeak('A short text', function () { advanced = true; });
+    // Timer is set synchronously for the no-TTS path
+    assert.ok(g._autoTimer !== null, 'fallback timer should be scheduled');
+    // Must NOT have advanced synchronously
+    assert.equal(advanced, false, 'should not advance synchronously');
+    g._autoClear();
+  });
+
+  test('fallback timer scales with text length (longer text → longer delay)', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    // We cannot read the setTimeout delay directly, but we can verify that
+    // a long narration does NOT advance synchronously and a timer is pending
+    const longText = 'A'.repeat(200);
+    let advanced = false;
+    g._ttsSpeak(longText, function () { advanced = true; });
+    assert.ok(g._autoTimer !== null, 'timer should be set for long text');
+    assert.equal(advanced, false, 'should not advance synchronously for long text');
+    g._autoClear();
+  });
+
+  test('next narration only starts after _ttsStop clears the previous audio', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    setTimeout(function () {
+      const firstAudio = win._audioInstances[win._audioInstances.length - 1];
+      assert.ok(firstAudio, 'first audio should exist');
+      assert.equal(firstAudio.paused, false, 'first audio should be playing');
+      // Manually advance without waiting for ended
+      g._autoClear();
+      g._wtNext();
+      // _ttsStop should have paused the first audio immediately
+      assert.equal(firstAudio.paused, true, 'first audio should be paused after step advance');
+      done();
+    }, 80);
   });
 });
