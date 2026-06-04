@@ -111,6 +111,162 @@ window.SomaGuideConfig = {
                 'Each member profile has a full bio, career highlights, and contact ' +
                 'information. Use the breadcrumb at the top to return to the full Committee list.',
               instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/major-jones.html"]',
+              page: 'members.html',
+              label: 'Major Jones',
+              demo: 'click',
+              narration:
+                'Major Jones played six seasons in the NBA, including time with the Houston ' +
+                'Rockets — a powerful presence on both ends of the court.',
+              instruction: 'Click Major\'s card to view his full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/major-jones.html',
+              label: 'Major\'s profile',
+              demo: 'hover',
+              narration:
+                'Major\'s profile details his NBA career and his current contributions ' +
+                'to the committee. Use the breadcrumb to return to the member list.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/lionel-hollins.html"]',
+              page: 'members.html',
+              label: 'Lionel Hollins',
+              demo: 'click',
+              narration:
+                'Lionel Hollins is an NBA champion, All-Star, and head coach — one of the ' +
+                'most decorated basketball minds on the committee.',
+              instruction: 'Click Lionel\'s card to view his full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/lionel-hollins.html',
+              label: 'Lionel\'s profile',
+              demo: 'hover',
+              narration:
+                'Lionel\'s profile covers his playing and coaching career in full detail.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/bruce-capers.html"]',
+              page: 'members.html',
+              label: 'Bruce Capers',
+              demo: 'click',
+              narration:
+                'Bruce Capers brings a unique perspective as a Harlem Globetrotter, coach, ' +
+                'and educator — basketball as both sport and life lesson.',
+              instruction: 'Click Bruce\'s card to view his full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/bruce-capers.html',
+              label: 'Bruce\'s profile',
+              demo: 'hover',
+              narration:
+                'Bruce\'s profile highlights his Globetrotters career and his work in education.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/herb-lang.html"]',
+              page: 'members.html',
+              label: 'Herb "Flight Time" Lang',
+              demo: 'click',
+              narration:
+                'Herb "Flight Time" Lang spent eighteen years with the Harlem Globetrotters ' +
+                'and is now a sought-after speaker and motivator.',
+              instruction: 'Click Herb\'s card to view his full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/herb-lang.html',
+              label: 'Herb\'s profile',
+              demo: 'hover',
+              narration:
+                'Herb\'s profile covers his Globetrotters tenure and his work as a speaker.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/leslie-johnson.html"]',
+              page: 'members.html',
+              label: 'Leslie Johnson',
+              demo: 'click',
+              narration:
+                'Leslie Johnson is a WNBA pioneer and Hall of Famer whose international ' +
+                'career and advocacy have shaped women\'s basketball.',
+              instruction: 'Click Leslie\'s card to view her full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/leslie-johnson.html',
+              label: 'Leslie\'s profile',
+              demo: 'hover',
+              narration:
+                'Leslie\'s profile covers her WNBA career, Hall of Fame recognition, ' +
+                'and international playing and coaching experience.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/george-tinsley.html"]',
+              page: 'members.html',
+              label: 'George Tinsley',
+              demo: 'click',
+              narration:
+                'George Tinsley was an ABA standout and three-time Division II champion ' +
+                'who went on to build a successful entrepreneurial career.',
+              instruction: 'Click George\'s card to view his full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/george-tinsley.html',
+              label: 'George\'s profile',
+              demo: 'hover',
+              narration:
+                'George\'s profile details his ABA playing days and his business ventures ' +
+                'after basketball.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/willie-davis.html"]',
+              page: 'members.html',
+              label: 'Willie Davis',
+              demo: 'click',
+              narration:
+                'Willie Davis had a standout ABA career, earned All-EBA honors, and now ' +
+                'leads the Dallas Chapter of the Legends organization.',
+              instruction: 'Click Willie\'s card to view his full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/willie-davis.html',
+              label: 'Willie\'s profile',
+              demo: 'hover',
+              narration:
+                'Willie\'s profile covers his ABA career and his leadership in the ' +
+                'Dallas Chapter.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            },
+            {
+              target: 'a[href="members/mo-evans.html"]',
+              page: 'members.html',
+              label: 'Mo Evans',
+              demo: 'click',
+              narration:
+                'Mo Evans played nine NBA seasons and served as VP of the NBA Players ' +
+                'Association — a player and a leader both on and off the court.',
+              instruction: 'Click Mo\'s card to view his full profile.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/mo-evans.html',
+              label: 'Mo\'s profile',
+              demo: 'hover',
+              narration:
+                'Mo\'s profile details his nine NBA seasons and his NBPA leadership work.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
             }
           ]
         },

@@ -486,3 +486,64 @@
   background: rgba(201,168,76,0.12);
   border-color: #c9a84c;
 }
+
+/* ── Walkthrough navigator (step-tree) ── */
+.sg-wt-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 130px;
+  overflow-y: auto;
+  border-top: 1px solid #e8e0c8;
+  padding-top: 8px;
+  margin-top: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a84c transparent;
+}
+.sg-wt-nav::-webkit-scrollbar { width: 4px; }
+.sg-wt-nav::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.45); border-radius: 2px; }
+.sg-wt-nav-step {
+  background: #f0ece0;
+  border: 1px solid #e0d8c0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: #444;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.sg-wt-nav-step:hover {
+  background: #e8e0ca;
+  border-color: #b8963e;
+  color: #060e18;
+}
+.sg-wt-nav-step--current {
+  border-color: #c9a84c;
+  background: #f5eed8;
+  color: #060e18;
+  font-weight: 600;
+}
+.sg-wt-nav-step--sub {
+  margin-left: 14px;
+  font-size: 0.74rem;
+  color: #555;
+  background: #f8f5ef;
+  border-color: #e8e0cc;
+}
+.sg-wt-nav-step--sub:hover {
+  background: #ede7d3;
+  border-color: #b8963e;
+  color: #060e18;
+}
+.sg-wt-nav-step--sub.sg-wt-nav-step--current {
+  background: #f5eed8;
+  border-color: #c9a84c;
+  color: #060e18;
+  font-weight: 600;
+}
