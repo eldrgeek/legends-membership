@@ -1059,6 +1059,10 @@
       return;
     }
 
+    /* Kick off next-step prefetch in parallel with current fetch — gives maximum
+     * lead time so the next step's audio is ready before this one ends. */
+    this._ttsPrefetchNext();
+
     var url = this.cfg.ttsProxyUrl +
       '?action=tts' +
       '&text=' + encodeURIComponent(text) +
@@ -1171,7 +1175,8 @@
       '&text=' + encodeURIComponent(nextStep.narration) +
       '&agent_id=' + encodeURIComponent(this.cfg.voiceAgentId);
 
-    if (self._ttsPrefetchUrl === url) return;
+    if (self._ttsPrefetchUrl === url) return;           /* in-flight dedup */
+    if (self._ttsPrefetchCache && self._ttsPrefetchCache.url === url) return; /* already cached */
     self._ttsPrefetchUrl = url;
     self._ttsPrefetchCache = null;
 

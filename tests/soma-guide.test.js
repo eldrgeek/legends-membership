@@ -712,6 +712,77 @@ describe('SOMA Guide — TTS narration', function () {
     g._ttsReplay(); // no active walkthrough
     assert.equal(win._ttsRequests.length, 0);
   });
+
+  /* ── Prefetch tests ── */
+
+  test('_ttsPrefetchNext fires at _ttsSpeak start before audio plays', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    // Position wt state at step 0 so prefetch targets step 1
+    g.wt = { id: 'wt-alpha', stepIndex: 0, subStepIndex: null };
+    win._ttsRequests.length = 0;
+
+    g._ttsSpeak('Step one narration', null);
+
+    // Both fetches initiated synchronously before any promise resolves:
+    // one for the current step, one prefetch for the next step.
+    assert.ok(win._ttsRequests.length >= 2, 'should have issued current + prefetch fetch synchronously');
+    const hasPrefetch = win._ttsRequests.some(function (u) { return u.includes('Step%20two%20narration'); });
+    assert.ok(hasPrefetch, 'prefetch request should target next step narration');
+  });
+
+  test('advance to next step uses prefetch cache without issuing a new fetch', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g.wt = { id: 'wt-alpha', stepIndex: 0, subStepIndex: null };
+
+    // Simulate prefetch already completed for step 1
+    const step1Url = TTS_CONFIG.ttsProxyUrl +
+      '?action=tts&text=' + encodeURIComponent('Step two narration') +
+      '&agent_id=' + encodeURIComponent(TTS_CONFIG.voiceAgentId);
+    g._ttsPrefetchCache = { url: step1Url, blobUrl: 'blob:prefetched' };
+
+    win._ttsRequests.length = 0;
+
+    // Simulate speaking step 1 (as if auto-advance fired)
+    g._ttsSpeak('Step two narration', null);
+
+    // Cache hit: no fetch should have been issued for step 1
+    const step1Fetches = win._ttsRequests.filter(function (u) { return u.includes('Step%20two%20narration'); });
+    assert.equal(step1Fetches.length, 0, 'cache hit must not issue a new fetch for step 1');
+  });
+
+  test('_ttsPrefetchNext does not clear valid cache when called again for same URL', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g.wt = { id: 'wt-alpha', stepIndex: 0, subStepIndex: null };
+
+    const step1Url = TTS_CONFIG.ttsProxyUrl +
+      '?action=tts&text=' + encodeURIComponent('Step two narration') +
+      '&agent_id=' + encodeURIComponent(TTS_CONFIG.voiceAgentId);
+    g._ttsPrefetchCache = { url: step1Url, blobUrl: 'blob:cached' };
+
+    win._ttsRequests.length = 0;
+    g._ttsPrefetchNext(); // second call for same URL
+
+    assert.ok(g._ttsPrefetchCache !== null, 'cache must not be cleared on duplicate call');
+    assert.equal(g._ttsPrefetchCache.blobUrl, 'blob:cached', 'cached blobUrl must be preserved');
+    const step1Fetches = win._ttsRequests.filter(function (u) { return u.includes('Step%20two%20narration'); });
+    assert.equal(step1Fetches.length, 0, 'no redundant re-fetch for already-cached URL');
+  });
+
+  test('_ttsPrefetchNext skips in-flight fetch for same URL (dedup)', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    g.wt = { id: 'wt-alpha', stepIndex: 0, subStepIndex: null };
+
+    g._ttsPrefetchNext(); // first call — starts in-flight fetch
+    const countAfterFirst = win._ttsRequests.length;
+
+    g._ttsPrefetchNext(); // second call while in-flight — must be a no-op
+
+    assert.equal(win._ttsRequests.length, countAfterFirst, 'in-flight dedup must suppress duplicate fetch');
+  });
 });
 
 /* ── Cross-page sessionStorage bridge ── */
