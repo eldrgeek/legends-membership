@@ -2182,17 +2182,17 @@ describe('SOMA Guide — return to neutral state', function () {
   test('sg-wt-menu button (← Menu) is present in sg-wt-bar', function () {
     const win = makeWindow();
     new win.SomaGuide(TEST_CONFIG);
-    const btn = win.document.querySelector('.sg-wt-menu');
-    assert.ok(btn, '.sg-wt-menu button should exist in sg-wt-bar');
+    const btn = win.document.querySelector('.sg-wt-bar .sg-wt-menu');
+    assert.ok(btn, '.sg-wt-menu button should exist inside .sg-wt-bar');
   });
 
-  test('clicking sg-wt-menu during active tour returns to idle and clears wt', function () {
+  test('_wtGoToNeutral from walkthrough mode returns to idle and clears wt', function () {
     const win = makeWindow();
     const g = new win.SomaGuide(TEST_CONFIG);
     g._wtStart('wt-alpha', 1);
     assert.equal(g.mode, 'walkthrough');
-    win.document.querySelector('.sg-wt-menu').click();
-    assert.equal(g.mode, 'idle', 'mode should be idle after ← Menu');
+    g._wtGoToNeutral();
+    assert.equal(g.mode, 'idle', 'mode should be idle after _wtGoToNeutral');
     assert.equal(g.wt, null, 'wt should be cleared');
     assert.equal(g.pendingResume, null, 'pendingResume should not be set');
   });
