@@ -441,12 +441,18 @@
 
     /* ── 1. Page navigation (synchronous) ── */
     if (step.page && typeof location !== 'undefined') {
-      var currentFile = location.pathname.split('/').pop() || 'index.html';
-      if (currentFile !== step.page) {
+      /* Resolve to root-absolute and strip .html for comparison + navigation.
+       * Stripping .html supports clean-URL servers (Netlify pretty URLs, etc.) where
+       * /members/greg-foster serves the file but /members/greg-foster.html 404s.
+       * Comparing full paths (not just pop()) prevents doubling on subpages. */
+      var absPage   = step.page.charAt(0) === '/' ? step.page : ('/' + step.page);
+      var navTarget = absPage.replace(/\.html$/, '');
+      var curNorm   = location.pathname.replace(/\.html$/, '');
+      if (curNorm !== navTarget) {
         this._ssSet('wt-id',      this.wt.id);
         this._ssSet('wt-step',    String(this.wt.stepIndex));
         this._ssSet('wt-substep', String(this.wt.subStepIndex != null ? this.wt.subStepIndex : -1));
-        this._navigate(step.page);
+        this._navigate(navTarget);
         return;
       }
     }
@@ -808,7 +814,9 @@
   };
 
   /* Render the step-tree navigator inside the active walkthrough panel.
-   * Highlights the current step; clicking any step jumps there (satisfying its preconditions). */
+   * Highlights the current step; clicking any step jumps there (satisfying its preconditions).
+   * Steps with substeps are wrapped in sg-wt-nav-group; substeps go in sg-wt-nav-substeps
+   * for visual nesting. All buttons (including the parent/first step) are clickable. */
   SomaGuide.prototype._renderWtNav = function () {
     var self   = this;
     var navDiv = this._$('.sg-wt-nav');
@@ -824,20 +832,27 @@
     wt.steps.forEach(function (s, i) {
       var isParentCurrent = (i === curStepIdx && curSubIdx === -1);
       var label = s.label || (s.narration ? s.narration.slice(0, 40) + '…' : ('Step ' + (i + 1)));
+      var hasSubsteps = s.substeps && s.substeps.length > 0;
+
+      if (hasSubsteps) html.push('<div class="sg-wt-nav-group">');
       html.push(
         '<button class="sg-wt-nav-step' + (isParentCurrent ? ' sg-wt-nav-step--current' : '') +
         '" data-si="' + i + '" data-sub="-1">' + (flatN + 1) + '. ' + label + '</button>'
       );
       flatN++;
-      (s.substeps || []).forEach(function (sub, j) {
-        var isSubCurrent = (i === curStepIdx && j === curSubIdx);
-        var subLabel = sub.label || (sub.narration ? sub.narration.slice(0, 35) + '…' : ('Sub-step ' + (j + 1)));
-        html.push(
-          '<button class="sg-wt-nav-step sg-wt-nav-step--sub' + (isSubCurrent ? ' sg-wt-nav-step--current' : '') +
-          '" data-si="' + i + '" data-sub="' + j + '">' + (flatN + 1) + '. ' + subLabel + '</button>'
-        );
-        flatN++;
-      });
+      if (hasSubsteps) {
+        html.push('<div class="sg-wt-nav-substeps">');
+        s.substeps.forEach(function (sub, j) {
+          var isSubCurrent = (i === curStepIdx && j === curSubIdx);
+          var subLabel = sub.label || (sub.narration ? sub.narration.slice(0, 35) + '…' : ('Sub-step ' + (j + 1)));
+          html.push(
+            '<button class="sg-wt-nav-step sg-wt-nav-step--sub' + (isSubCurrent ? ' sg-wt-nav-step--current' : '') +
+            '" data-si="' + i + '" data-sub="' + j + '">' + (flatN + 1) + '. ' + subLabel + '</button>'
+          );
+          flatN++;
+        });
+        html.push('</div></div>');
+      }
     });
 
     navDiv.innerHTML = html.join('');

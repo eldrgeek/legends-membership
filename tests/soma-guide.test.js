@@ -777,7 +777,8 @@ describe('SOMA Guide — cross-page sessionStorage bridge', function () {
     g.wt = { id: 'xp-tour', stepIndex: 1 };
     g._setMode('walkthrough');
     g._renderWtStep();
-    assert.equal(navigatedTo, 'other.html', 'should navigate to step.page');
+    /* Engine navigates to root-absolute clean URL (no .html) */
+    assert.equal(navigatedTo, '/other', 'should navigate to root-absolute path without .html');
     assert.equal(win.sessionStorage.getItem('soma-guide-xp:xbot:wt-id'), 'xp-tour');
     assert.equal(win.sessionStorage.getItem('soma-guide-xp:xbot:wt-step'), '1');
   });
@@ -1919,5 +1920,197 @@ describe('SOMA Guide — navigator panel', function () {
     const dropdown = win2.document.querySelector('.drop');
     assert.ok(dropdown.classList.contains('sg-demo-open'), 'dropdown should be open after nav click to sub-step');
     assert.equal(g.wt.subStepIndex, 0);
+  });
+});
+
+/* ── A. Root-absolute page resolution (no doubling) ── */
+
+describe('SOMA Guide — root-absolute page resolution', function () {
+  test('engine navigates to root-absolute path (no .html), not a relative URL', function () {
+    const win = makeWindowOnPage('index.html');
+    const g = new win.SomaGuide(XPAGE_CONFIG);
+    var navigatedTo = null;
+    g._navigate = function(page) { navigatedTo = page; };
+    g.wt = { id: 'xp-tour', stepIndex: 1 };
+    g._setMode('walkthrough');
+    g._renderWtStep();
+    assert.ok(navigatedTo && navigatedTo.charAt(0) === '/', 'navigate target must start with / (root-absolute)');
+    assert.ok(!navigatedTo.endsWith('.html'), 'navigate target must not end in .html (clean URL)');
+  });
+
+  test('no doubling: navigating to member subpage from member subpage uses root-absolute path', function () {
+    /* Simulate being on /members/greg-foster and stepping to members.html */
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+      url: 'http://localhost/members/greg-foster',
+      runScripts: 'dangerously'
+    });
+    const win2 = dom.window;
+    win2.eval('window.__importStub = function(url) { return Promise.resolve({ Conversation: { startSession: function() { return Promise.resolve({ endSession: function(){}, sendUserMessage: function(){} }); } } }); };');
+    win2.eval(fs.readFileSync(path.join(ROOT, 'js', 'soma-guide.js'), 'utf8'));
+
+    const cfg = {
+      persona: { name: 'T', id: 'tbot', avatar: '🤖', greeting: 'Hi', shortGreeting: 'Back', walkthroughDone: 'Done' },
+      voiceAgentId: 'x', siteMap: [],
+      walkthroughs: [{
+        id: 'wt-x', label: 'X', keywords: ['x'],
+        steps: [{ target: 'body', page: 'members', label: 'Grid', narration: 'Grid', instruction: 'See' }]
+      }]
+    };
+    const g2 = new win2.SomaGuide(cfg);
+    var navigatedTo = null;
+    g2._navigate = function(p) { navigatedTo = p; };
+    g2._wtStart('wt-x', 0, -1);
+    /* When stepping from /members/greg-foster to page 'members', engine must produce /members
+     * and NOT /members/members (the doubled form). */
+    assert.equal(navigatedTo, '/members', 'should navigate to /members, not doubled path');
+  });
+
+  test('engine does NOT navigate when already on the correct page (subpath match)', function () {
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+      url: 'http://localhost/members/greg-foster',
+      runScripts: 'dangerously'
+    });
+    const win3 = dom.window;
+    win3.eval('window.__importStub = function(url) { return Promise.resolve({ Conversation: { startSession: function() { return Promise.resolve({ endSession: function(){}, sendUserMessage: function(){} }); } } }); };');
+    win3.eval(fs.readFileSync(path.join(ROOT, 'js', 'soma-guide.js'), 'utf8'));
+
+    const cfg = {
+      persona: { name: 'T', id: 'tbot2', avatar: '🤖', greeting: 'Hi', shortGreeting: 'Back', walkthroughDone: 'Done' },
+      voiceAgentId: 'x', siteMap: [],
+      walkthroughs: [{
+        id: 'wt-x', label: 'X', keywords: ['x'],
+        steps: [{ target: 'body', page: 'members/greg-foster', label: 'Profile', narration: 'Profile', instruction: 'See' }]
+      }]
+    };
+    const g3 = new win3.SomaGuide(cfg);
+    var navigated = false;
+    g3._navigate = function() { navigated = true; };
+    g3._wtStart('wt-x', 0, -1);
+    assert.equal(navigated, false, 'should NOT navigate when already on the matching subpath');
+  });
+});
+
+/* ── B. Ensure-page gate runs on jump from non-matching page ── */
+
+describe('SOMA Guide — ensure-page gate on jump/resume', function () {
+  test('jumping to a step with page: navigates even when coming from a different page', function () {
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+      url: 'http://localhost/members/greg-foster',
+      runScripts: 'dangerously'
+    });
+    const win4 = dom.window;
+    win4.eval('window.__importStub = function(url) { return Promise.resolve({ Conversation: { startSession: function() { return Promise.resolve({ endSession: function(){}, sendUserMessage: function(){} }); } } }); };');
+    win4.eval(fs.readFileSync(path.join(ROOT, 'js', 'soma-guide.js'), 'utf8'));
+
+    const cfg = {
+      persona: { name: 'T', id: 'tbot3', avatar: '🤖', greeting: 'Hi', shortGreeting: 'Back', walkthroughDone: 'Done' },
+      voiceAgentId: 'x', siteMap: [],
+      walkthroughs: [{
+        id: 'wt-j', label: 'J', keywords: ['j'],
+        steps: [
+          { target: 'body', label: 'Step 1', narration: 'Step 1', instruction: '' },
+          { target: 'body', page: 'recommendations', label: 'Recs', narration: 'Recs', instruction: '' }
+        ]
+      }]
+    };
+    const g4 = new win4.SomaGuide(cfg);
+    var navigatedTo = null;
+    g4._navigate = function(p) { navigatedTo = p; };
+    /* Jump directly to step 1 (page: 'recommendations') from /members/greg-foster */
+    g4._wtStart('wt-j', 1, -1);
+    assert.equal(navigatedTo, '/recommendations', 'should navigate to /recommendations when jumping from wrong page');
+  });
+
+  test('navigator click to a page-gated step triggers navigation', function () {
+    const win5 = makeWindowOnPage('index.html');
+    const cfg = {
+      persona: { name: 'T', id: 'tbot4', avatar: '🤖', greeting: 'Hi', shortGreeting: 'Back', walkthroughDone: 'Done' },
+      voiceAgentId: 'x', siteMap: [],
+      walkthroughs: [{
+        id: 'wt-n', label: 'N', keywords: ['n'],
+        steps: [
+          { target: 'body', label: 'Step 1', narration: 'Step 1', instruction: '' },
+          { target: 'body', page: 'about', label: 'About', narration: 'About page', instruction: '' }
+        ]
+      }]
+    };
+    const g5 = new win5.SomaGuide(cfg);
+    var navigatedTo = null;
+    g5._navigate = function(p) { navigatedTo = p; };
+    g5._wtStart('wt-n', 0, -1);
+    /* Click the About step in the navigator */
+    const btns = win5.document.querySelectorAll('.sg-wt-nav-step');
+    const aboutBtn = Array.from(btns).find(function(b) { return b.getAttribute('data-si') === '1'; });
+    assert.ok(aboutBtn, 'About nav button should exist');
+    aboutBtn.click();
+    assert.equal(navigatedTo, '/about', 'navigator click should navigate to the gated page');
+  });
+});
+
+/* ── D. Navigator nesting and first/parent step reachability ── */
+
+describe('SOMA Guide — navigator nesting and parent step reachability', function () {
+  test('substeps are inside a sg-wt-nav-substeps wrapper element', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    const substepsWrapper = win.document.querySelector('.sg-wt-nav-substeps');
+    assert.ok(substepsWrapper, '.sg-wt-nav-substeps wrapper should exist');
+    const subBtns = substepsWrapper.querySelectorAll('.sg-wt-nav-step--sub');
+    assert.equal(subBtns.length, 2, 'both substep buttons should be inside the wrapper');
+  });
+
+  test('parent step and substeps share a sg-wt-nav-group container', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    const group = win.document.querySelector('.sg-wt-nav-group');
+    assert.ok(group, '.sg-wt-nav-group should exist for a step with substeps');
+    const parentBtn = group.querySelector('.sg-wt-nav-step:not(.sg-wt-nav-step--sub)');
+    assert.ok(parentBtn, 'parent step button should be inside the group');
+    assert.equal(parentBtn.getAttribute('data-sub'), '-1', 'parent button data-sub should be -1');
+  });
+
+  test('clicking the first/parent step button (data-sub=-1) jumps to parent at step 0', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, 1); /* start at sub-step 1b */
+    /* Now click the parent step (data-si=0 data-sub=-1) */
+    const btns = win.document.querySelectorAll('.sg-wt-nav-step');
+    const parentBtn = Array.from(btns).find(function(b) {
+      return b.getAttribute('data-si') === '0' && b.getAttribute('data-sub') === '-1';
+    });
+    assert.ok(parentBtn, 'parent step (data-sub=-1) button should be present');
+    parentBtn.click();
+    assert.equal(g.wt.stepIndex, 0, 'should jump to step index 0');
+    assert.equal(g.wt.subStepIndex, -1, 'subStepIndex should be -1 (at parent)');
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'First step', 'should show parent step narration');
+  });
+
+  test('clicking parent step from within a substep restores parent narration', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, 1); /* at Sub 1b */
+    const btns = win.document.querySelectorAll('.sg-wt-nav-step');
+    const parentBtn = Array.from(btns).find(function(b) {
+      return b.getAttribute('data-si') === '0' && b.getAttribute('data-sub') === '-1';
+    });
+    parentBtn.click();
+    assert.equal(g.wt.subStepIndex, -1, 'should be at parent (subStepIndex -1) after click');
+  });
+
+  test('step without substeps has no sg-wt-nav-group wrapper', function () {
+    /* NAV_CONFIG Step 2 has no substeps — should not be wrapped in a group */
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 1, -1); /* Step 2 (no substeps) */
+    /* querySelectorAll gets all step buttons; Step 2 button must NOT be inside a group */
+    const groups = win.document.querySelectorAll('.sg-wt-nav-group');
+    /* Only Step 1 (which has substeps) gets a group; Step 2 should not */
+    groups.forEach(function(gr) {
+      const stepBtn = gr.querySelector('[data-si="1"]');
+      assert.ok(!stepBtn, 'Step 2 (no substeps) should not be inside a sg-wt-nav-group');
+    });
   });
 });

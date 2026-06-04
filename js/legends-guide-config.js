@@ -4,7 +4,7 @@
  *
  * Step schema (engine reads this; no Legends-specific code in soma-guide.js):
  *   { id, label, target, narration, instruction, page, demo, requires, substeps[] }
- *   - page:     navigate here before animating
+ *   - page:     navigate here before animating (clean URL form, no .html — engine resolves root-absolute)
  *   - demo:     'click' | 'hover' | 'openDropdown'
  *   - requires: { dropdown: '.nav-dropdown' }  — engine opens it before animating
  *   - substeps: child steps played after the parent narration
@@ -72,19 +72,20 @@ window.SomaGuideConfig = {
             'The nav links on the right take you to every section. On mobile, tap the ☰ menu icon.'
         },
 
-        /* Step 2 — Committee page (parent) with sub-steps for individual members */
+        /* Step 2 — Committee page (parent) with sub-steps for the member grid + one representative profile.
+         * Scoped to Greg Foster as the demo member — no need to tour all nine in the walkthrough. */
         {
           target: 'a[href="members.html"]',
           label: 'Committee members',
           demo: 'click',
           narration:
             'The Committee page shows all nine members of the Membership Services Committee — ' +
-            'former NBA, WNBA, ABA, and Globetrotter legends. Let me show you a few.',
+            'former NBA, WNBA, ABA, and Globetrotter legends. Let me show you the layout.',
           instruction: 'Click "Committee" to browse member profiles.',
           substeps: [
             {
               target: '.members-grid',
-              page: 'members.html',
+              page: 'members',
               label: 'Member grid',
               demo: 'hover',
               narration:
@@ -94,7 +95,7 @@ window.SomaGuideConfig = {
             },
             {
               target: 'a[href="members/greg-foster.html"]',
-              page: 'members.html',
+              page: 'members',
               label: 'Greg Foster — Chairman',
               demo: 'click',
               narration:
@@ -104,180 +105,24 @@ window.SomaGuideConfig = {
             },
             {
               target: '.profile-hero',
-              page: 'members/greg-foster.html',
+              page: 'members/greg-foster',
               label: 'Greg\'s profile',
               demo: 'hover',
               narration:
                 'Each member profile has a full bio, career highlights, and contact ' +
                 'information. Use the breadcrumb at the top to return to the full Committee list.',
               instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/major-jones.html"]',
-              page: 'members.html',
-              label: 'Major Jones',
-              demo: 'click',
-              narration:
-                'Major Jones played six seasons in the NBA, including time with the Houston ' +
-                'Rockets — a powerful presence on both ends of the court.',
-              instruction: 'Click Major\'s card to view his full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/major-jones.html',
-              label: 'Major\'s profile',
-              demo: 'hover',
-              narration:
-                'Major\'s profile details his NBA career and his current contributions ' +
-                'to the committee. Use the breadcrumb to return to the member list.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/lionel-hollins.html"]',
-              page: 'members.html',
-              label: 'Lionel Hollins',
-              demo: 'click',
-              narration:
-                'Lionel Hollins is an NBA champion, All-Star, and head coach — one of the ' +
-                'most decorated basketball minds on the committee.',
-              instruction: 'Click Lionel\'s card to view his full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/lionel-hollins.html',
-              label: 'Lionel\'s profile',
-              demo: 'hover',
-              narration:
-                'Lionel\'s profile covers his playing and coaching career in full detail.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/bruce-capers.html"]',
-              page: 'members.html',
-              label: 'Bruce Capers',
-              demo: 'click',
-              narration:
-                'Bruce Capers brings a unique perspective as a Harlem Globetrotter, coach, ' +
-                'and educator — basketball as both sport and life lesson.',
-              instruction: 'Click Bruce\'s card to view his full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/bruce-capers.html',
-              label: 'Bruce\'s profile',
-              demo: 'hover',
-              narration:
-                'Bruce\'s profile highlights his Globetrotters career and his work in education.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/herb-lang.html"]',
-              page: 'members.html',
-              label: 'Herb "Flight Time" Lang',
-              demo: 'click',
-              narration:
-                'Herb "Flight Time" Lang spent eighteen years with the Harlem Globetrotters ' +
-                'and is now a sought-after speaker and motivator.',
-              instruction: 'Click Herb\'s card to view his full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/herb-lang.html',
-              label: 'Herb\'s profile',
-              demo: 'hover',
-              narration:
-                'Herb\'s profile covers his Globetrotters tenure and his work as a speaker.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/leslie-johnson.html"]',
-              page: 'members.html',
-              label: 'Leslie Johnson',
-              demo: 'click',
-              narration:
-                'Leslie Johnson is a WNBA pioneer and Hall of Famer whose international ' +
-                'career and advocacy have shaped women\'s basketball.',
-              instruction: 'Click Leslie\'s card to view her full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/leslie-johnson.html',
-              label: 'Leslie\'s profile',
-              demo: 'hover',
-              narration:
-                'Leslie\'s profile covers her WNBA career, Hall of Fame recognition, ' +
-                'and international playing and coaching experience.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/george-tinsley.html"]',
-              page: 'members.html',
-              label: 'George Tinsley',
-              demo: 'click',
-              narration:
-                'George Tinsley was an ABA standout and three-time Division II champion ' +
-                'who went on to build a successful entrepreneurial career.',
-              instruction: 'Click George\'s card to view his full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/george-tinsley.html',
-              label: 'George\'s profile',
-              demo: 'hover',
-              narration:
-                'George\'s profile details his ABA playing days and his business ventures ' +
-                'after basketball.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/willie-davis.html"]',
-              page: 'members.html',
-              label: 'Willie Davis',
-              demo: 'click',
-              narration:
-                'Willie Davis had a standout ABA career, earned All-EBA honors, and now ' +
-                'leads the Dallas Chapter of the Legends organization.',
-              instruction: 'Click Willie\'s card to view his full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/willie-davis.html',
-              label: 'Willie\'s profile',
-              demo: 'hover',
-              narration:
-                'Willie\'s profile covers his ABA career and his leadership in the ' +
-                'Dallas Chapter.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
-            },
-            {
-              target: 'a[href="members/mo-evans.html"]',
-              page: 'members.html',
-              label: 'Mo Evans',
-              demo: 'click',
-              narration:
-                'Mo Evans played nine NBA seasons and served as VP of the NBA Players ' +
-                'Association — a player and a leader both on and off the court.',
-              instruction: 'Click Mo\'s card to view his full profile.'
-            },
-            {
-              target: '.profile-hero',
-              page: 'members/mo-evans.html',
-              label: 'Mo\'s profile',
-              demo: 'hover',
-              narration:
-                'Mo\'s profile details his nine NBA seasons and his NBPA leadership work.',
-              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
             }
           ]
         },
 
-        /* Step 3 — Resources dropdown (parent) with sub-steps for each area.
-         * page: 'members.html' ensures the engine navigates back to a root-level page
-         * before this step so that relative nav-link selectors (href="minutes.html" etc.)
-         * resolve correctly (member profile pages use href="../minutes.html"). */
+        /* Step 3 — Resources dropdown (parent) with sub-steps for each section.
+         * Each substep navigates to its actual destination page so the user sees the content.
+         * page: 'members' on parent ensures we start from a root-level page where nav hrefs
+         * are root-relative (e.g. href="minutes.html", not href="../minutes.html"). */
         {
           target: '.nav-dropdown',
-          page: 'members.html',
+          page: 'members',
           label: 'Resources dropdown',
           demo: 'openDropdown',
           requires: { dropdown: '.nav-dropdown' },
@@ -287,7 +132,7 @@ window.SomaGuideConfig = {
           substeps: [
             {
               target: 'a[href="minutes.html"]',
-              page: 'members.html',
+              page: 'minutes',
               label: 'Meeting Minutes',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -298,7 +143,7 @@ window.SomaGuideConfig = {
             },
             {
               target: 'a[href="systems-map.html"]',
-              page: 'members.html',
+              page: 'systems-map',
               label: 'Systems Map',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -309,7 +154,7 @@ window.SomaGuideConfig = {
             },
             {
               target: 'a[href="assessment.html"]',
-              page: 'members.html',
+              page: 'assessment',
               label: 'Assessment',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -320,7 +165,7 @@ window.SomaGuideConfig = {
             },
             {
               target: 'a[href="resources.html"]',
-              page: 'members.html',
+              page: 'resources',
               label: 'Documents',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -332,9 +177,12 @@ window.SomaGuideConfig = {
           ]
         },
 
-        /* Step 4 — Recommendations */
+        /* Step 4 — Recommendations nav link.
+         * page: 'resources' ensures we're on a root-level page when resuming/jumping here,
+         * so the nav selector a[href="recommendations.html"] resolves correctly. */
         {
           target: 'a[href="recommendations.html"]',
+          page: 'resources',
           label: 'Recommendations',
           demo: 'click',
           narration:
@@ -344,7 +192,7 @@ window.SomaGuideConfig = {
         },
         {
           target: '#rec-grid',
-          page: 'recommendations.html',
+          page: 'recommendations',
           label: 'Recommendations board',
           demo: 'hover',
           narration:
@@ -353,9 +201,12 @@ window.SomaGuideConfig = {
           instruction: 'Browse the proposals, or click any card for details.'
         },
 
-        /* Step 5 — About & Contact (navigates to about.html) */
+        /* Step 5 — About & Contact.
+         * page: 'recommendations' ensures we're on a root-level page when resuming/jumping
+         * here, so a[href="about.html"] in the nav resolves correctly from any starting page. */
         {
           target: 'a[href="about.html"]',
+          page: 'recommendations',
           label: 'About & Contact',
           demo: 'click',
           narration:
@@ -365,7 +216,7 @@ window.SomaGuideConfig = {
         },
         {
           target: '.hero',
-          page: 'about.html',
+          page: 'about',
           label: 'About page',
           demo: 'hover',
           narration:
@@ -403,7 +254,7 @@ window.SomaGuideConfig = {
         },
         {
           target: '.members-grid',
-          page: 'members.html',
+          page: 'members',
           label: 'Member grid',
           demo: 'hover',
           narration:
