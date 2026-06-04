@@ -461,15 +461,24 @@ const TTS_CONFIG = {
   ]
 };
 
-/** Make a window with Audio + fetch mocks suitable for TTS tests */
+/** Make a window with Audio + fetch mocks suitable for TTS tests.
+ *  By default static /audio/tour/ paths return 404 so existing tests
+ *  exercise the live-TTS fallback path.  Set win._staticAudioOk = true
+ *  before calling _ttsSpeak to let the static path succeed. */
 function makeWindowWithTTS() {
   const win = makeWindow();
   win.eval(`
     window._ttsRequests = [];
     window._audioInstances = [];
     window._ttsBlob = { type: 'audio/mpeg', _mock: true };
+    window._staticAudioOk = false;
     window.fetch = function(url) {
       window._ttsRequests.push(url);
+      // Static clip paths: 404 by default (tests live fallback);
+      // set window._staticAudioOk = true to exercise the static-hit path.
+      if (url.includes('/audio/tour/') && !window._staticAudioOk) {
+        return Promise.resolve({ ok: false, status: 404 });
+      }
       return Promise.resolve({
         ok: true,
         blob: function() { return Promise.resolve(window._ttsBlob); }
@@ -597,10 +606,11 @@ describe('SOMA Guide — TTS narration', function () {
     const win = makeWindowWithTTS();
     const g = new win.SomaGuide(TTS_CONFIG);
     g._ttsSpeak('Hello narration');
-    // fetch is async; wait a tick
+    // fetch is async; static 404 causes fallback to live TTS
     setTimeout(function () {
-      assert.ok(win._ttsRequests.length > 0, 'fetch should have been called');
-      assert.ok(win._ttsRequests[0].includes('action=tts'), 'URL should include action=tts');
+      const liveReq = win._ttsRequests.find(function (u) { return u.includes('action=tts'); });
+      assert.ok(liveReq, 'live TTS fetch should have been called');
+      assert.ok(liveReq.includes('action=tts'), 'URL should include action=tts');
       done();
     }, 20);
   });
@@ -610,7 +620,8 @@ describe('SOMA Guide — TTS narration', function () {
     const g = new win.SomaGuide(TTS_CONFIG);
     g._ttsSpeak('Hello & goodbye');
     setTimeout(function () {
-      assert.ok(win._ttsRequests[0].includes('Hello'), 'URL should contain text');
+      const liveReq = win._ttsRequests.find(function (u) { return u.includes('action=tts'); });
+      assert.ok(liveReq && liveReq.includes('Hello'), 'live TTS URL should contain text');
       done();
     }, 20);
   });
@@ -620,7 +631,8 @@ describe('SOMA Guide — TTS narration', function () {
     const g = new win.SomaGuide(TTS_CONFIG);
     g._ttsSpeak('test text');
     setTimeout(function () {
-      assert.ok(win._ttsRequests[0].includes('agent_id=test-agent-id'), 'URL should include agent_id');
+      const liveReq = win._ttsRequests.find(function (u) { return u.includes('action=tts'); });
+      assert.ok(liveReq && liveReq.includes('agent_id=test-agent-id'), 'URL should include agent_id');
       done();
     }, 20);
   });
@@ -784,6 +796,114 @@ describe('SOMA Guide — TTS narration', function () {
     g._ttsPrefetchNext(); // second call while in-flight — must be a no-op
 
     assert.equal(win._ttsRequests.length, countAfterFirst, 'in-flight dedup must suppress duplicate fetch');
+  });
+});
+
+/* ── Pre-generated static audio clips ── */
+
+describe('SOMA Guide — pre-generated static audio', function () {
+
+  test('_tourAudioHash produces 8-char hex string', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const hash = g._tourAudioHash('agent-id', 'Hello narration');
+    assert.ok(typeof hash === 'string', 'hash should be a string');
+    assert.equal(hash.length, 8, 'hash should be 8 characters');
+    assert.ok(/^[0-9a-f]{8}$/.test(hash), 'hash should be lowercase hex');
+  });
+
+  test('_tourAudioHash is stable (same input → same output)', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const h1 = g._tourAudioHash('agent_2401ks53q6t8e2drt1h7va3f2c52', 'Welcome! Let\'s start at the top.');
+    const h2 = g._tourAudioHash('agent_2401ks53q6t8e2drt1h7va3f2c52', 'Welcome! Let\'s start at the top.');
+    assert.equal(h1, h2, 'same input must produce same hash');
+  });
+
+  test('_tourAudioHash differs for different narrations', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const h1 = g._tourAudioHash('test-agent', 'First narration');
+    const h2 = g._tourAudioHash('test-agent', 'Second narration');
+    assert.notEqual(h1, h2, 'different narrations must produce different hashes');
+  });
+
+  test('_tourAudioHash differs for different agentIds', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const h1 = g._tourAudioHash('agent-A', 'Same narration');
+    const h2 = g._tourAudioHash('agent-B', 'Same narration');
+    assert.notEqual(h1, h2, 'different agentIds must produce different hashes');
+  });
+
+  test('engine hash matches gen-script hash for a known sample', function () {
+    // Compute the reference hash using the same djb2-xor algorithm as the script
+    function refHash(agentId, narration) {
+      const s = (agentId || '') + '|' + (narration || '');
+      let h = 0;
+      for (let i = 0; i < s.length; i++) {
+        h = (((h << 5) + h) ^ s.charCodeAt(i)) | 0;
+      }
+      return ('0000000' + (h >>> 0).toString(16)).slice(-8);
+    }
+    const win = makeWindow();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    const agentId   = 'agent_2401ks53q6t8e2drt1h7va3f2c52';
+    const narration = 'Welcome! Let\'s start at the top. This navigation bar is your map to the whole site.';
+    assert.equal(
+      g._tourAudioHash(agentId, narration),
+      refHash(agentId, narration),
+      'engine hash must match script hash for the same input'
+    );
+  });
+
+  test('engine tries static path first (fetch for /audio/tour/ URL)', function () {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    win._ttsRequests.length = 0;
+    g._ttsSpeak('Step one narration', null);
+    const staticReqs = win._ttsRequests.filter(function (u) { return u.includes('/audio/tour/'); });
+    assert.ok(staticReqs.length > 0, 'engine should try the static clip URL first');
+  });
+
+  test('engine falls back to live TTS when static returns 404', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    win._ttsRequests.length = 0;
+    win._staticAudioOk = false; // 404 for static paths
+    g._ttsSpeak('Step one narration', null);
+    setTimeout(function () {
+      const liveReqs = win._ttsRequests.filter(function (u) { return u.includes('action=tts'); });
+      assert.ok(liveReqs.length > 0, 'should fall back to live TTS when static clip not found');
+      done();
+    }, 30);
+  });
+
+  test('engine uses static clip when available (no live TTS fetch)', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    win._staticAudioOk = true; // static clips return 200
+    win._ttsRequests.length = 0;
+    g._ttsSpeak('Step one narration', null);
+    setTimeout(function () {
+      const staticReqs = win._ttsRequests.filter(function (u) { return u.includes('/audio/tour/'); });
+      const liveReqs   = win._ttsRequests.filter(function (u) { return u.includes('action=tts'); });
+      assert.ok(staticReqs.length > 0, 'should have fetched static clip');
+      assert.equal(liveReqs.length, 0, 'should NOT fetch live TTS when static clip is available');
+      done();
+    }, 30);
+  });
+
+  test('static hit plays audio via _ttsPlayBlob (Audio instance created)', function (_, done) {
+    const win = makeWindowWithTTS();
+    const g = new win.SomaGuide(TTS_CONFIG);
+    win._staticAudioOk = true;
+    win._audioInstances.length = 0;
+    g._ttsSpeak('Step one narration', null);
+    setTimeout(function () {
+      assert.ok(win._audioInstances.length > 0, 'Audio should be created when static clip loads');
+      done();
+    }, 30);
   });
 });
 

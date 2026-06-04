@@ -1050,6 +1050,17 @@
     return !!(this.cfg.ttsProxyUrl && this.cfg.voiceAgentId) && !this._ttsMuted;
   };
 
+  /* Stable djb2-xor hash of voiceAgentId + '|' + narration → 8-char hex string.
+   * MUST match the identical function in scripts/gen-tour-audio.mjs. */
+  SomaGuide.prototype._tourAudioHash = function (agentId, narration) {
+    var s = (agentId || '') + '|' + (narration || '');
+    var h = 0;
+    for (var i = 0; i < s.length; i++) {
+      h = (((h << 5) + h) ^ s.charCodeAt(i)) | 0;
+    }
+    return ('0000000' + (h >>> 0).toString(16)).slice(-8);
+  };
+
   SomaGuide.prototype._ttsStop = function () {
     if (this._ttsAudio) {
       this._ttsAudio.pause();
@@ -1063,6 +1074,11 @@
    * onEnded: called when audio finishes (or fallback fires when muted/unavailable).
    *          Never called before audio actually ends; fallback is computed to be
    *          generous enough to never truncate real narration.
+   *
+   * Playback order:
+   *  1. Pre-generated static clip at /audio/tour/<hash>.mp3 (instant CDN hit).
+   *  2. Prefetch cache for live TTS (populated by _ttsPrefetchNext).
+   *  3. Live TTS fetch from the proxy.
    *
    * Robust timing:
    *  - Muted/no TTS: fallback = max(TTS_FLOOR_MS, chars * TTS_MS_PER_CHAR).
@@ -1092,30 +1108,22 @@
       return;
     }
 
-    /* Kick off next-step prefetch in parallel with current fetch — gives maximum
-     * lead time so the next step's audio is ready before this one ends. */
-    this._ttsPrefetchNext();
-
-    var url = this.cfg.ttsProxyUrl +
+    var liveUrl = this.cfg.ttsProxyUrl +
       '?action=tts' +
       '&text=' + encodeURIComponent(text) +
       '&agent_id=' + encodeURIComponent(this.cfg.voiceAgentId);
 
-    /* Use prefetch cache if available for this URL */
-    var cached = (self._ttsPrefetchCache && self._ttsPrefetchCache.url === url)
+    /* Snapshot prefetch cache before _ttsPrefetchNext may clear it. */
+    var cached = (self._ttsPrefetchCache && self._ttsPrefetchCache.url === liveUrl)
       ? self._ttsPrefetchCache : null;
-    if (cached) {
-      self._ttsPrefetchCache = null;
-      self._ttsPrefetchUrl   = null;
-      self._ttsPlayBlob(cached.blobUrl, fallbackMs, onEnded);
-      return;
-    }
 
-    var fetchFn = (typeof global !== 'undefined' && global.fetch) || fetch;
-    fetchFn(url).then(function (r) {
-      if (!r.ok) return null;
-      return r.blob();
-    }).then(function (blob) {
+    /* Kick off next-step live-TTS prefetch in parallel for use as fallback. */
+    this._ttsPrefetchNext();
+
+    var staticUrl = '/audio/tour/' + this._tourAudioHash(this.cfg.voiceAgentId, text) + '.mp3';
+    var fetchFn   = (typeof global !== 'undefined' && global.fetch) || fetch;
+
+    function playBlob(blob) {
       if (!blob || !self._ttsEnabled()) {
         if (onEnded) self._autoTimer = setTimeout(onEnded, fallbackMs);
         return;
@@ -1127,6 +1135,22 @@
         return;
       }
       self._ttsPlayBlob(objUrl, fallbackMs, onEnded);
+    }
+
+    /* Try pre-generated static clip first; fall through to live TTS on miss. */
+    fetchFn(staticUrl).then(function (r) {
+      if (r.ok) return r.blob().then(playBlob);
+
+      /* Static miss — use prefetch cache if available, else fetch live TTS. */
+      if (cached) {
+        self._ttsPrefetchCache = null;
+        self._ttsPrefetchUrl   = null;
+        self._ttsPlayBlob(cached.blobUrl, fallbackMs, onEnded);
+        return;
+      }
+      return fetchFn(liveUrl).then(function (r2) {
+        return r2.ok ? r2.blob() : null;
+      }).then(playBlob);
     }).catch(function (e) {
       console.warn('[SomaGuide] TTS error', e);
       if (onEnded) self._autoTimer = setTimeout(onEnded, fallbackMs);
