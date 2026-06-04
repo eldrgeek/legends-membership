@@ -174,6 +174,7 @@
       '    </div>',
       '  </div>',
       '  <div class="sg-wt-bar" hidden>',
+      '    <button class="sg-wt-menu" title="Back to walkthrough menu">← Menu</button>',
       '    <button class="sg-wt-exit" title="Pause tour and save your progress">⏸ Pause</button>',
       '    <span class="sg-wt-prog"></span>',
       '    <button class="sg-wt-playpause sg-btn-icon" title="Pause auto-play" aria-label="Pause auto-play">⏸</button>',
@@ -184,7 +185,8 @@
       '    <div class="sg-resume-steps"></div>',
       '    <div class="sg-resume-btns">',
       '      <button class="sg-wt-resume">▶ Resume</button>',
-      '      <button class="sg-wt-restart">Start over</button>',
+      '      <button class="sg-wt-restart">↺ Start over</button>',
+      '      <button class="sg-wt-home">← Menu</button>',
       '    </div>',
       '  </div>',
       '</div>'
@@ -246,6 +248,7 @@
     this._$('.sg-btn-text').addEventListener('click', function () { self._openText(); });
     this._$('.sg-btn-voice').addEventListener('click', function () { self._openVoice(); });
 
+    this._$('.sg-wt-menu').addEventListener('click', function () { self._wtGoToNeutral(); });
     this._$('.sg-wt-next').addEventListener('click', function () { self._wtNext(); });
     this._$('.sg-wt-exit').addEventListener('click', function () { self._wtExit(); });
     this._$('.sg-wt-playpause').addEventListener('click', function () { self._wtAutoPlayToggle(); });
@@ -258,6 +261,7 @@
     this._$('.sg-wt-restart').addEventListener('click', function () {
       if (self.pendingResume) self._wtStart(self.pendingResume.id, 0, -1);
     });
+    this._$('.sg-wt-home').addEventListener('click', function () { self._wtGoToNeutral(); });
     this._$('.sg-btn-mute').addEventListener('click', function () { self._ttsMuteToggle(); });
     this._$('.sg-btn-replay').addEventListener('click', function () { self._ttsReplay(); });
     this._updateMuteBtn();
@@ -314,9 +318,14 @@
     var greeting = isFirst ? this.cfg.persona.greeting : this.cfg.persona.shortGreeting;
     this._$('.sg-greeting').textContent = greeting || '';
 
+    /* Hide the topic-list (walkthrough chooser) while paused mid-tour so it
+     * doesn't appear alongside the resume navigator as a second list. */
+    var topicList = this._$('.sg-topic-list');
+    if (topicList) topicList.hidden = !!this.pendingResume;
+
     var resumeBar = this._$('.sg-resume-bar');
     if (this.pendingResume) {
-      this._renderResumeSteps();
+      this._renderResumeNav();
       resumeBar.hidden = false;
     } else {
       resumeBar.hidden = true;
@@ -772,8 +781,10 @@
 
   /* ── Resume / navigator ──────────────────────────────────────────────────── */
 
-  /* Render hierarchical step list in the resume bar. Clicking any item jumps there. */
-  SomaGuide.prototype._renderResumeSteps = function () {
+  /* Render the structured navigator tree in the resume bar (paused state).
+   * Uses the same sg-wt-nav-step / sg-wt-nav-group / sg-wt-nav-substeps structure
+   * as _renderWtNav so the paused view is identical to the active-walkthrough navigator. */
+  SomaGuide.prototype._renderResumeNav = function () {
     var self = this;
     var bar  = this._$('.sg-resume-steps');
     var wt   = this._wtById(this.pendingResume && this.pendingResume.id);
@@ -787,30 +798,52 @@
     wt.steps.forEach(function (s, i) {
       var isParentCurrent = (i === curStepIdx && curSubIdx === -1);
       var label = s.label || (s.narration ? s.narration.slice(0, 40) + '…' : ('Step ' + (i + 1)));
+      var hasSubsteps = s.substeps && s.substeps.length > 0;
+
+      if (hasSubsteps) html.push('<div class="sg-wt-nav-group">');
       html.push(
-        '<button class="sg-resume-step' + (isParentCurrent ? ' sg-resume-step--current' : '') +
+        '<button class="sg-wt-nav-step' + (isParentCurrent ? ' sg-wt-nav-step--current' : '') +
         '" data-si="' + i + '" data-sub="-1">' + (flatN + 1) + '. ' + label + '</button>'
       );
       flatN++;
-      (s.substeps || []).forEach(function (sub, j) {
-        var isSubCurrent = (i === curStepIdx && j === curSubIdx);
-        var subLabel = sub.label || (sub.narration ? sub.narration.slice(0, 35) + '…' : ('Sub-step ' + (j + 1)));
-        html.push(
-          '<button class="sg-resume-step sg-resume-step--sub' + (isSubCurrent ? ' sg-resume-step--current' : '') +
-          '" data-si="' + i + '" data-sub="' + j + '">' + (flatN + 1) + '. ' + subLabel + '</button>'
-        );
-        flatN++;
-      });
+      if (hasSubsteps) {
+        html.push('<div class="sg-wt-nav-substeps">');
+        s.substeps.forEach(function (sub, j) {
+          var isSubCurrent = (i === curStepIdx && j === curSubIdx);
+          var subLabel = sub.label || (sub.narration ? sub.narration.slice(0, 35) + '…' : ('Sub-step ' + (j + 1)));
+          html.push(
+            '<button class="sg-wt-nav-step sg-wt-nav-step--sub' + (isSubCurrent ? ' sg-wt-nav-step--current' : '') +
+            '" data-si="' + i + '" data-sub="' + j + '">' + (flatN + 1) + '. ' + subLabel + '</button>'
+          );
+          flatN++;
+        });
+        html.push('</div></div>');
+      }
     });
 
     bar.innerHTML = html.join('');
-    bar.querySelectorAll('.sg-resume-step').forEach(function (btn) {
+    bar.querySelectorAll('.sg-wt-nav-step').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var si  = parseInt(btn.getAttribute('data-si'),  10);
         var sub = parseInt(btn.getAttribute('data-sub'), 10);
         self._wtStart(self.pendingResume.id, si, sub);
       });
     });
+  };
+
+  /* Return to the neutral idle state, discarding any in-progress tour resume. */
+  SomaGuide.prototype._wtGoToNeutral = function () {
+    this._autoClear();
+    this._ttsStop();
+    this._demoStop();
+    this._clearHighlight();
+    this._wtCloseDropdowns();
+    this.wt = null;
+    this.pendingResume = null;
+    this._ssDel('resume-id');
+    this._ssDel('resume-step');
+    this._ssDel('resume-substep');
+    this._openIdle(false);
   };
 
   /* Render the step-tree navigator inside the active walkthrough panel.

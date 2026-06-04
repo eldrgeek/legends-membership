@@ -56,6 +56,7 @@
 .sg--idle .sg-panel {
   display: flex;
   width: 340px;
+  max-height: min(520px, 85vh);
 }
 
 /* ── Mode: text ── */
@@ -73,6 +74,7 @@
 .sg--walkthrough .sg-panel {
   display: flex;
   width: 340px;
+  max-height: min(520px, 85vh);
 }
 
 /* ── Mode: voice ── */
@@ -330,6 +332,17 @@
   border-top: 1px solid #eee;
   background: #fafafa;
 }
+.sg-wt-menu {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: #555;
+  transition: border-color 0.15s, color 0.15s;
+}
+.sg-wt-menu:hover { border-color: #999; color: #333; }
 .sg-wt-exit {
   background: none;
   border: 1px solid #ddd;
@@ -376,29 +389,31 @@
 .sg-resume-steps {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   margin-bottom: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a84c transparent;
 }
-.sg-resume-step {
-  background: #f0ece0;
-  border: 1px solid #e0d8c0;
+.sg-resume-steps::-webkit-scrollbar { width: 4px; }
+.sg-resume-steps::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.45); border-radius: 2px; }
+.sg-resume-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.sg-wt-resume {
+  background: #060e18;
+  border: none;
   border-radius: 6px;
-  padding: 5px 10px;
+  padding: 4px 14px;
   font-family: inherit;
-  font-size: 0.8rem;
-  color: #333;
+  font-size: 0.82rem;
+  color: #c9a84c;
+  font-weight: 600;
   cursor: pointer;
-  text-align: left;
   transition: background 0.15s;
 }
-.sg-resume-step:hover { background: #e8e0ca; }
-.sg-resume-step--current {
-  border-color: #c9a84c;
-  background: #f5eed8;
-  font-weight: 600;
-}
-.sg-resume-btns { display: flex; gap: 6px; }
-.sg-wt-restart {
+.sg-wt-resume:hover { background: #1a2a3a; }
+.sg-wt-restart,
+.sg-wt-home {
   background: none;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -408,7 +423,8 @@
   cursor: pointer;
   color: #666;
 }
-.sg-wt-restart:hover { border-color: #999; color: #333; }
+.sg-wt-restart:hover,
+.sg-wt-home:hover { border-color: #999; color: #333; }
 
 /* ── Page element highlight ── */
 .sg-highlight {

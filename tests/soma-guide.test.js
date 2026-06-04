@@ -310,22 +310,24 @@ describe('SOMA Guide — jump-out / jump-back-in', function () {
     assert.equal(bar.hidden, true, 'resume bar should be hidden when no pending resume');
   });
 
-  test('resume-step buttons are rendered for each step', function () {
+  test('structured nav buttons are rendered for each step in resume bar', function () {
     const win = makeWindow();
     const g = new win.SomaGuide(TEST_CONFIG);
     g._wtStart('wt-alpha', 1);
     g._wtExit();
-    const steps = win.document.querySelectorAll('.sg-resume-step');
+    const resumeSteps = win.document.querySelector('.sg-resume-steps');
+    const steps = resumeSteps.querySelectorAll('.sg-wt-nav-step');
     assert.equal(steps.length, TEST_CONFIG.walkthroughs[0].steps.length);
   });
 
-  test('current resume step gets --current class', function () {
+  test('current step gets --current class in resume navigator', function () {
     const win = makeWindow();
     const g = new win.SomaGuide(TEST_CONFIG);
     g._wtStart('wt-alpha', 2);
     g._wtExit();
-    const steps = win.document.querySelectorAll('.sg-resume-step');
-    assert.ok(steps[2].className.includes('sg-resume-step--current'));
+    const resumeSteps = win.document.querySelector('.sg-resume-steps');
+    const steps = resumeSteps.querySelectorAll('.sg-wt-nav-step');
+    assert.ok(steps[2].className.includes('sg-wt-nav-step--current'));
   });
 
   test('clicking restart button re-starts at step 0', function () {
@@ -2115,6 +2117,145 @@ describe('SOMA Guide — ensure-page gate on jump/resume', function () {
     assert.ok(aboutBtn, 'About nav button should exist');
     aboutBtn.click();
     assert.equal(navigatedTo, '/about', 'navigator click should navigate to the gated page');
+  });
+});
+
+/* ── Pause view consolidation (Issue #3) ── */
+
+describe('SOMA Guide — pause view: single structured navigator', function () {
+  test('paused state renders structured navigator buttons (sg-wt-nav-step) in resume-steps', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    g._wtExit(); // pause
+    const resumeSteps = win.document.querySelector('.sg-resume-steps');
+    const navBtns = resumeSteps.querySelectorAll('.sg-wt-nav-step');
+    assert.ok(navBtns.length > 0, 'structured sg-wt-nav-step buttons should render in resume-steps when paused');
+  });
+
+  test('paused state has NO flat sg-resume-step buttons in resume-steps', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    g._wtExit();
+    const resumeSteps = win.document.querySelector('.sg-resume-steps');
+    const flatBtns = resumeSteps.querySelectorAll('.sg-resume-step');
+    assert.equal(flatBtns.length, 0, 'old flat sg-resume-step buttons must not appear when paused');
+  });
+
+  test('paused navigator includes all steps AND substeps (complete tree)', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 1, -1); // start at Step 2 so the saved position differs
+    g._wtExit();
+    // NAV_CONFIG: Step 1 + Sub 1a + Sub 1b + Step 2 = 4 total
+    const resumeSteps = win.document.querySelector('.sg-resume-steps');
+    const navBtns = resumeSteps.querySelectorAll('.sg-wt-nav-step');
+    assert.equal(navBtns.length, 4, 'complete tree: all 4 steps/substeps should appear in paused navigator');
+    const subBtns = resumeSteps.querySelectorAll('.sg-wt-nav-step--sub');
+    assert.equal(subBtns.length, 2, 'both sub-steps should be present in the paused navigator');
+  });
+
+  test('topic list is hidden when paused mid-tour', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    g._wtExit(); // triggers _openIdle with pendingResume set
+    const topicList = win.document.querySelector('.sg-topic-list');
+    assert.equal(topicList.hidden, true, 'topic list should be hidden while paused mid-tour');
+  });
+
+  test('topic list is visible after _wtGoToNeutral clears pendingResume', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    g._wtExit(); // pause
+    g._wtGoToNeutral(); // return to neutral
+    const topicList = win.document.querySelector('.sg-topic-list');
+    assert.equal(topicList.hidden, false, 'topic list should be visible after returning to neutral');
+  });
+});
+
+/* ── Neutral navigation: finish + Back to Menu ── */
+
+describe('SOMA Guide — return to neutral state', function () {
+  test('sg-wt-menu button (← Menu) is present in sg-wt-bar', function () {
+    const win = makeWindow();
+    new win.SomaGuide(TEST_CONFIG);
+    const btn = win.document.querySelector('.sg-wt-menu');
+    assert.ok(btn, '.sg-wt-menu button should exist in sg-wt-bar');
+  });
+
+  test('clicking sg-wt-menu during active tour returns to idle and clears wt', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 1);
+    assert.equal(g.mode, 'walkthrough');
+    win.document.querySelector('.sg-wt-menu').click();
+    assert.equal(g.mode, 'idle', 'mode should be idle after ← Menu');
+    assert.equal(g.wt, null, 'wt should be cleared');
+    assert.equal(g.pendingResume, null, 'pendingResume should not be set');
+  });
+
+  test('sg-wt-home button (Back to Menu) is present in resume bar', function () {
+    const win = makeWindow();
+    new win.SomaGuide(TEST_CONFIG);
+    const btn = win.document.querySelector('.sg-wt-home');
+    assert.ok(btn, '.sg-wt-home button should exist in DOM');
+  });
+
+  test('clicking Back to Menu clears pendingResume and returns to idle', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    g._wtExit(); // pause
+    assert.ok(g.pendingResume, 'should have pendingResume after pause');
+    win.document.querySelector('.sg-wt-home').click();
+    assert.equal(g.mode, 'idle', 'mode should be idle after Back to Menu');
+    assert.equal(g.pendingResume, null, 'pendingResume should be cleared');
+  });
+
+  test('Back to Menu shows topic list and hides resume bar', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    g._wtExit();
+    win.document.querySelector('.sg-wt-home').click();
+    const resumeBar = win.document.querySelector('.sg-resume-bar');
+    assert.equal(resumeBar.hidden, true, 'resume bar should be hidden after Back to Menu');
+    const topicList = win.document.querySelector('.sg-topic-list');
+    assert.equal(topicList.hidden, false, 'topic list should be visible after Back to Menu');
+  });
+
+  test('_wtFinish returns to idle mode with topic list visible', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._wtFinish();
+    assert.equal(g.mode, 'idle', '_wtFinish should leave widget in idle mode');
+    assert.equal(g.wt, null, 'wt should be null after finish');
+    assert.equal(g.pendingResume, null, 'pendingResume should be null after finish');
+    const topicList = win.document.querySelector('.sg-topic-list');
+    assert.equal(topicList.hidden, false, 'topic list should be visible after finish');
+  });
+
+  test('_wtFinish hides resume bar', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 0);
+    g._wtFinish();
+    const resumeBar = win.document.querySelector('.sg-resume-bar');
+    assert.equal(resumeBar.hidden, true, 'resume bar should be hidden after finish');
+  });
+
+  test('_wtGoToNeutral clears sessionStorage resume keys', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 1);
+    g._wtExit();
+    g._wtGoToNeutral();
+    assert.equal(win.sessionStorage.getItem('soma-guide-xp:test-bot:resume-id'), null);
+    assert.equal(win.sessionStorage.getItem('soma-guide-xp:test-bot:resume-step'), null);
   });
 });
 
