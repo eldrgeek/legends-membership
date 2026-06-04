@@ -130,6 +130,19 @@
   background: rgba(255,255,255,0.12);
 }
 
+/* Close (×) button — more prominent than the minimize (−) */
+.sg-btn-close {
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1.2rem !important;
+  padding: 2px 8px !important;
+  min-width: 28px;
+  min-height: 28px;
+}
+.sg-btn-close:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,0.18) !important;
+}
+
 /* ── Body ── */
 .sg-body {
   padding: 16px;
@@ -562,4 +575,53 @@
   border-color: #c9a84c;
   color: #060e18;
   font-weight: 600;
+}
+
+/* ── Mobile responsive — ≤600px ── */
+@media (max-width: 600px) {
+  #soma-guide {
+    bottom: 14px;
+    right: 14px;
+  }
+
+  /* FAB — compact but still tappable */
+  .sg-fab {
+    padding: 10px 14px 10px 11px;
+    font-size: 0.82rem;
+    gap: 6px;
+  }
+  .sg-fab-avatar { font-size: 1.05rem; }
+
+  /* Expanded panel — stay within viewport, scrollable */
+  .sg--idle .sg-panel,
+  .sg--text .sg-panel,
+  .sg--walkthrough .sg-panel,
+  .sg--voice .sg-panel {
+    width: min(340px, calc(100vw - 28px));
+    max-height: min(72vh, 460px);
+  }
+
+  /* Text panel: fixed height, no resize handle (pinch/zoom handles zoom on mobile) */
+  .sg--text .sg-panel {
+    height: min(72vh, 460px);
+    resize: none;
+  }
+
+  /* Body: tighter padding saves vertical space */
+  .sg-body { padding: 12px; }
+
+  /* Walk-through nav — shorten scrollable area to save screen */
+  .sg-wt-nav { max-height: 100px; }
+
+  /* Resume steps list — same cap */
+  .sg-resume-steps { max-height: 140px; }
+
+  /* Close button — larger hit target on touch */
+  .sg-btn-close {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }

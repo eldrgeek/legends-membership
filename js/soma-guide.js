@@ -144,6 +144,7 @@
       '      <button class="sg-btn-text" title="Text chat" aria-label="Text mode">💬</button>',
       '      <button class="sg-btn-voice" title="Voice" aria-label="Voice mode">🎙</button>',
       '      <button class="sg-btn-min" title="Minimize" aria-label="Minimize">−</button>',
+      '      <button class="sg-btn-close" title="Close" aria-label="Close">×</button>',
       '    </div>',
       '  </div>',
       '  <div class="sg-body">',
@@ -245,6 +246,7 @@
 
     this._$('.sg-fab').addEventListener('click', function () { self._openIdle(false); });
     this._$('.sg-btn-min').addEventListener('click', function () { self._minimize(); });
+    this._$('.sg-btn-close').addEventListener('click', function () { self._minimize(); });
     this._$('.sg-btn-text').addEventListener('click', function () { self._openText(); });
     this._$('.sg-btn-voice').addEventListener('click', function () { self._openVoice(); });
 

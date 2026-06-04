@@ -2446,3 +2446,72 @@ describe('SOMA Guide — navigator nesting and parent step reachability', functi
     });
   });
 });
+
+/* ── Close (×) button and mobile affordances ── */
+
+describe('SOMA Guide — close button (×)', function () {
+  test('.sg-btn-close button exists inside .sg-header-btns', function () {
+    const win = makeWindow();
+    new win.SomaGuide(TEST_CONFIG);
+    const btn = win.document.querySelector('.sg-header-btns .sg-btn-close');
+    assert.ok(btn, '.sg-btn-close should exist inside .sg-header-btns');
+  });
+
+  test('.sg-btn-close button shows × symbol', function () {
+    const win = makeWindow();
+    new win.SomaGuide(TEST_CONFIG);
+    const btn = win.document.querySelector('.sg-btn-close');
+    assert.ok(btn.textContent.includes('×'), 'close button text should be ×');
+  });
+
+  test('.sg-btn-close has aria-label="Close"', function () {
+    const win = makeWindow();
+    new win.SomaGuide(TEST_CONFIG);
+    const btn = win.document.querySelector('.sg-btn-close');
+    assert.equal(btn.getAttribute('aria-label'), 'Close');
+  });
+
+  test('clicking .sg-btn-close minimizes the widget from idle mode', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._openIdle(false);
+    assert.equal(g.mode, 'idle');
+    win.document.querySelector('.sg-btn-close').click();
+    assert.equal(g.mode, 'minimized', 'close button should minimize widget to FAB');
+  });
+
+  test('clicking .sg-btn-close minimizes the widget from walkthrough mode', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 1);
+    assert.equal(g.mode, 'walkthrough');
+    win.document.querySelector('.sg-btn-close').click();
+    assert.equal(g.mode, 'minimized', 'close button should minimize from walkthrough mode');
+  });
+
+  test('after close, FAB is the visible affordance (sg--min class set)', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._openIdle(false);
+    win.document.querySelector('.sg-btn-close').click();
+    const root = win.document.getElementById('soma-guide');
+    assert.ok(root.className.includes('sg--min'), 'root element should have sg--min class after close');
+  });
+
+  test('close saves walkthrough progress (pendingResume set) so user can reopen', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._wtStart('wt-alpha', 2);
+    win.document.querySelector('.sg-btn-close').click();
+    assert.ok(g.pendingResume, 'pendingResume should be set after closing mid-tour');
+    assert.equal(g.pendingResume.stepIndex, 2);
+  });
+
+  test('existing minimize button (sg-btn-min) still works alongside sg-btn-close', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(TEST_CONFIG);
+    g._openIdle(false);
+    win.document.querySelector('.sg-btn-min').click();
+    assert.equal(g.mode, 'minimized', 'original − button should still minimize');
+  });
+});
