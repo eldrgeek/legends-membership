@@ -1496,3 +1496,428 @@ describe('SOMA Guide — audio ended drives auto-advance', function () {
     }, 80);
   });
 });
+
+/* ── Sub-step traversal ── */
+
+const SUB_CONFIG = {
+  persona: { name: 'SubBot', id: 'sub-bot', avatar: '🤖', greeting: 'Hi!', shortGreeting: 'Back!', walkthroughDone: 'Done!' },
+  voiceAgentId: 'sub-agent',
+  siteMap: [],
+  walkthroughs: [
+    {
+      id: 'wt-sub',
+      label: 'Sub Tour',
+      keywords: ['sub'],
+      steps: [
+        {
+          target: 'body', label: 'Parent A', narration: 'Parent A narration', instruction: 'Parent A',
+          substeps: [
+            { target: 'body', label: 'Sub A1', narration: 'Sub A1 narration', instruction: 'Sub A1' },
+            { target: 'body', label: 'Sub A2', narration: 'Sub A2 narration', instruction: 'Sub A2' }
+          ]
+        },
+        {
+          target: 'body', label: 'Parent B', narration: 'Parent B narration', instruction: 'Parent B'
+        }
+      ]
+    }
+  ]
+};
+
+describe('SOMA Guide — sub-step traversal', function () {
+  test('_wtStart at parent step shows parent narration', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, -1);
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Parent A narration');
+  });
+
+  test('_wtStart at sub-step shows sub-step narration', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, 0);
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Sub A1 narration');
+  });
+
+  test('_wtNext from parent descends into first sub-step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, -1);
+    g._wtNext();
+    assert.equal(g.wt.stepIndex, 0);
+    assert.equal(g.wt.subStepIndex, 0);
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Sub A1 narration');
+  });
+
+  test('_wtNext from first sub-step advances to second sub-step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, 0);
+    g._wtNext();
+    assert.equal(g.wt.subStepIndex, 1);
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Sub A2 narration');
+  });
+
+  test('_wtNext from last sub-step advances to next top-level step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, 1);  // last sub-step of Parent A
+    g._wtNext();
+    assert.equal(g.wt.stepIndex, 1);
+    assert.equal(g.wt.subStepIndex, -1);
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Parent B narration');
+  });
+
+  test('_wtNext from last sub-step of last parent finishes walkthrough', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, 1); // last sub-step of Parent A
+    g._wtNext();  // → Parent B
+    g._wtNext();  // → Finish
+    assert.equal(g.wt, null);
+  });
+
+  test('flat count includes parent + substeps for each top-level step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    const wt = g._wtById('wt-sub');
+    // Parent A (1) + Sub A1 (1) + Sub A2 (1) + Parent B (1) = 4
+    assert.equal(g._wtFlatCount(wt), 4);
+  });
+
+  test('progress shows flat index correctly for sub-step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, 1); // Sub A2 is flat index 2 (0-based), position 3 of 4
+    const prog = win.document.querySelector('.sg-wt-prog').textContent;
+    assert.equal(prog, 'Step 3 of 4');
+  });
+
+  test('Finish button shows on last sub-step of last parent', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 1, -1); // Parent B is last step with no substeps
+    const btn = win.document.querySelector('.sg-wt-next').textContent;
+    assert.equal(btn, 'Finish ✓');
+  });
+
+  test('auto-advance via timer descends into sub-step', function (_, done) {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG); // no TTS → timer fallback
+    g._wtStart('wt-sub', 0, -1); // at Parent A
+    g._autoClear();
+    g._autoTimer = setTimeout(function () {
+      g._wtNext(); // descend into Sub A1
+    }, 10);
+    setTimeout(function () {
+      assert.equal(g.wt && g.wt.subStepIndex, 0, 'should have descended into first sub-step');
+      done();
+    }, 30);
+  });
+
+  test('_wtCurrentStep resolves to substep when subStepIndex >= 0', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, 1);
+    const step = g._wtCurrentStep();
+    assert.equal(step.narration, 'Sub A2 narration');
+  });
+
+  test('_wtCurrentStep resolves to parent when subStepIndex is -1', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(SUB_CONFIG);
+    g._wtStart('wt-sub', 0, -1);
+    const step = g._wtCurrentStep();
+    assert.equal(step.narration, 'Parent A narration');
+  });
+});
+
+/* ── Preconditions per sub-step ── */
+
+describe('SOMA Guide — preconditions per sub-step', function () {
+  const PRECOND_CONFIG = {
+    persona: { name: 'PBot', id: 'p-bot', avatar: '🤖', greeting: 'Hi!', shortGreeting: 'Back!', walkthroughDone: 'Done!' },
+    voiceAgentId: 'p-agent',
+    siteMap: [],
+    walkthroughs: [
+      {
+        id: 'wt-precond',
+        label: 'Precond Tour',
+        keywords: ['precond'],
+        steps: [
+          {
+            target: '.my-dropdown',
+            label: 'Dropdown parent',
+            narration: 'Open the dropdown',
+            requires: { dropdown: '.my-dropdown' },
+            substeps: [
+              {
+                target: '.item-one',
+                label: 'Item one',
+                narration: 'First item',
+                requires: { dropdown: '.my-dropdown' }
+              },
+              {
+                target: '.item-two',
+                label: 'Item two',
+                narration: 'Second item',
+                requires: { dropdown: '.my-dropdown' }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
+
+  function makeWindowWithDropdown() {
+    const dom = new JSDOM(
+      '<!DOCTYPE html><html><body>' +
+      '<div class="my-dropdown" aria-expanded="false">' +
+      '<span class="item-one">One</span>' +
+      '<span class="item-two">Two</span>' +
+      '</div>' +
+      '</body></html>',
+      { url: 'http://localhost', runScripts: 'dangerously' }
+    );
+    const win = dom.window;
+    win.eval('window.__importStub = function(url) { return Promise.resolve({ Conversation: { startSession: function() { return Promise.resolve({ endSession: function(){}, sendUserMessage: function(){} }); } } }); };');
+    win.eval(fs.readFileSync(path.join(ROOT, 'js', 'soma-guide.js'), 'utf8'));
+    return win;
+  }
+
+  test('_wtSatisfyPreconditions opens dropdown for parent step', function () {
+    const win = makeWindowWithDropdown();
+    const g = new win.SomaGuide(PRECOND_CONFIG);
+    const step = PRECOND_CONFIG.walkthroughs[0].steps[0];
+    let ready = false;
+    g._wtSatisfyPreconditions(step, function () { ready = true; });
+    assert.equal(ready, true, 'callback should fire synchronously when target exists');
+    const dropdown = win.document.querySelector('.my-dropdown');
+    assert.ok(dropdown.classList.contains('sg-demo-open'), 'dropdown should have sg-demo-open class');
+  });
+
+  test('_wtSatisfyPreconditions opens dropdown for sub-step', function () {
+    const win = makeWindowWithDropdown();
+    const g = new win.SomaGuide(PRECOND_CONFIG);
+    const sub = PRECOND_CONFIG.walkthroughs[0].steps[0].substeps[0];
+    let ready = false;
+    g._wtSatisfyPreconditions(sub, function () { ready = true; });
+    assert.equal(ready, true, 'callback should fire synchronously when target exists');
+    const dropdown = win.document.querySelector('.my-dropdown');
+    assert.ok(dropdown.classList.contains('sg-demo-open'), 'dropdown should be open for sub-step');
+  });
+
+  test('preconditions are satisfied when jumping to sub-step via _wtStart', function () {
+    const win = makeWindowWithDropdown();
+    const g = new win.SomaGuide(PRECOND_CONFIG);
+    g._wtStart('wt-precond', 0, 1); // Sub-step 1 (item-two) requires dropdown
+    const dropdown = win.document.querySelector('.my-dropdown');
+    assert.ok(dropdown.classList.contains('sg-demo-open'), 'dropdown should be open after jumping to sub-step');
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Second item');
+  });
+
+  test('_wtSatisfyPreconditions calls onReady after timeout when target missing', function (_, done) {
+    const win = makeWindow();
+    const g = new win.SomaGuide(PRECOND_CONFIG);
+    const step = { target: '.no-such-element', narration: 'test', requires: { dropdown: '.my-dropdown' } };
+    // Patch _wtReadyGate to simulate immediate timeout
+    g._wtReadyGate = function (sel, timeoutMs, onFound, onTimeout) {
+      onTimeout();
+    };
+    let called = false;
+    g._wtSatisfyPreconditions(step, function () { called = true; });
+    setTimeout(function () {
+      assert.equal(called, true, 'onReady should still be called after timeout');
+      done();
+    }, 10);
+  });
+});
+
+/* ── Navigator rendering and navigation ── */
+
+const NAV_CONFIG = {
+  persona: { name: 'NavBot', id: 'nav-bot', avatar: '🤖', greeting: 'Hi!', shortGreeting: 'Back!', walkthroughDone: 'Done!' },
+  voiceAgentId: 'nav-agent',
+  siteMap: [],
+  walkthroughs: [
+    {
+      id: 'wt-nav',
+      label: 'Nav Tour',
+      keywords: ['nav'],
+      steps: [
+        {
+          target: 'body', label: 'Step 1', narration: 'First step', instruction: 'Do this',
+          substeps: [
+            { target: 'body', label: 'Sub 1a', narration: 'Sub 1a narration', instruction: 'Sub 1a' },
+            { target: 'body', label: 'Sub 1b', narration: 'Sub 1b narration', instruction: 'Sub 1b' }
+          ]
+        },
+        {
+          target: 'body', label: 'Step 2', narration: 'Second step', instruction: 'Do that'
+        }
+      ]
+    }
+  ]
+};
+
+describe('SOMA Guide — navigator panel', function () {
+  test('sg-wt-nav element exists in the DOM', function () {
+    const win = makeWindow();
+    new win.SomaGuide(NAV_CONFIG);
+    const nav = win.document.querySelector('.sg-wt-nav');
+    assert.ok(nav, '.sg-wt-nav should exist in DOM');
+  });
+
+  test('_renderWtNav renders buttons for all flat steps', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    const btns = win.document.querySelectorAll('.sg-wt-nav-step');
+    // Step 1 + Sub 1a + Sub 1b + Step 2 = 4 buttons
+    assert.equal(btns.length, 4, 'should render 4 nav step buttons');
+  });
+
+  test('current parent step gets --current class', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    const current = win.document.querySelectorAll('.sg-wt-nav-step--current');
+    assert.equal(current.length, 1, 'exactly one button should be current');
+    assert.equal(current[0].getAttribute('data-si'), '0');
+    assert.equal(current[0].getAttribute('data-sub'), '-1');
+  });
+
+  test('current sub-step gets --current class', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, 1); // Sub 1b
+    const current = win.document.querySelectorAll('.sg-wt-nav-step--current');
+    assert.equal(current.length, 1);
+    assert.equal(current[0].getAttribute('data-si'), '0');
+    assert.equal(current[0].getAttribute('data-sub'), '1');
+  });
+
+  test('sub-step buttons get --sub class', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    const subs = win.document.querySelectorAll('.sg-wt-nav-step--sub');
+    assert.equal(subs.length, 2, 'two sub-step buttons should have --sub class');
+  });
+
+  test('navigator updates when step advances', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    g._wtNext(); // descend into Sub 1a
+    const current = win.document.querySelectorAll('.sg-wt-nav-step--current');
+    assert.equal(current.length, 1);
+    assert.equal(current[0].getAttribute('data-sub'), '0', 'Sub 1a should be current after advance');
+  });
+
+  test('clicking a nav button jumps to that step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    // Find the "Step 2" nav button (data-si=1, data-sub=-1)
+    const btns = win.document.querySelectorAll('.sg-wt-nav-step');
+    const step2btn = Array.from(btns).find(function (b) {
+      return b.getAttribute('data-si') === '1' && b.getAttribute('data-sub') === '-1';
+    });
+    assert.ok(step2btn, 'Step 2 nav button should exist');
+    step2btn.click();
+    assert.equal(g.wt.stepIndex, 1, 'click should jump to Step 2');
+    assert.equal(g.wt.subStepIndex, -1);
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Second step');
+  });
+
+  test('clicking a sub-step nav button jumps to that sub-step', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 1, -1); // start at Step 2
+    // Find Sub 1b (data-si=0, data-sub=1)
+    const btns = win.document.querySelectorAll('.sg-wt-nav-step');
+    const sub1bBtn = Array.from(btns).find(function (b) {
+      return b.getAttribute('data-si') === '0' && b.getAttribute('data-sub') === '1';
+    });
+    assert.ok(sub1bBtn, 'Sub 1b nav button should exist');
+    sub1bBtn.click();
+    assert.equal(g.wt.stepIndex, 0, 'click should jump to parent step index 0');
+    assert.equal(g.wt.subStepIndex, 1, 'click should land at sub-step 1');
+    const narr = win.document.querySelector('.sg-wt-narration').textContent;
+    assert.equal(narr, 'Sub 1b narration');
+  });
+
+  test('navigator is inside the walkthrough panel (sg-wt-ui)', function () {
+    const win = makeWindow();
+    const g = new win.SomaGuide(NAV_CONFIG);
+    g._wtStart('wt-nav', 0, -1);
+    const wtUi = win.document.querySelector('.sg-wt-ui');
+    const nav  = wtUi && wtUi.querySelector('.sg-wt-nav');
+    assert.ok(nav, '.sg-wt-nav should be inside .sg-wt-ui');
+    assert.ok(nav.querySelectorAll('.sg-wt-nav-step').length > 0, 'nav should have step buttons');
+  });
+
+  test('navigator is empty before walkthrough starts', function () {
+    const win = makeWindow();
+    new win.SomaGuide(NAV_CONFIG);
+    const nav = win.document.querySelector('.sg-wt-nav');
+    assert.equal(nav.innerHTML, '', 'navigator should be empty before walkthrough starts');
+  });
+
+  test('nav click satisfies preconditions before playing (dropdown config)', function () {
+    const dom = new JSDOM(
+      '<!DOCTYPE html><html><body>' +
+      '<div class="drop" aria-expanded="false"><span class="inner">Item</span></div>' +
+      '</body></html>',
+      { url: 'http://localhost', runScripts: 'dangerously' }
+    );
+    const win2 = dom.window;
+    win2.eval('window.__importStub = function(url) { return Promise.resolve({ Conversation: { startSession: function() { return Promise.resolve({ endSession: function(){}, sendUserMessage: function(){} }); } } }); };');
+    win2.eval(fs.readFileSync(path.join(ROOT, 'js', 'soma-guide.js'), 'utf8'));
+
+    const dropConfig = {
+      persona: { name: 'D', id: 'd', avatar: '🤖', greeting: 'Hi', shortGreeting: 'Back', walkthroughDone: 'Done' },
+      voiceAgentId: 'x',
+      siteMap: [],
+      walkthroughs: [{
+        id: 'wt-drop',
+        label: 'Drop',
+        keywords: ['drop'],
+        steps: [{
+          target: '.drop',
+          label: 'Dropdown step',
+          narration: 'The dropdown',
+          requires: { dropdown: '.drop' },
+          substeps: [{
+            target: '.inner',
+            label: 'Inner',
+            narration: 'Inner item',
+            requires: { dropdown: '.drop' }
+          }]
+        }]
+      }]
+    };
+
+    const g = new win2.SomaGuide(dropConfig);
+    g._wtStart('wt-drop', 0, -1);
+    // Click the sub-step nav button
+    const btns = win2.document.querySelectorAll('.sg-wt-nav-step');
+    const subBtn = Array.from(btns).find(function (b) {
+      return b.getAttribute('data-sub') === '0';
+    });
+    assert.ok(subBtn, 'sub nav button should exist');
+    subBtn.click();
+    const dropdown = win2.document.querySelector('.drop');
+    assert.ok(dropdown.classList.contains('sg-demo-open'), 'dropdown should be open after nav click to sub-step');
+    assert.equal(g.wt.subStepIndex, 0);
+  });
+});

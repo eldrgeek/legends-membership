@@ -2,9 +2,12 @@
  *
  * Persona: Bill  |  Voice: ElevenLabs agent agent_2401ks53q6t8e2drt1h7va3f2c52
  *
- * To add or remove walkthroughs, edit the walkthroughs array below.
- * To change the persona or voice agent, edit the persona/voiceAgentId fields.
- * The soma-guide.js core reads this file — nothing here is baked into the core.
+ * Step schema (engine reads this; no Legends-specific code in soma-guide.js):
+ *   { id, label, target, narration, instruction, page, demo, requires, substeps[] }
+ *   - page:     navigate here before animating
+ *   - demo:     'click' | 'hover' | 'openDropdown'
+ *   - requires: { dropdown: '.nav-dropdown' }  — engine opens it before animating
+ *   - substeps: child steps played after the parent narration
  */
 
 window.SomaGuideConfig = {
@@ -12,7 +15,7 @@ window.SomaGuideConfig = {
   /* ── Persona ─────────────────────────────────────────────────────────── */
   persona: {
     name: 'Bill',
-    id: 'legends-bill',   // localStorage namespace — unique per site instance
+    id: 'legends-bill',
     avatar: '🏀',
     greeting:
       'Hi! I\'m Bill, your AI guide to the Legends of Basketball membership site. ' +
@@ -26,92 +29,39 @@ window.SomaGuideConfig = {
 
   /* ── Voice agent (ElevenLabs) ────────────────────────────────────────── */
   voiceAgentId: 'agent_2401ks53q6t8e2drt1h7va3f2c52',
-  // voiceAgentEsmUrl: 'https://esm.sh/@elevenlabs/client@latest',  // default
 
   /* ── TTS narration proxy ─────────────────────────────────────────────── */
-  /* Routes walkthrough narration TTS through bill-talk's existing proxy.
-   * The EL API key stays on that site; this site exposes nothing. */
   ttsProxyUrl: 'https://bill-talk.netlify.app/.netlify/functions/el-proxy',
 
-  /* ── Site map (grounding context for Bill) ───────────────────────────── */
+  /* ── Cursor lead-in (ms after audio starts → cursor appears) ─────────── */
+  cursorLeadIn: 1200,
+
+  /* ── Site map ────────────────────────────────────────────────────────── */
   siteMap: [
-    {
-      id: 'home',
-      label: 'Home',
-      path: 'index.html',
-      description: 'Overview of the Legends of Basketball Membership Services Committee'
-    },
-    {
-      id: 'committee',
-      label: 'Committee',
-      path: 'members.html',
-      description: 'Browse all committee members with bios, photos, and career highlights'
-    },
-    {
-      id: 'resources',
-      label: 'Resources',
-      path: 'resources.html',
-      description: 'Committee documents, Leslie Johnson proposals, and reference materials'
-    },
-    {
-      id: 'minutes',
-      label: 'Meeting Minutes',
-      path: 'minutes.html',
-      description: 'Official minutes from committee meetings'
-    },
-    {
-      id: 'systems-map',
-      label: 'Systems Map',
-      path: 'systems-map.html',
-      description: 'Interactive map of the organization\'s systems and initiatives'
-    },
-    {
-      id: 'assessment',
-      label: 'Assessment',
-      path: 'assessment.html',
-      description: 'Member satisfaction assessment and feedback form'
-    },
-    {
-      id: 'recommendations',
-      label: 'Recommendations',
-      path: 'recommendations.html',
-      description: 'Committee recommendations board — current proposals and status'
-    },
-    {
-      id: 'features',
-      label: 'Feature Requests',
-      path: 'features.html',
-      description: 'Submit new feature ideas for the membership site'
-    },
-    {
-      id: 'bugs',
-      label: 'Bug Reports',
-      path: 'bugs.html',
-      description: 'Report issues with the membership site'
-    },
-    {
-      id: 'about',
-      label: 'About & Contact',
-      path: 'about.html',
-      description: 'About the committee, its mission, and how to contact us'
-    },
-    {
-      id: 'ask-bill-full',
-      label: 'Ask Bill (full chat)',
-      path: 'https://bill-talk.netlify.app',
-      description: 'Full voice and text conversation with Bill — the site\'s AI manager'
-    }
+    { id: 'home',            label: 'Home',              path: 'index.html',           description: 'Overview of the Legends of Basketball Membership Services Committee' },
+    { id: 'committee',       label: 'Committee',         path: 'members.html',         description: 'Browse all committee members with bios, photos, and career highlights' },
+    { id: 'resources',       label: 'Resources',         path: 'resources.html',       description: 'Committee documents, Leslie Johnson proposals, and reference materials' },
+    { id: 'minutes',         label: 'Meeting Minutes',   path: 'minutes.html',         description: 'Official minutes from committee meetings' },
+    { id: 'systems-map',     label: 'Systems Map',       path: 'systems-map.html',     description: 'Interactive map of the organization\'s systems and initiatives' },
+    { id: 'assessment',      label: 'Assessment',        path: 'assessment.html',      description: 'Member satisfaction assessment and feedback form' },
+    { id: 'recommendations', label: 'Recommendations',   path: 'recommendations.html', description: 'Committee recommendations board — current proposals and status' },
+    { id: 'features',        label: 'Feature Requests',  path: 'features.html',        description: 'Submit new feature ideas for the membership site' },
+    { id: 'bugs',            label: 'Bug Reports',       path: 'bugs.html',            description: 'Report issues with the membership site' },
+    { id: 'about',           label: 'About & Contact',   path: 'about.html',           description: 'About the committee, its mission, and how to contact us' },
+    { id: 'ask-bill-full',   label: 'Ask Bill (full)',   path: 'https://bill-talk.netlify.app', description: 'Full voice and text conversation with Bill' }
   ],
 
   /* ── Walkthroughs ────────────────────────────────────────────────────── */
   walkthroughs: [
 
-    /* 1 — Site Tour */
+    /* ── 1. Site Tour ── */
     {
       id: 'site-tour',
       label: 'Site Tour',
       keywords: ['tour', 'overview', 'show me', 'around', 'what is this', 'help me navigate'],
       steps: [
+
+        /* Step 1 — Navigation bar */
         {
           target: '.nav-inner',
           label: 'Navigation',
@@ -121,24 +71,112 @@ window.SomaGuideConfig = {
           instruction:
             'The nav links on the right take you to every section. On mobile, tap the ☰ menu icon.'
         },
+
+        /* Step 2 — Committee page (parent) with sub-steps for individual members */
         {
           target: 'a[href="members.html"]',
           label: 'Committee members',
+          demo: 'click',
           narration:
-            'The Committee page shows all members of the Membership Services Committee — ' +
-            'former NBA, WNBA, ABA, and Globetrotter legends.',
+            'The Committee page shows all nine members of the Membership Services Committee — ' +
+            'former NBA, WNBA, ABA, and Globetrotter legends. Let me show you a few.',
           instruction: 'Click "Committee" to browse member profiles.',
-          demo: 'click'
+          substeps: [
+            {
+              target: '.members-grid',
+              page: 'members.html',
+              label: 'Member grid',
+              demo: 'hover',
+              narration:
+                'Here\'s the member grid — cards for each legend with career highlights ' +
+                'and contact info. Click any card to open a full profile.',
+              instruction: 'Click any member card to open their full profile.'
+            },
+            {
+              target: 'a[href="members/greg-foster.html"]',
+              page: 'members.html',
+              label: 'Greg Foster — Chairman',
+              demo: 'click',
+              narration:
+                'Greg Foster is our Chairman — thirteen NBA seasons, a championship with ' +
+                'the Lakers in 2001, and deep leadership experience as coach and broadcaster.',
+              instruction: 'Click "View Profile" to see Greg\'s full bio and contact details.'
+            },
+            {
+              target: '.profile-hero',
+              page: 'members/greg-foster.html',
+              label: 'Greg\'s profile',
+              demo: 'hover',
+              narration:
+                'Each member profile has a full bio, career highlights, and contact ' +
+                'information. Use the breadcrumb at the top to return to the full Committee list.',
+              instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
+            }
+          ]
         },
+
+        /* Step 3 — Resources dropdown (parent) with sub-steps for each area.
+         * page: 'members.html' ensures the engine navigates back to a root-level page
+         * before this step so that relative nav-link selectors (href="minutes.html" etc.)
+         * resolve correctly (member profile pages use href="../minutes.html"). */
         {
           target: '.nav-dropdown',
+          page: 'members.html',
           label: 'Resources dropdown',
+          demo: 'openDropdown',
+          requires: { dropdown: '.nav-dropdown' },
           narration:
-            'Resources is a dropdown with several sub-sections: meeting minutes, the systems map, ' +
-            'assessment, and committee documents.',
+            'Resources is a dropdown with several sub-sections. Let me walk you through each one.',
           instruction: 'Click "Resources ▾" to see the dropdown menu options.',
-          demo: 'openDropdown'
+          substeps: [
+            {
+              target: 'a[href="minutes.html"]',
+              page: 'members.html',
+              label: 'Meeting Minutes',
+              demo: 'hover',
+              requires: { dropdown: '.nav-dropdown' },
+              narration:
+                'Meeting Minutes is where you\'ll find the official record of every committee ' +
+                'session — decisions, votes, and discussion summaries.',
+              instruction: 'Click "Minutes" to view all meeting records.'
+            },
+            {
+              target: 'a[href="systems-map.html"]',
+              page: 'members.html',
+              label: 'Systems Map',
+              demo: 'hover',
+              requires: { dropdown: '.nav-dropdown' },
+              narration:
+                'The Systems Map gives you an interactive overview of the organization\'s ' +
+                'initiatives and how they connect — a great place to orient yourself.',
+              instruction: 'Click "Systems Map" to explore the initiative landscape.'
+            },
+            {
+              target: 'a[href="assessment.html"]',
+              page: 'members.html',
+              label: 'Assessment',
+              demo: 'hover',
+              requires: { dropdown: '.nav-dropdown' },
+              narration:
+                'The Assessment is a member satisfaction survey. Your feedback helps the ' +
+                'committee prioritize improvements and understand member needs.',
+              instruction: 'Click "Assessment" to complete or review the satisfaction survey.'
+            },
+            {
+              target: 'a[href="resources.html"]',
+              page: 'members.html',
+              label: 'Documents',
+              demo: 'hover',
+              requires: { dropdown: '.nav-dropdown' },
+              narration:
+                'And the Resources page itself is home to committee documents, the Leslie ' +
+                'Johnson proposals, and other reference materials.',
+              instruction: 'Click "Resources" to browse all committee documents.'
+            }
+          ]
         },
+
+        /* Step 4 — Recommendations */
         {
           target: 'a[href="recommendations.html"]',
           label: 'Recommendations',
@@ -154,30 +192,46 @@ window.SomaGuideConfig = {
           label: 'Recommendations board',
           demo: 'hover',
           narration:
-            'Here\'s the Recommendations board — a living record of committee decisions and initiatives. ' +
-            'Each card shows a proposal and its current status.',
+            'Here\'s the Recommendations board — a living record of committee decisions and ' +
+            'initiatives. Each card shows a proposal and its current status.',
           instruction: 'Browse the proposals, or click any card for details.'
         },
+
+        /* Step 5 — About & Contact (navigates to about.html) */
         {
           target: 'a[href="about.html"]',
           label: 'About & Contact',
+          demo: 'click',
+          narration:
+            'About & Contact tells you more about the committee\'s mission and who to reach out to. ' +
+            'Let me take you there.',
+          instruction: 'Heading to the About & Contact page…'
+        },
+        {
+          target: '.hero',
+          page: 'about.html',
+          label: 'About page',
           demo: 'hover',
           narration:
-            'About & Contact tells you more about the committee\'s mission and who to reach out to.',
-          instruction: 'Click "About & Contact" for more information.'
+            'This is the About & Contact page. You\'ll find the committee\'s mission statement, ' +
+            'key contacts, and information on how to get in touch.',
+          instruction: 'Scroll down to find contact details and the committee\'s mission.'
         },
+
+        /* Step 6 — Ask Bill nav link */
         {
           target: '#ask-bill-nav',
           label: 'Ask Bill nav',
           demo: 'hover',
           narration:
-            'The "Ask Bill" link in the nav opens this very widget — so you can reach me from any page, anytime.',
-          instruction: 'Click "Ask Bill" in the nav to open this guide widget on any page of the site.'
+            'And finally — the "Ask Bill" link in the nav opens this very widget so you can ' +
+            'reach me from any page, any time. That wraps up the site tour!',
+          instruction: 'Click "Ask Bill" in the nav to open this guide widget on any page.'
         }
       ]
     },
 
-    /* 2 — How to find a member */
+    /* ── 2. How to find a member ── */
     {
       id: 'find-member',
       label: 'How to find a member',
@@ -204,7 +258,7 @@ window.SomaGuideConfig = {
       ]
     },
 
-    /* 3 — How to submit a feature request */
+    /* ── 3. How to suggest a feature ── */
     {
       id: 'submit-feature',
       label: 'How to suggest a feature',
@@ -213,15 +267,17 @@ window.SomaGuideConfig = {
         {
           target: '.nav-dropdown-toggle',
           label: 'Open Resources',
+          demo: 'openDropdown',
+          requires: { dropdown: '.nav-dropdown' },
           narration:
             'Feature requests live under the Resources section. Click Resources to open the dropdown.',
-          instruction: 'Click "Resources ▾" in the navigation to open the dropdown menu.',
-          demo: 'openDropdown'
+          instruction: 'Click "Resources ▾" in the navigation to open the dropdown menu.'
         },
         {
           target: '.nav-dropdown-menu',
           label: 'Resources dropdown menu',
           demo: 'hover',
+          requires: { dropdown: '.nav-dropdown' },
           narration:
             'You\'ll see a menu with Resources, Minutes, Systems Map, and Assessment. ' +
             'Feature Requests is reachable from the main Resources page.',
@@ -230,7 +286,7 @@ window.SomaGuideConfig = {
       ]
     },
 
-    /* 4 — How to use Ask Bill */
+    /* ── 4. How to use Ask Bill ── */
     {
       id: 'ask-bill-walkthrough',
       label: 'How to use Ask Bill',
