@@ -1336,52 +1336,63 @@ const DEMO_CONFIG = {
 };
 
 describe('SOMA Guide — cursor lead-in delay', function () {
-  test('_demoStop clears _demoCursorLeadInTimer', function () {
+  test('_demoStop clears _cursorLeadTimer', function () {
     const win = makeWindow();
     const g = new win.SomaGuide(TEST_CONFIG);
-    g._demoCursorLeadInTimer = setTimeout(function () {}, 9999);
+    g._cursorLeadTimer = setTimeout(function () {}, 9999);
     g._demoStop();
-    assert.equal(g._demoCursorLeadInTimer, null, 'lead-in timer should be cleared by _demoStop');
+    assert.equal(g._cursorLeadTimer, null, 'lead-in timer should be cleared by _demoStop');
   });
 
-  test('_demoCursorLeadInTimer initialised to null', function () {
+  test('_cursorLeadTimer initialised to null', function () {
     const win = makeWindow();
     const g = new win.SomaGuide(TEST_CONFIG);
-    assert.equal(g._demoCursorLeadInTimer, null);
+    assert.equal(g._cursorLeadTimer, null);
   });
 
-  test('cursor lead-in timer is scheduled, not fired synchronously, on step with demo', function () {
+  test('cursor lead-in timer is set after audio play starts (not synchronously)', function (_, done) {
     const win = makeWindowWithTTS();
     const g = new win.SomaGuide(DEMO_CONFIG);
     let moveCalled = false;
     g._demoMoveTo = function () { moveCalled = true; };
     g._wtStart('wt-demo', 0);
-    // _demoMoveTo should NOT have been called yet — it's behind a lead-in timer
+    // Synchronously: moveCalled must be false — cursor not yet triggered
     assert.equal(moveCalled, false, 'cursor should not move synchronously on step render');
-    assert.ok(g._demoCursorLeadInTimer !== null, 'lead-in timer should be pending');
-    g._demoStop(); // cleanup
+    // After async fetch → play().then() → onPlay() sets the lead-in timer:
+    setTimeout(function () {
+      assert.ok(g._cursorLeadTimer !== null, 'lead-in timer should be set after audio starts playing');
+      assert.equal(moveCalled, false, 'cursor should not have fired yet (lead-in delay pending)');
+      g._demoStop(); // cleanup
+      done();
+    }, 80);
   });
 
-  test('lead-in timer is cancelled when _demoStop is called before it fires', function () {
+  test('lead-in timer is cancelled when _demoStop is called after play starts', function (_, done) {
     const win = makeWindowWithTTS();
     const g = new win.SomaGuide(DEMO_CONFIG);
     g._wtStart('wt-demo', 0);
-    assert.ok(g._demoCursorLeadInTimer !== null, 'lead-in timer should be set');
-    g._demoStop();
-    assert.equal(g._demoCursorLeadInTimer, null, 'lead-in timer should be null after stop');
+    setTimeout(function () {
+      assert.ok(g._cursorLeadTimer !== null, 'lead-in timer should be set after audio starts');
+      g._demoStop();
+      assert.equal(g._cursorLeadTimer, null, 'lead-in timer should be null after _demoStop');
+      done();
+    }, 80);
   });
 
-  test('lead-in timer is cleared by _wtNext before scheduling for next step', function () {
+  test('lead-in timer is cleared when _wtNext is called', function (_, done) {
     const win = makeWindowWithTTS();
     const g = new win.SomaGuide(DEMO_CONFIG);
     g._wtStart('wt-demo', 0);
-    const firstTimer = g._demoCursorLeadInTimer;
-    g._wtNext(); // advance to step 1 — should stop previous cursor and set new timer
-    // After wtNext, a new lead-in timer for step 1 may or may not be set,
-    // but the first timer handle should be gone
-    assert.ok(g._demoCursorLeadInTimer !== firstTimer || g._demoCursorLeadInTimer === null,
-      'lead-in timer should be refreshed on step advance');
-    g._demoStop();
+    setTimeout(function () {
+      const firstTimer = g._cursorLeadTimer;
+      assert.ok(firstTimer !== null, 'lead-in timer should be set for step 0');
+      // Advance to step 1 — _demoStop is called in _wtNext, clearing the timer
+      g._wtNext();
+      assert.equal(g._cursorLeadTimer, null,
+        'lead-in timer should be cleared immediately when _wtNext is called');
+      g._demoStop();
+      done();
+    }, 80);
   });
 });
 
