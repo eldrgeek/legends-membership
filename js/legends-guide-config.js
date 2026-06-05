@@ -12,6 +12,15 @@
 
 window.SomaGuideConfig = {
 
+  /* ── Inference (Ask / answer-from-content) ───────────────────────────── */
+  /* Requires soma-infer running locally: cd ~/Projects/SOMA/services/soma-infer && node server.js */
+  /* https→http://localhost is allowed in Chrome as a trustworthy origin for localhost. */
+  /* TODO (follow-up): hosted inference endpoint for members without localhost access. */
+  inferenceUrl: 'http://localhost:8131/ask',
+
+  /* Site knowledge pack — loaded from legends-knowledge.js (must be included before this script). */
+  knowledge: (typeof window.LegendsKnowledge === 'string') ? window.LegendsKnowledge : '',
+
   /* ── Persona ─────────────────────────────────────────────────────────── */
   persona: {
     name: 'Bill',
