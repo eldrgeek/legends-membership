@@ -6,17 +6,24 @@
   <title>Meeting Minutes | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- SOMA Auth (replaces Netlify Identity) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <script>
     document.documentElement.style.visibility = 'hidden';
-    netlifyIdentity.on('init', function(user) {
+    SomaAuth.onAuthStateChange(function(event, session) {
+      if (event === 'SIGNED_OUT') { window.location.href = '/'; return; }
+      if (event !== 'INITIAL_SESSION') return;
+      var user = session ? session.user : null;
       if (!user) {
         window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
       } else {
         document.documentElement.style.visibility = '';
       }
     });
-    netlifyIdentity.on('logout', function() { window.location.href = '/'; });
+    SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
   </script>
 </head>
 <body>
@@ -46,14 +53,16 @@
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
         <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
-        <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
       </li>
     </ul>
   </div>
 </nav>
 <script>
   var ADMIN_EMAILS_M = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
-  netlifyIdentity.on('init', function(user) {
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+    var user = session ? session.user : null;
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
     var loginNav = document.getElementById('login-nav');
@@ -62,9 +71,12 @@
       if (el) el.style.display = 'flex';
       if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
       if (loginNav) loginNav.style.display = 'none';
-      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS_M.indexOf(user.email) !== -1) ? 'list-item' : 'none';
-      var adminLink = document.getElementById('footer-admin-link');
-      if (adminLink && ADMIN_EMAILS_M.indexOf(user.email) !== -1) adminLink.style.display = 'block';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS_M.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
     } else {
       if (el) el.style.display = 'none';
       if (loginNav) loginNav.style.display = '';

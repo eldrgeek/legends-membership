@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Committee Login | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- SOMA Auth (replaces Netlify Identity) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <style>
     .login-page {
       min-height: 100vh;
@@ -57,6 +61,20 @@
       line-height: 1.65;
       margin-bottom: 32px;
     }
+    .login-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      box-sizing: border-box;
+      margin-bottom: 14px;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    .login-input:focus { border-color: var(--navy); }
     .login-btn {
       display: inline-block;
       background: var(--navy);
@@ -74,6 +92,17 @@
       width: 100%;
     }
     .login-btn:hover { background: var(--navy-mid); }
+    .login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .login-msg {
+      margin-top: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: none;
+    }
+    .login-msg.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .login-msg.error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
     .login-footer-note {
       font-size: 0.78rem;
       color: var(--text-light);
@@ -95,14 +124,13 @@
     <div class="login-gold-line"></div>
     <h1 class="login-title">Committee Access</h1>
     <p class="login-desc">
-      This section of the site is for committee members only. Sign in with your committee invitation to access meeting minutes, resources, and documents.
+      Enter your committee email address. We'll send you a magic link — click it to sign in instantly, no password needed.
     </p>
-    <button class="login-btn" id="login-btn">Sign In</button>
+    <input type="email" id="login-email" class="login-input" placeholder="your@email.com" autocomplete="email" />
+    <button class="login-btn" id="login-btn">Send Sign-In Link</button>
+    <div id="login-msg" class="login-msg"></div>
     <p class="login-footer-note">
       Don't have an account? Contact <a href="mailto:gfos44@gmail.com">Greg Foster</a> to receive an invitation.
-    </p>
-    <p class="login-footer-note" style="margin-top:12px;font-size:0.73rem;color:var(--text-light);">
-      Tip: Use your browser's built-in password reveal (the eye icon in the password field) if you need to check what you're typing.
     </p>
   </div>
 </div>
@@ -114,7 +142,7 @@
   if (params.get('confirmed') === '1') {
     var banner = document.createElement('div');
     banner.style.cssText = 'background:#16a34a;color:#fff;padding:12px 16px;border-radius:8px;margin-bottom:20px;font-size:0.88rem;font-weight:600;text-align:center;';
-    banner.textContent = 'Email confirmed! Please sign in below.';
+    banner.textContent = 'Email confirmed! Enter your email below to sign in.';
     var card = document.querySelector('.login-card');
     var btn = document.getElementById('login-btn');
     card.insertBefore(banner, btn);
@@ -126,38 +154,56 @@
     if (r && r.startsWith('/') && !r.startsWith('//')) redirectTo = r;
   } catch(e) {}
 
-  // Handle recovery/invite tokens BEFORE init() — log out any current user so the
-  // widget can process the token cleanly, then open the appropriate modal.
-  (function handleRecoveryToken() {
-    var hash = window.location.hash || '';
-    if (hash.indexOf('recovery_token=') !== -1) {
-      try { if (netlifyIdentity.currentUser()) { netlifyIdentity.logout(); } } catch(e){}
-      netlifyIdentity.on('init', function() {
-        netlifyIdentity.open('login');
-      });
+  // If already signed in (e.g., magic link lands here), redirect immediately.
+  // Also handles Supabase processing the magic link token from the URL hash.
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+      window.location.replace(redirectTo);
     }
-    if (hash.indexOf('invite_token=') !== -1) {
-      try { if (netlifyIdentity.currentUser()) { netlifyIdentity.logout(); } } catch(e){}
-      netlifyIdentity.on('init', function() {
-        netlifyIdentity.open('signup');
-      });
-    }
-  })();
-
-  // Listeners before init()
-  netlifyIdentity.on('init', function(user) {
-    // Only auto-redirect if NOT processing a recovery/invite token
-    var hash = window.location.hash || '';
-    var hasToken = hash.indexOf('recovery_token=') !== -1 || hash.indexOf('invite_token=') !== -1;
-    if (user && !hasToken) window.location.replace(redirectTo);
   });
-  netlifyIdentity.on('login', function() {
-    window.location.replace(redirectTo);
-  });
-  netlifyIdentity.init();
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 
+  // Magic-link form submit
   document.getElementById('login-btn').addEventListener('click', function() {
-    netlifyIdentity.open('login');
+    var email = document.getElementById('login-email').value.trim();
+    var msg = document.getElementById('login-msg');
+    var btn = document.getElementById('login-btn');
+    if (!email || !email.includes('@')) {
+      msg.textContent = 'Please enter a valid email address.';
+      msg.className = 'login-msg error';
+      msg.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    msg.style.display = 'none';
+    var origin = window.location.origin || 'https://legends-membership.netlify.app';
+    SomaAuth.signInWithOtp(email, { emailRedirectTo: origin + redirectTo })
+      .then(function(result) {
+        btn.disabled = false;
+        btn.textContent = 'Send Sign-In Link';
+        if (result.error) {
+          msg.textContent = result.error.message || 'Sign-in failed. Please try again.';
+          msg.className = 'login-msg error';
+        } else {
+          msg.textContent = 'Check your email — a sign-in link is on its way!';
+          msg.className = 'login-msg success';
+          document.getElementById('login-email').value = '';
+        }
+        msg.style.display = 'block';
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'Send Sign-In Link';
+        msg.textContent = err.message || 'Unable to reach auth server. Please try again later.';
+        msg.className = 'login-msg error';
+        msg.style.display = 'block';
+      });
+  });
+
+  // Allow pressing Enter in the email field
+  document.getElementById('login-email').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('login-btn').click();
   });
 </script>
 

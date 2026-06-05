@@ -6,7 +6,11 @@
   <title>Recommendations Board | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- SOMA Auth (replaces Netlify Identity) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <style>
     .page-hero {
       background: var(--navy);
@@ -151,7 +155,7 @@
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size:0.78rem;color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.35);padding:5px 11px;border-radius:4px;">Admin</a></li>
       <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
         <span id="auth-name" style="font-size:0.78rem;color:rgba(255,255,255,0.55);"></span>
-        <button onclick="netlifyIdentity.logout()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
+        <button onclick="SomaAuth.signOut()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
       </li>
     </ul>
   </div>
@@ -212,38 +216,7 @@
   var allItems = [];
   var currentFilter = 'all';
 
-  // ── Auth debug instrumentation ──────────────────────────────────────────
-  (function instrument() {
-    var t0 = Date.now();
-    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
-    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
-      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
-    });
-    log('PAGE LOADED', window.location.href);
-  })();
-
   var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
-
-  function updateAuthUI(user) {
-    var el = document.getElementById('auth-nav');
-    var nm = document.getElementById('auth-name');
-    var loginNav = document.getElementById('login-nav');
-    var navAdmin = document.getElementById('nav-admin-link');
-    if (!el) return;
-    if (user) {
-      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
-      if (nm) nm.textContent = name;
-      el.style.display = 'flex';
-      if (loginNav) loginNav.style.display = 'none';
-      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
-    } else {
-      el.style.display = 'none';
-      if (loginNav) loginNav.style.display = '';
-      if (navAdmin) navAdmin.style.display = 'none';
-    }
-    var adminLink = document.getElementById('footer-admin-link');
-    if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';
-  }
 
   function formatDate(iso) {
     if (!iso) return '';
@@ -315,11 +288,34 @@
       });
   }
 
-  // Listeners before init()
-  netlifyIdentity.on('init', function(user) { updateAuthUI(user); loadRecs(); });
-  netlifyIdentity.on('login', function(user) { updateAuthUI(user); });
-  netlifyIdentity.on('logout', function() { window.location.replace('/'); });
-  netlifyIdentity.init();
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') {
+      if (event === 'SIGNED_OUT') window.location.replace('/');
+      return;
+    }
+    var user = session ? session.user : null;
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+    if (event === 'INITIAL_SESSION') loadRecs();
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 </script>
 
 <script src="js/legends-guide-config.js"></script>

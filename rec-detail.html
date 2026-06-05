@@ -6,7 +6,11 @@
   <title>Recommendation Detail | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- SOMA Auth (replaces Netlify Identity) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <style>
     .page-content { max-width: 800px; margin: 80px auto 0; padding: 40px 24px 60px; }
     .back-link { display: inline-block; color: var(--navy); font-size: 0.85rem; font-weight: 500; margin-bottom: 24px; text-decoration: none; }
@@ -88,7 +92,7 @@
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size:0.78rem;color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.35);padding:5px 11px;border-radius:4px;">Admin</a></li>
       <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
         <span id="auth-name" style="font-size:0.78rem;color:rgba(255,255,255,0.55);"></span>
-        <button onclick="netlifyIdentity.logout()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
+        <button onclick="SomaAuth.signOut()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
       </li>
     </ul>
   </div>
@@ -122,37 +126,7 @@
   var currentUser = null;
   var recId = null;
 
-  (function instrument() {
-    var t0 = Date.now();
-    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
-    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
-      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
-    });
-    log('PAGE LOADED', window.location.href);
-  })();
-
   var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
-
-  function updateAuthUI(user) {
-    currentUser = user;
-    var authNav = document.getElementById('auth-nav');
-    var nm = document.getElementById('auth-name');
-    var loginNav = document.getElementById('login-nav');
-    var navAdmin = document.getElementById('nav-admin-link');
-    if (user) {
-      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
-      if (nm) nm.textContent = name;
-      if (authNav) authNav.style.display = 'flex';
-      if (loginNav) loginNav.style.display = 'none';
-      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
-    } else {
-      if (authNav) authNav.style.display = 'none';
-      if (loginNav) loginNav.style.display = '';
-      if (navAdmin) navAdmin.style.display = 'none';
-    }
-    var adminLink = document.getElementById('footer-admin-link');
-    if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';
-  }
 
   function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -214,7 +188,7 @@
           '<button class="comment-btn" id="comment-btn" onclick="postComment()">Post Comment</button>' +
           '<div id="comment-msg" style="margin-top:8px;font-size:0.85rem;"></div>' +
         '</div>'
-      : '<div class="login-prompt"><p>Log in to add a comment.</p><button class="btn btn-gold" onclick="netlifyIdentity.open(\'login\')">Sign In</button></div>';
+      : '<div class="login-prompt"><p>Log in to add a comment.</p><button class="btn btn-gold" onclick="window.location.href=\'/login.html\'">Sign In</button></div>';
 
     area.innerHTML =
       '<a href="' + backLink + '" class="back-link" style="font-size:0.8rem;opacity:0.7;">' + escHtml(backLabel) + '</a>' +
@@ -269,7 +243,8 @@
     btn.disabled = true;
     btn.textContent = 'Posting…';
 
-    currentUser.jwt().then(function(token) {
+    SomaAuth.getSession().then(function(session) {
+      var token = session && session.access_token;
       return fetch(API_BASE + '/' + recId + '/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -299,7 +274,8 @@
     var note = document.getElementById('decision-note');
     var msgEl = document.getElementById('decision-msg');
 
-    currentUser.jwt().then(function(token) {
+    SomaAuth.getSession().then(function(session) {
+      var token = session && session.access_token;
       return fetch(API_BASE + '/' + recId + '/decision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -318,10 +294,35 @@
     });
   }
 
-  netlifyIdentity.on('init', function(user) { updateAuthUI(user); loadDetail(); });
-  netlifyIdentity.on('login', function(user) { updateAuthUI(user); loadDetail(); });
-  netlifyIdentity.on('logout', function() { window.location.replace('/'); });
-  netlifyIdentity.init();
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') {
+      if (event === 'SIGNED_OUT') window.location.replace('/');
+      return;
+    }
+    var user = session ? session.user : null;
+    currentUser = user;
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+    loadDetail();
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 </script>
 
 <script src="js/legends-guide-config.js"></script>

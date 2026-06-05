@@ -6,7 +6,11 @@
   <title>Committee Members | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- SOMA Auth (replaces Netlify Identity) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
 </head>
 <body>
 
@@ -35,7 +39,7 @@
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
         <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
-        <button onclick="sessionStorage.setItem('legends_active_logout','1'); netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
       </li>
     </ul>
   </div>
@@ -274,61 +278,34 @@
 </footer>
 
 <script>
-  // Phase B: instrument auth events FIRST so we catch everything including our own handlers
-  (function instrument() {
-    var t0 = Date.now();
-    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
-    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
-      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
-    });
-    var _r = window.location.replace.bind(window.location);
-    window.location.replace = function(u){ log('REPLACE', u); console.trace(); return _r(u); };
-    window.addEventListener('beforeunload', function(){ log('UNLOAD', window.location.href); });
-    log('PAGE LOADED', window.location.href);
-  })();
-
   var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
-
-  function updateAuthUI(user) {
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') {
+      if (event === 'SIGNED_OUT') window.location.replace('/');
+      return;
+    }
+    var user = session ? session.user : null;
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
     var loginNav = document.getElementById('login-nav');
     var navAdmin = document.getElementById('nav-admin-link');
-    if (!el) return;
     if (user) {
-      var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
-      if (nm) nm.textContent = name;
-      el.style.display = 'flex';
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
       if (loginNav) loginNav.style.display = 'none';
-      if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
     } else {
-      el.style.display = 'none';
+      if (el) el.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
       if (navAdmin) navAdmin.style.display = 'none';
     }
-    var adminLink = document.getElementById('footer-admin-link');
-    if (adminLink) adminLink.style.display = (user && ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';
-  }
-  netlifyIdentity.on('init', function(user) {
-    updateAuthUI(user);
-    var hash = window.location.hash;
-    if (!user && (hash.includes('invite_token=') || hash.includes('recovery_token=') || hash.includes('confirmation_token='))) {
-      netlifyIdentity.open('signup');
-    }
   });
-  // No redirect on 'login' needed — already on the target page. Just update UI.
-  netlifyIdentity.on('login', function(user) {
-    updateAuthUI(user);
-  });
-  netlifyIdentity.on('logout', function() {
-    // Only redirect when the user explicitly clicked Sign Out (flag set on button onclick).
-    // Guards against spurious 'logout' events fired during token-refresh edge cases,
-    // which caused the / ↔ /members.html redirect loop.
-    if (sessionStorage.getItem('legends_active_logout') !== '1') return;
-    sessionStorage.removeItem('legends_active_logout');
-    window.location.replace('/');
-  });
-  netlifyIdentity.init();
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 </script>
 
 <script src="js/legends-guide-config.js"></script>

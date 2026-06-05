@@ -6,7 +6,11 @@
   <title>Admin | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- SOMA Auth (replaces Netlify Identity) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <script>
     document.documentElement.style.visibility = 'hidden';
   </script>
@@ -120,7 +124,7 @@
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
         <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
-        <button onclick="netlifyIdentity.logout()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
       </li>
     </ul>
   </div>
@@ -215,13 +219,14 @@
 </footer>
 
 <script>
-  var ADMIN_ALLOWLIST = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  // Bootstrap fallback until roles seeded in Supabase profiles table
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
 
-  function isAdmin(user) {
-    return user && ADMIN_ALLOWLIST.indexOf(user.email) !== -1;
+  function isAdmin(user, role) {
+    return (role === 'admin') || (user && ADMIN_EMAILS.indexOf(user.email) !== -1);
   }
 
-  function updateAuthNav(user) {
+  function updateAuthNav(user, role) {
     var el = document.getElementById('auth-nav');
     var nm = document.getElementById('auth-name');
     var loginNav = document.getElementById('login-nav');
@@ -232,52 +237,38 @@
       if (nm) nm.textContent = name;
       el.style.display = 'flex';
       if (loginNav) loginNav.style.display = 'none';
-      if (navAdmin) navAdmin.style.display = (isAdmin(user)) ? 'list-item' : 'none';
+      if (navAdmin) navAdmin.style.display = isAdmin(user, role) ? 'list-item' : 'none';
     } else {
       el.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
       if (navAdmin) navAdmin.style.display = 'none';
     }
     var adminLink = document.getElementById('footer-admin-link');
-    if (adminLink) adminLink.style.display = (user && isAdmin(user)) ? 'block' : 'none';
+    if (adminLink) adminLink.style.display = (user && isAdmin(user, role)) ? 'block' : 'none';
   }
 
-  // Listeners BEFORE init()
-  netlifyIdentity.on('init', function(user) {
-    updateAuthNav(user);
+  SomaAuth.onAuthStateChange(function(event, session) {
+    var user = session ? session.user : null;
+    if (event === 'SIGNED_OUT') { window.location.replace('/'); return; }
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
     if (!user) {
-      // Keep page hidden during redirect to avoid flash of content
       window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
-    } else {
-      document.documentElement.style.visibility = '';
-      if (!isAdmin(user)) {
+      return;
+    }
+    document.documentElement.style.visibility = '';
+    SomaAuth.getRole(user).then(function(role) {
+      updateAuthNav(user, role);
+      if (!isAdmin(user, role)) {
         document.getElementById('not-authorized').style.display = 'flex';
+        document.getElementById('admin-content').style.display = 'none';
       } else {
         document.getElementById('admin-content').style.display = 'block';
+        document.getElementById('not-authorized').style.display = 'none';
       }
-    }
+    });
   });
 
-  netlifyIdentity.on('error', function() {
-    document.documentElement.style.visibility = '';
-  });
-
-  netlifyIdentity.on('login', function(user) {
-    updateAuthNav(user);
-    if (!isAdmin(user)) {
-      document.getElementById('not-authorized').style.display = 'flex';
-      document.getElementById('admin-content').style.display = 'none';
-    } else {
-      document.getElementById('admin-content').style.display = 'block';
-      document.getElementById('not-authorized').style.display = 'none';
-    }
-  });
-
-  netlifyIdentity.on('logout', function() {
-    window.location.replace('/');
-  });
-
-  netlifyIdentity.init();
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 </script>
 
 <script src="js/legends-guide-config.js"></script>

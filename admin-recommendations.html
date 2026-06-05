@@ -6,7 +6,11 @@
   <title>Admin: Recommendations | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- SOMA Auth (replaces Netlify Identity) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <style>
     .page-hero { background: var(--navy); padding: 100px 24px 48px; text-align: center; color: var(--white); }
     .page-hero h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold); margin-bottom: 8px; }
@@ -75,7 +79,7 @@
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size:0.78rem;color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.35);padding:5px 11px;border-radius:4px;">Admin</a></li>
       <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
         <span id="auth-name" style="font-size:0.78rem;color:rgba(255,255,255,0.55);"></span>
-        <button onclick="netlifyIdentity.logout()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
+        <button onclick="SomaAuth.signOut()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
       </li>
     </ul>
   </div>
@@ -100,7 +104,7 @@
   <div id="not-logged-in" class="access-denied" style="display:none;">
     <h2>Login Required</h2>
     <p>This admin panel is for Greg Foster only.</p>
-    <button class="btn btn-gold" onclick="netlifyIdentity.open('login')" style="margin-top:16px;">Sign In</button>
+    <button class="btn btn-gold" onclick="window.location.href='/login.html'" style="margin-top:16px;">Sign In</button>
   </div>
 
   <div id="admin-panel" style="display:none;">
@@ -143,56 +147,7 @@
   var allItems = [];
   var currentTab = 'pending';
 
-  (function instrument() {
-    var t0 = Date.now();
-    function log(){ var args = ['[auth-debug ' + (Date.now()-t0) + 'ms]'].concat([].slice.call(arguments)); console.log.apply(console, args); }
-    ['init','login','signup','confirm','logout','error','open','close'].forEach(function(ev){
-      netlifyIdentity.on(ev, function(){ log('EVENT', ev, arguments[0]); });
-    });
-    log('PAGE LOADED', window.location.href);
-  })();
-
   var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
-
-  function updateAuthUI(user) {
-    currentUser = user;
-    var authNav = document.getElementById('auth-nav');
-    var nm = document.getElementById('auth-name');
-    var loginNav = document.getElementById('login-nav');
-    var navAdmin = document.getElementById('nav-admin-link');
-    var notLoggedIn = document.getElementById('not-logged-in');
-    var accessDenied = document.getElementById('access-denied');
-    var adminPanel = document.getElementById('admin-panel');
-
-    if (!user) {
-      if (authNav) authNav.style.display = 'none';
-      if (loginNav) loginNav.style.display = '';
-      if (navAdmin) navAdmin.style.display = 'none';
-      if (notLoggedIn) notLoggedIn.style.display = 'block';
-      if (accessDenied) accessDenied.style.display = 'none';
-      if (adminPanel) adminPanel.style.display = 'none';
-      return;
-    }
-
-    var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
-    if (nm) nm.textContent = name;
-    if (authNav) authNav.style.display = 'flex';
-    if (loginNav) loginNav.style.display = 'none';
-    if (navAdmin) navAdmin.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'list-item' : 'none';
-    if (notLoggedIn) notLoggedIn.style.display = 'none';
-
-    var adminLink = document.getElementById('footer-admin-link');
-    if (adminLink) adminLink.style.display = (ADMIN_EMAILS.indexOf(user.email) !== -1) ? 'block' : 'none';
-
-    if (user.email.toLowerCase() !== MANAGER_EMAIL.toLowerCase()) {
-      if (accessDenied) accessDenied.style.display = 'block';
-      if (adminPanel) adminPanel.style.display = 'none';
-    } else {
-      if (accessDenied) accessDenied.style.display = 'none';
-      if (adminPanel) adminPanel.style.display = 'block';
-      loadAdmin();
-    }
-  }
 
   function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function formatDate(iso) {
@@ -277,7 +232,8 @@
     var note = noteEl ? noteEl.value.trim() : '';
     var fbEl = document.getElementById('fb-' + recId);
 
-    currentUser.jwt().then(function(token) {
+    SomaAuth.getSession().then(function(session) {
+      var token = session && session.access_token;
       return fetch(API_BASE + '/' + recId + '/decision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -296,10 +252,53 @@
     });
   }
 
-  netlifyIdentity.on('init', function(user) { updateAuthUI(user); });
-  netlifyIdentity.on('login', function(user) { updateAuthUI(user); });
-  netlifyIdentity.on('logout', function() { window.location.replace('/'); });
-  netlifyIdentity.init();
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') {
+      if (event === 'SIGNED_OUT') window.location.replace('/');
+      return;
+    }
+    var user = session ? session.user : null;
+    currentUser = user;
+    var authNav = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    var notLoggedIn = document.getElementById('not-logged-in');
+    var accessDenied = document.getElementById('access-denied');
+    var adminPanel = document.getElementById('admin-panel');
+
+    if (!user) {
+      if (authNav) authNav.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+      if (notLoggedIn) notLoggedIn.style.display = 'block';
+      if (accessDenied) accessDenied.style.display = 'none';
+      if (adminPanel) adminPanel.style.display = 'none';
+      return;
+    }
+
+    if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+    if (authNav) authNav.style.display = 'flex';
+    if (loginNav) loginNav.style.display = 'none';
+    if (notLoggedIn) notLoggedIn.style.display = 'none';
+
+    SomaAuth.getRole(user).then(function(role) {
+      var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+      if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+      var adminLink = document.getElementById('footer-admin-link');
+      if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+
+      if (user.email.toLowerCase() !== MANAGER_EMAIL.toLowerCase()) {
+        if (accessDenied) accessDenied.style.display = 'block';
+        if (adminPanel) adminPanel.style.display = 'none';
+      } else {
+        if (accessDenied) accessDenied.style.display = 'none';
+        if (adminPanel) adminPanel.style.display = 'block';
+        loadAdmin();
+      }
+    });
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 </script>
 
 <script src="js/legends-guide-config.js"></script>
