@@ -213,7 +213,7 @@
         <table class="members-table">
           <thead>
             <tr>
-              <th>Email / ID</th>
+              <th>Name / ID</th>
               <th>Role</th>
               <th>Change Role</th>
             </tr>
@@ -343,12 +343,12 @@
     errorEl.style.display = 'none';
     tableWrap.style.display = 'none';
 
-    supaRest('/rest/v1/profiles?select=id,email,role&order=role.asc,email.asc')
+    supaRest('/rest/v1/profiles?select=id,full_name,role&order=role.asc,full_name.asc')
       .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; }); })
       .then(function(result) {
         loading.style.display = 'none';
         if (!result.ok) {
-          errorEl.textContent = 'Could not load members (status ' + result.status + '). Check that the admin-read-all SELECT policy is active.';
+          errorEl.textContent = 'Could not load members (status ' + result.status + ').';
           errorEl.style.display = '';
           return;
         }
@@ -374,10 +374,10 @@
     rows.forEach(function(row) {
       var tr = document.createElement('tr');
 
-      // Email / ID cell
+      // Name / ID cell
       var tdEmail = document.createElement('td');
-      if (row.email) {
-        tdEmail.textContent = row.email;
+      if (row.full_name) {
+        tdEmail.textContent = row.full_name;
       } else {
         var span = document.createElement('span');
         span.className = 'members-id';
