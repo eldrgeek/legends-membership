@@ -92,21 +92,37 @@
 
     /**
      * Fetch the user's role from the profiles table.
-     * Returns 'admin' | 'member' | null. Defaults to 'member' on any error
-     * (profiles table not yet created, network error, etc.).
+     * Returns 'admin' | 'member' | null (null only when not authenticated).
+     * If called without a user argument, fetches the current session user first
+     * so that getRole() with no args works correctly (e.g., console checks,
+     * or any path where the caller doesn't have the user object at hand).
      */
     getRole: function (user) {
-      if (!user || !_client) return Promise.resolve(null);
-      return _client
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-        .then(function (result) {
-          if (result.error || !result.data) return 'member';
-          return result.data.role || 'member';
-        })
-        .catch(function () { return 'member'; });
+      if (!_client) return Promise.resolve(null);
+
+      function queryRole(uid) {
+        return _client
+          .from('profiles')
+          .select('role')
+          .eq('id', uid)
+          .single()
+          .then(function (result) {
+            if (result.error || !result.data) return 'member';
+            return result.data.role || 'member';
+          })
+          .catch(function () { return 'member'; });
+      }
+
+      if (user && user.id) {
+        return queryRole(user.id);
+      }
+
+      // No user/id provided — fetch the currently authenticated user first.
+      return _client.auth.getUser().then(function (res) {
+        var uid = res && res.data && res.data.user && res.data.user.id;
+        if (!uid) return null;
+        return queryRole(uid);
+      }).catch(function () { return null; });
     }
   };
 
