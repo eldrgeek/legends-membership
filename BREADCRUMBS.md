@@ -35,6 +35,18 @@ legends-membership-site pages
 3. **ElevenLabs agent** ID `agent_2401ks53q6t8e2drt1h7va3f2c52` — must be active
 4. **VPS infer/ask** (vpsmikewolf.duckdns.org) — needs Anthropic API credits
 
+## Auth — SOMA Auth (Supabase magic-link)
+This repo is the **reference implementation** of the SOMA Auth standard.
+See `~/Projects/SOMA/standards/SOMA-AUTH.md` for the architecture, drop-in recipe,
+provisioning checklist, and copy-paste patterns for new SOMA apps.
+
+Netlify Identity is **permanently removed** (2026-06-05). Not an option.
+- `js/soma-auth.js` — IIFE runtime (copy verbatim to new projects)
+- `js/soma-auth-config.js` — Supabase project url + anon key (public-safe)
+- `login.html` — magic-link send UI + post-login redirect
+- `admin.html` — admin-gated page example
+- `minutes.html` — member-gated page example
+
 ## Recommendations page
 Loads cards from `https://vpsmikewolf.duckdns.org/api/recommendations?app=legends`.
 Filter buttons: All / Bugs / Features / Open / Triaged / Approved / Shipped / Rejected.
