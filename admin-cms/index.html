@@ -4,9 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Content Manager | Legends of Basketball</title>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!--
+    RETIRED 2026-06-08: Decap CMS + git-gateway backend required Netlify Identity
+    for authentication. Netlify Identity has been permanently removed from this site
+    in favor of SOMA Auth (Supabase magic-link). The git-gateway backend cannot be
+    migrated to SOMA Auth without replacing the CMS backend entirely.
+    Content editing is now managed via direct git commits.
+    See /admin.html for the active administration surface.
+  -->
+  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
+  <meta http-equiv="refresh" content="0; url=/admin.html">
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <p>Redirecting to <a href="/admin.html">Admin</a>…</p>
 </body>
 </html>
