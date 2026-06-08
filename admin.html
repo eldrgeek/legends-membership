@@ -95,6 +95,63 @@
       transition: box-shadow 0.15s;
     }
     .activity-link:hover { box-shadow: var(--shadow); }
+
+    /* ── In-app admin panel styles ─────────────────────────────────────── */
+    .members-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .members-table th {
+      text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border);
+      color: var(--text-light); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .members-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .members-table tr:last-child td { border-bottom: none; }
+    .members-table tr:hover td { background: var(--gold-pale, #fffdf5); }
+    .role-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+    }
+    .role-badge.admin { background: var(--navy); color: var(--gold); }
+    .role-badge.member { background: var(--border); color: var(--text-light); }
+    .role-select {
+      border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 0.82rem;
+      font-family: inherit; background: white; color: var(--text-dark); cursor: pointer;
+    }
+    .role-select:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+    .btn-role-save {
+      background: var(--navy); color: var(--gold); border: none; border-radius: 6px;
+      padding: 5px 14px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: opacity 0.15s;
+    }
+    .btn-role-save:hover { opacity: 0.85; }
+    .btn-role-save:disabled { opacity: 0.4; cursor: default; }
+    .inline-status { font-size: 0.8rem; margin-left: 8px; }
+    .inline-status.ok { color: #1a7a1a; }
+    .inline-status.err { color: #c0392b; }
+    .panel-loading { color: var(--text-light); font-size: 0.88rem; padding: 18px 0; }
+    .panel-error { color: #c0392b; font-size: 0.88rem; padding: 14px 0; }
+    .policy-note {
+      background: var(--gold-pale, #fffdf5); border: 1px solid var(--gold);
+      border-radius: 8px; padding: 14px 18px; font-size: 0.85rem; line-height: 1.65;
+      margin-top: 16px; color: var(--text-dark);
+    }
+    .policy-note strong { color: var(--navy); }
+    .policy-note code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.82em; }
+    .invite-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+    .invite-email-input {
+      flex: 1; min-width: 220px; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; font-size: 0.9rem; font-family: inherit;
+    }
+    .invite-email-input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+    .btn-invite {
+      background: var(--navy); color: var(--gold); border: none; border-radius: 8px;
+      padding: 10px 22px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: opacity 0.15s; white-space: nowrap;
+    }
+    .btn-invite:hover { opacity: 0.85; }
+    .btn-invite:disabled { opacity: 0.4; cursor: default; }
+    .invite-feedback { margin-top: 12px; font-size: 0.88rem; padding: 10px 14px; border-radius: 8px; }
+    .invite-feedback.ok { background: #f0faf0; border: 1px solid #4caf50; color: #1a6b1a; }
+    .invite-feedback.err { background: #fff0f0; border: 1px solid #e74c3c; color: #9b2b2b; }
+    .invite-feedback.warn { background: var(--gold-pale, #fffdf5); border: 1px solid var(--gold); color: var(--text-dark); }
+    .members-id { font-family: monospace; font-size: 0.75rem; color: var(--text-light); }
   </style>
 </head>
 <body>
@@ -146,34 +203,43 @@
 
   <div class="admin-wrap">
 
-    <!-- Section 1: Current Users -->
+    <!-- Section 1: Committee Members (in-app panel) -->
     <div class="admin-section">
-      <h2>Committee Users</h2>
-      <p class="section-sub">Members who have login access to gated committee pages.</p>
-      <div class="limitation-note">
-        <strong>Supabase dashboard required for user listing.</strong> Listing all auth users client-side requires a service-role key — that credential must never be in browser code. To view and manage committee users:
+      <h2>Committee Members</h2>
+      <p class="section-sub">Members with login access to gated pages. Change roles here — the profiles table updates immediately.</p>
+      <div id="members-loading" class="panel-loading">Loading members…</div>
+      <div id="members-error" class="panel-error" style="display:none;"></div>
+      <div id="members-table-wrap" style="display:none;">
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th>Email / ID</th>
+              <th>Role</th>
+              <th>Change Role</th>
+            </tr>
+          </thead>
+          <tbody id="members-tbody"></tbody>
+        </table>
       </div>
-      <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/auth/users" class="dashboard-link" target="_blank" rel="noopener">
-        Open Supabase Users Dashboard →
-      </a>
-      <p style="font-size: 0.82rem; color: var(--text-light); margin-top: 14px;">
-        The Auth → Users tab shows all registered users, their last sign-in, and confirmation status.
-      </p>
+      <div id="members-policy-note" class="policy-note" style="display:none;">
+        <strong>Admin write policy not yet applied.</strong> Role changes will be rejected until Mike pastes
+        the SQL policy into Supabase. File: <code>SOMA/standards/soma-auth-profiles-admin-write.sql</code><br>
+        → <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/sql/new" target="_blank" rel="noopener">Open Supabase SQL Editor</a>
+        and paste the contents of that file, then click Run.
+      </div>
     </div>
 
-    <!-- Section 2: Invite a User -->
+    <!-- Section 2: Invite a Member (calls Netlify function) -->
     <div class="admin-section">
       <h2>Invite a Committee Member</h2>
       <p class="section-sub">Send a magic-link invitation so a new member can access gated pages.</p>
-      <div class="limitation-note">
-        <strong>Invitations require the Supabase dashboard.</strong> The <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">inviteUserByEmail</code> API requires a service-role key and must not run client-side. Use the button below to go directly to the Supabase invite interface:
-      </div>
-      <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/auth/users" class="dashboard-link" target="_blank" rel="noopener">
-        Invite User in Supabase Dashboard →
-      </a>
-      <p style="font-size: 0.82rem; color: var(--text-light); margin-top: 14px;">
-        In the Auth → Users tab, click <strong style="color:var(--navy)">Invite user</strong>, enter the email address, and Supabase sends the magic-link invite email. The recipient clicks the link to activate their session.
-      </p>
+      <form id="invite-form">
+        <div class="invite-row">
+          <input type="email" id="invite-email" class="invite-email-input" placeholder="member@example.com" required autocomplete="email">
+          <button type="submit" id="invite-btn" class="btn-invite">Send Invite</button>
+        </div>
+      </form>
+      <div id="invite-feedback" style="display:none;" class="invite-feedback"></div>
     </div>
 
     <!-- Section 3: Recent Activity -->
@@ -253,9 +319,207 @@
     if (adminLink) adminLink.style.display = (user && isAdmin(user, role)) ? 'block' : 'none';
   }
 
+  // ── Admin panel logic ──────────────────────────────────────────────────────
+
+  var _adminSession = null;
+
+  // Make authenticated Supabase REST requests using the admin's JWT.
+  function supaRest(path, opts) {
+    var cfg = window.SOMA_AUTH_CONFIG;
+    var headers = Object.assign({
+      'apikey': cfg.anonKey,
+      'Authorization': 'Bearer ' + _adminSession.access_token,
+      'Content-Type': 'application/json'
+    }, (opts && opts.headers) || {});
+    return fetch(cfg.url + path, Object.assign({}, opts, { headers: headers }));
+  }
+
+  function loadMembers() {
+    var loading = document.getElementById('members-loading');
+    var errorEl = document.getElementById('members-error');
+    var tableWrap = document.getElementById('members-table-wrap');
+
+    loading.style.display = '';
+    errorEl.style.display = 'none';
+    tableWrap.style.display = 'none';
+
+    supaRest('/rest/v1/profiles?select=id,email,role&order=role.asc,email.asc')
+      .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; }); })
+      .then(function(result) {
+        loading.style.display = 'none';
+        if (!result.ok) {
+          errorEl.textContent = 'Could not load members (status ' + result.status + '). Check that the admin-read-all SELECT policy is active.';
+          errorEl.style.display = '';
+          return;
+        }
+        var rows = result.data;
+        if (!Array.isArray(rows) || rows.length === 0) {
+          errorEl.textContent = 'No profiles found. Members appear here once they have logged in at least once.';
+          errorEl.style.display = '';
+          return;
+        }
+        renderMembersTable(rows);
+        tableWrap.style.display = '';
+      })
+      .catch(function(err) {
+        loading.style.display = 'none';
+        errorEl.textContent = 'Network error loading members: ' + err.message;
+        errorEl.style.display = '';
+      });
+  }
+
+  function renderMembersTable(rows) {
+    var tbody = document.getElementById('members-tbody');
+    tbody.innerHTML = '';
+    rows.forEach(function(row) {
+      var tr = document.createElement('tr');
+
+      // Email / ID cell
+      var tdEmail = document.createElement('td');
+      if (row.email) {
+        tdEmail.textContent = row.email;
+      } else {
+        var span = document.createElement('span');
+        span.className = 'members-id';
+        span.textContent = row.id;
+        tdEmail.appendChild(span);
+      }
+      tr.appendChild(tdEmail);
+
+      // Current role badge
+      var tdRole = document.createElement('td');
+      var badge = document.createElement('span');
+      badge.className = 'role-badge ' + (row.role || 'member');
+      badge.textContent = row.role || 'member';
+      tdRole.appendChild(badge);
+      tr.appendChild(tdRole);
+
+      // Role change cell
+      var tdAction = document.createElement('td');
+      var sel = document.createElement('select');
+      sel.className = 'role-select';
+      ['admin', 'member'].forEach(function(r) {
+        var opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r;
+        if (r === (row.role || 'member')) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      var btn = document.createElement('button');
+      btn.className = 'btn-role-save';
+      btn.textContent = 'Save';
+      var statusSpan = document.createElement('span');
+      statusSpan.className = 'inline-status';
+
+      btn.onclick = function() {
+        var newRole = sel.value;
+        if (newRole === (row.role || 'member')) return;
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        statusSpan.textContent = '';
+        statusSpan.className = 'inline-status';
+
+        supaRest('/rest/v1/profiles?id=eq.' + encodeURIComponent(row.id), {
+          method: 'PATCH',
+          headers: { 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ role: newRole })
+        })
+        .then(function(res) {
+          btn.disabled = false;
+          btn.textContent = 'Save';
+          if (res.ok || res.status === 204) {
+            // Update local state and re-render badge
+            row.role = newRole;
+            badge.className = 'role-badge ' + newRole;
+            badge.textContent = newRole;
+            statusSpan.textContent = '✓ saved';
+            statusSpan.className = 'inline-status ok';
+            setTimeout(function() { statusSpan.textContent = ''; }, 3000);
+          } else {
+            return res.text().then(function(body) {
+              var policyNote = document.getElementById('members-policy-note');
+              // 42501 = insufficient_privilege; also catches generic 403
+              if (res.status === 403 || (body && body.indexOf('42501') !== -1)) {
+                policyNote.style.display = '';
+                statusSpan.textContent = '✗ policy not applied';
+              } else {
+                statusSpan.textContent = '✗ error ' + res.status;
+              }
+              statusSpan.className = 'inline-status err';
+            });
+          }
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Save';
+          statusSpan.textContent = '✗ ' + err.message;
+          statusSpan.className = 'inline-status err';
+        });
+      };
+
+      tdAction.appendChild(sel);
+      tdAction.appendChild(document.createTextNode(' '));
+      tdAction.appendChild(btn);
+      tdAction.appendChild(statusSpan);
+      tr.appendChild(tdAction);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── Invite form ────────────────────────────────────────────────────────────
+  document.getElementById('invite-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var email = document.getElementById('invite-email').value.trim();
+    var btn = document.getElementById('invite-btn');
+    var feedback = document.getElementById('invite-feedback');
+
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    feedback.style.display = 'none';
+    feedback.className = 'invite-feedback';
+
+    fetch('/.netlify/functions/admin-users', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + _adminSession.access_token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ action: 'invite', email: email })
+    })
+    .then(function(res) {
+      return res.json().then(function(data) { return { status: res.status, data: data }; });
+    })
+    .then(function(result) {
+      btn.disabled = false;
+      btn.textContent = 'Send Invite';
+      feedback.style.display = '';
+      if (result.status === 200) {
+        feedback.className = 'invite-feedback ok';
+        feedback.textContent = 'Invite sent to ' + email + '. They will receive a magic-link email.';
+        document.getElementById('invite-email').value = '';
+      } else if (result.status === 503) {
+        feedback.className = 'invite-feedback warn';
+        feedback.innerHTML = '<strong>Invite not yet enabled.</strong> To enable: add <code>SUPABASE_SERVICE_ROLE_KEY</code> in Netlify → Site settings → Environment variables (get the key from <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/settings/api" target="_blank" rel="noopener">Supabase → Project Settings → API → service_role</a>), then redeploy.';
+      } else {
+        feedback.className = 'invite-feedback err';
+        feedback.textContent = result.data.error || ('Invite failed (status ' + result.status + ')');
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Send Invite';
+      feedback.style.display = '';
+      feedback.className = 'invite-feedback err';
+      feedback.textContent = 'Network error: ' + err.message;
+    });
+  });
+
+  // ── Auth gate ──────────────────────────────────────────────────────────────
   SomaAuth.onAuthStateChange(function(event, session) {
     var user = session ? session.user : null;
     if (event === 'SIGNED_OUT') { window.location.replace('/'); return; }
+    // Keep _adminSession current so REST calls use a fresh token
+    if (event === 'TOKEN_REFRESHED' && session) { _adminSession = session; return; }
     if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
     if (!user) {
       window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
@@ -270,6 +534,9 @@
       } else {
         document.getElementById('admin-content').style.display = 'block';
         document.getElementById('not-authorized').style.display = 'none';
+        // Store session for REST calls and load the members panel
+        _adminSession = session;
+        loadMembers();
       }
     });
   });
