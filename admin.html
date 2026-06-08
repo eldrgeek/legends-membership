@@ -251,16 +251,32 @@
       </a>
     </div>
 
-    <!-- Section 4: Member Assessment Submissions -->
+    <!-- Section 4: Member Assessment Submissions (native in-app panel) -->
     <div class="admin-section">
       <h2>Member Assessment Submissions</h2>
-      <p class="section-sub">Responses from the Member Needs Assessment form.</p>
-      <div class="limitation-note" style="border-color: #e67e22; background: #fff9f0;">
-        <strong>⚠ Migration decision needed.</strong> The assessment form (<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">assessment.html</code>) currently submits to Netlify Forms via a POST to <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">/</code> with <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">form-name: member-assessment</code>. This is a live Netlify dependency — not just a dashboard link. Existing submissions are still at the Netlify Forms URL below until you decide where new submissions should go (suggested: a Supabase <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">assessment_submissions</code> table, written via a Supabase Edge Function or direct anon insert with RLS). The form collection has <strong>not been migrated yet</strong>.
+      <p class="section-sub">Responses from the Member Needs Assessment form, stored in Supabase.</p>
+      <div id="assessment-loading" class="panel-loading">Loading submissions…</div>
+      <div id="assessment-error" class="panel-error" style="display:none;"></div>
+      <div id="assessment-empty" style="display:none; color: var(--text-light); font-size: 0.88rem; padding: 14px 0;">No submissions yet.</div>
+      <div id="assessment-table-wrap" style="display:none; overflow-x: auto;">
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th>Submitted</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Membership</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="assessment-tbody"></tbody>
+        </table>
       </div>
-      <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/editor" class="dashboard-link" target="_blank" rel="noopener">
-        Open Supabase SQL Editor →
-      </a>
+      <div id="assessment-setup-note" class="policy-note" style="display:none;">
+        <strong>Table not yet created.</strong> Apply the SQL to enable this panel.<br>
+        File: <code>SOMA/standards/soma-assessment-submissions.sql</code><br>
+        → <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/sql/new" target="_blank" rel="noopener">Open Supabase SQL Editor</a> and paste + run the contents.
+      </div>
     </div>
 
   </div>
@@ -466,6 +482,105 @@
     });
   }
 
+  // ── Assessment submissions panel ──────────────────────────────────────────
+
+  function loadAssessments() {
+    var loading = document.getElementById('assessment-loading');
+    var errorEl = document.getElementById('assessment-error');
+    var emptyEl = document.getElementById('assessment-empty');
+    var tableWrap = document.getElementById('assessment-table-wrap');
+    var setupNote = document.getElementById('assessment-setup-note');
+
+    loading.style.display = '';
+    errorEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    tableWrap.style.display = 'none';
+    setupNote.style.display = 'none';
+
+    supaRest('/rest/v1/assessment_submissions?select=id,created_at,first_name,last_name,submitter_email,membership_status,source&order=created_at.desc&limit=100')
+      .then(function(res) {
+        return res.text().then(function(text) {
+          var data;
+          try { data = JSON.parse(text); } catch(e) { data = null; }
+          return { ok: res.ok, status: res.status, data: data, text: text };
+        });
+      })
+      .then(function(result) {
+        loading.style.display = 'none';
+        // Table doesn't exist yet: Supabase returns 400 or 404 with code 42P01 / PGRST106
+        if (!result.ok && (result.status === 400 || result.status === 404 || result.status === 422)) {
+          setupNote.style.display = '';
+          return;
+        }
+        if (!result.ok) {
+          errorEl.textContent = 'Could not load submissions (status ' + result.status + ').';
+          errorEl.style.display = '';
+          return;
+        }
+        var rows = result.data;
+        if (!Array.isArray(rows) || rows.length === 0) {
+          emptyEl.style.display = '';
+          return;
+        }
+        renderAssessmentsTable(rows);
+        tableWrap.style.display = '';
+      })
+      .catch(function(err) {
+        loading.style.display = 'none';
+        errorEl.textContent = 'Network error loading submissions: ' + err.message;
+        errorEl.style.display = '';
+      });
+  }
+
+  function renderAssessmentsTable(rows) {
+    var tbody = document.getElementById('assessment-tbody');
+    tbody.innerHTML = '';
+    rows.forEach(function(row) {
+      var tr = document.createElement('tr');
+
+      var tdDate = document.createElement('td');
+      if (row.created_at) {
+        var d = new Date(row.created_at);
+        tdDate.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        tdDate.title = d.toISOString();
+      } else {
+        tdDate.textContent = '—';
+      }
+      tr.appendChild(tdDate);
+
+      var tdName = document.createElement('td');
+      var name = [row.first_name, row.last_name].filter(Boolean).join(' ');
+      tdName.textContent = name || '—';
+      tr.appendChild(tdName);
+
+      var tdEmail = document.createElement('td');
+      if (row.submitter_email) {
+        var a = document.createElement('a');
+        a.href = 'mailto:' + row.submitter_email;
+        a.textContent = row.submitter_email;
+        a.style.color = 'var(--navy)';
+        tdEmail.appendChild(a);
+      } else {
+        tdEmail.textContent = '—';
+        tdEmail.style.color = 'var(--text-light)';
+      }
+      tr.appendChild(tdEmail);
+
+      var tdStatus = document.createElement('td');
+      tdStatus.textContent = row.membership_status || '—';
+      tr.appendChild(tdStatus);
+
+      var tdSource = document.createElement('td');
+      var badge = document.createElement('span');
+      badge.className = 'role-badge ' + (row.source === 'migrated' ? 'admin' : 'member');
+      badge.textContent = row.source || 'web';
+      tdSource.appendChild(badge);
+      tr.appendChild(tdSource);
+
+      tbody.appendChild(tr);
+    });
+  }
+
   // ── Invite form ────────────────────────────────────────────────────────────
   document.getElementById('invite-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -534,9 +649,10 @@
       } else {
         document.getElementById('admin-content').style.display = 'block';
         document.getElementById('not-authorized').style.display = 'none';
-        // Store session for REST calls and load the members panel
+        // Store session for REST calls and load both panels
         _adminSession = session;
         loadMembers();
+        loadAssessments();
       }
     });
   });
