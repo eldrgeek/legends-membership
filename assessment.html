@@ -290,52 +290,6 @@
 </head>
 <body>
 
-<!-- Netlify Forms detection form (hidden — Netlify reads this at build time) -->
-<form name="member-assessment" netlify netlify-honeypot="bot-field" hidden>
-  <input name="bot-field">
-  <input name="first_name">
-  <input name="last_name">
-  <input name="email">
-  <input name="leagues">
-  <input name="years_since_retirement">
-  <input name="membership_status">
-  <input name="location">
-  <input name="referral">
-  <input name="cam_connection">
-  <input name="cam_frequency">
-  <input name="cam_barriers">
-  <input name="cam_engagement">
-  <input name="cam_isolation">
-  <input name="cam_open">
-  <input name="health_physical">
-  <input name="health_mental">
-  <input name="health_access">
-  <input name="health_conditions">
-  <input name="health_support">
-  <input name="health_open">
-  <input name="fin_stability">
-  <input name="fin_income">
-  <input name="fin_plan">
-  <input name="fin_challenges">
-  <input name="fin_support">
-  <input name="com_local">
-  <input name="com_skills">
-  <input name="com_interests">
-  <input name="com_mentoring">
-  <input name="com_barriers">
-  <input name="fam_relationships">
-  <input name="fam_support">
-  <input name="fam_impact">
-  <input name="fam_support_needed">
-  <input name="fam_open">
-  <input name="tr_overall">
-  <input name="tr_unsettled">
-  <input name="tr_immediate">
-  <input name="tr_vision">
-  <input name="tr_readiness">
-  <input name="tr_open">
-</form>
-
 <nav>
   <div class="nav-inner">
     <a href="index.html" class="nav-brand">
@@ -473,6 +427,11 @@
         <label class="a-option-item"><input type="radio" name="referral" value="Event"> Event or meeting</label>
         <label class="a-option-item"><input type="radio" name="referral" value="Other"> Other</label>
       </div>
+    </div>
+
+    <!-- Honeypot: hidden from humans via CSS, visible to bots. Server rejects if non-empty. -->
+    <div style="display:none; visibility:hidden; position:absolute; left:-9999px;" aria-hidden="true">
+      <label>Website <input type="text" id="hp_website" name="website" tabindex="-1" autocomplete="off"></label>
     </div>
 
   </div>
@@ -1111,8 +1070,7 @@
     var fname = document.getElementById('q_fname').value || 'Legend';
 
     var payload = {
-      'form-name': 'member-assessment',
-      'bot-field': '',
+      website: document.getElementById('hp_website').value,
       first_name: fname,
       last_name: document.getElementById('q_lname').value || '',
       email: document.getElementById('q_email').value || '',
@@ -1157,22 +1115,31 @@
     };
 
     var submitted = false;
+    var submitMsg = '';
     try {
-      var resp = await fetch('/', {
+      var resp = await fetch('/.netlify/functions/submit-assessment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(payload).toString()
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-      submitted = resp.ok;
+      if (resp.status === 503) {
+        submitMsg = '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#856404;text-align:left;">⚠ Submission system is being configured — please email your responses directly to the Legends team or print this page for your records.</div>';
+      } else {
+        submitted = resp.ok;
+      }
     } catch (e) {
       submitted = false;
     }
 
     var statusEl = document.getElementById('submission-status');
     if (statusEl) {
-      statusEl.innerHTML = submitted
-        ? '<div style="background:#d4edda;border:1px solid #28a745;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#155724;text-align:left;">✓ Assessment submitted successfully. The Legends team will follow up based on your responses.</div>'
-        : '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#856404;text-align:left;">⚠ Submission not recorded — please print or save this page as PDF for your records.</div>';
+      if (submitMsg) {
+        statusEl.innerHTML = submitMsg;
+      } else {
+        statusEl.innerHTML = submitted
+          ? '<div style="background:#d4edda;border:1px solid #28a745;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#155724;text-align:left;">✓ Assessment submitted successfully. The Legends team will follow up based on your responses.</div>'
+          : '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#856404;text-align:left;">⚠ Submission not recorded — please print or save this page as PDF for your records.</div>';
+      }
     }
 
     document.getElementById('summary-name').textContent = fname;
