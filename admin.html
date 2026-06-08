@@ -151,28 +151,28 @@
       <h2>Committee Users</h2>
       <p class="section-sub">Members who have login access to gated committee pages.</p>
       <div class="limitation-note">
-        <strong>Netlify dashboard required for user listing.</strong> The Netlify Identity API requires a service-role JWT to list users client-side — that credential is not stored here for security reasons. To view and manage committee users:
+        <strong>Supabase dashboard required for user listing.</strong> Listing all auth users client-side requires a service-role key — that credential must never be in browser code. To view and manage committee users:
       </div>
-      <a href="https://app.netlify.com/sites/legends-membership/identity" class="dashboard-link" target="_blank" rel="noopener">
-        Open Identity Dashboard →
+      <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/auth/users" class="dashboard-link" target="_blank" rel="noopener">
+        Open Supabase Users Dashboard →
       </a>
       <p style="font-size: 0.82rem; color: var(--text-light); margin-top: 14px;">
-        The Identity tab shows all registered users, their last login, and confirmation status.
+        The Auth → Users tab shows all registered users, their last sign-in, and confirmation status.
       </p>
     </div>
 
     <!-- Section 2: Invite a User -->
     <div class="admin-section">
       <h2>Invite a Committee Member</h2>
-      <p class="section-sub">Send a Netlify Identity invitation so a new member can set a password and access gated pages.</p>
+      <p class="section-sub">Send a magic-link invitation so a new member can access gated pages.</p>
       <div class="limitation-note">
-        <strong>Invitations require the Netlify dashboard.</strong> Client-side invite calls require the same service-role JWT that user listing does. Use the button below to go directly to the Netlify invite interface:
+        <strong>Invitations require the Supabase dashboard.</strong> The <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">inviteUserByEmail</code> API requires a service-role key and must not run client-side. Use the button below to go directly to the Supabase invite interface:
       </div>
-      <a href="https://app.netlify.com/sites/legends-membership/identity" class="dashboard-link" target="_blank" rel="noopener">
-        Invite User in Netlify Dashboard →
+      <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/auth/users" class="dashboard-link" target="_blank" rel="noopener">
+        Invite User in Supabase Dashboard →
       </a>
       <p style="font-size: 0.82rem; color: var(--text-light); margin-top: 14px;">
-        In the Identity tab, click <strong style="color:var(--navy)">Invite users</strong>, enter the email address, and Netlify sends the invite email. The recipient clicks a link to set their password.
+        In the Auth → Users tab, click <strong style="color:var(--navy)">Invite user</strong>, enter the email address, and Supabase sends the magic-link invite email. The recipient clicks the link to activate their session.
       </p>
     </div>
 
@@ -189,11 +189,11 @@
     <div class="admin-section">
       <h2>Member Assessment Submissions</h2>
       <p class="section-sub">Responses from the Member Needs Assessment form.</p>
-      <div class="limitation-note">
-        <strong>View submissions in Netlify Forms.</strong> Each completed assessment is captured as a Netlify Form submission under the name <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">member-assessment</code>.
+      <div class="limitation-note" style="border-color: #e67e22; background: #fff9f0;">
+        <strong>⚠ Migration decision needed.</strong> The assessment form (<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">assessment.html</code>) currently submits to Netlify Forms via a POST to <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">/</code> with <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">form-name: member-assessment</code>. This is a live Netlify dependency — not just a dashboard link. Existing submissions are still at the Netlify Forms URL below until you decide where new submissions should go (suggested: a Supabase <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">assessment_submissions</code> table, written via a Supabase Edge Function or direct anon insert with RLS). The form collection has <strong>not been migrated yet</strong>.
       </div>
-      <a href="https://app.netlify.com/sites/legends-membership/forms" class="dashboard-link" target="_blank" rel="noopener">
-        View Form Submissions →
+      <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/editor" class="dashboard-link" target="_blank" rel="noopener">
+        Open Supabase SQL Editor →
       </a>
     </div>
 
