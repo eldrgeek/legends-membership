@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Benefits — Health &amp; Retirement Resources | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <style>
+    .benefits-league-section {
+      margin-bottom: 3rem;
+    }
+    .benefits-league-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .league-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--navy);
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      padding: 4px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin: 1.25rem 0;
+    }
+    .benefit-card {
+      background: var(--navy);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+    }
+    .benefit-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--gold);
+      margin: 0 0 0.6rem 0;
+    }
+    .benefit-card p, .benefit-card li {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.8);
+      margin: 0;
+    }
+    .benefit-card ul {
+      margin: 0.4rem 0 0 1rem;
+      padding: 0;
+    }
+    .benefit-card li {
+      margin-bottom: 0.3rem;
+    }
+    .service-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 1rem 0;
+    }
+    .service-table th {
+      background: var(--gold);
+      color: var(--navy);
+      font-weight: 700;
+      padding: 8px 14px;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.04em;
+    }
+    .service-table td {
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(201,168,76,0.12);
+      color: rgba(255,255,255,0.85);
+    }
+    .service-table tr:nth-child(even) td {
+      background: rgba(255,255,255,0.03);
+    }
+    .resource-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+    .resource-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.35);
+      color: var(--gold-light, #e8c96e);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .resource-link:hover {
+      background: rgba(201,168,76,0.2);
+      border-color: var(--gold);
+    }
+    .highlight-box {
+      background: rgba(201,168,76,0.08);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 6px 6px 0;
+      padding: 1rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .highlight-box p {
+      margin: 0;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.85);
+    }
+    .highlight-box strong {
+      color: var(--gold-light, #e8c96e);
+    }
+    .gap-notice {
+      background: rgba(180,60,60,0.12);
+      border-left: 3px solid rgba(180,80,80,0.7);
+      border-radius: 0 6px 6px 0;
+      padding: 0.9rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .gap-notice p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: rgba(255,180,180,0.9);
+      line-height: 1.55;
+    }
+    .disclaimer-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      margin-top: 2rem;
+    }
+    .disclaimer-box p {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+    }
+    .disclaimer-box p:last-child { margin-bottom: 0; }
+    .quick-contacts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .contact-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201,168,76,0.18);
+      border-radius: 8px;
+      padding: 1.1rem 1.25rem;
+    }
+    .contact-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      color: var(--gold);
+      margin: 0 0 0.5rem 0;
+    }
+    .contact-card p {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.7);
+      margin: 0 0 0.25rem 0;
+      line-height: 1.45;
+    }
+    .contact-card a {
+      color: var(--gold-light, #e8c96e);
+      text-decoration: none;
+    }
+    .contact-card a:hover { text-decoration: underline; }
+    .league-divider {
+      border: none;
+      border-top: 1px solid rgba(201,168,76,0.18);
+      margin: 2.5rem 0;
+    }
+    @media (max-width: 700px) {
+      .benefit-grid { grid-template-columns: 1fr; }
+      .quick-contacts { grid-template-columns: 1fr; }
+      .service-table { font-size: 0.82rem; }
+      .service-table th, .service-table td { padding: 7px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li class="nav-dropdown">
+        <a href="members.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Committee &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="members.html" role="menuitem">Committee Members</a></li>
+          <li><a href="transition-services.html" role="menuitem">Transition Services — Legends Life</a></li>
+        </ul>
+      </li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle active" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
+        </ul>
+      </li>
+      <li><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="ask-bill-nav"><a href="#" onclick="event.preventDefault(); window.somaGuide && window.somaGuide.open();">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="hero hero-small">
+  <div class="hero-eyebrow">Member Resources</div>
+  <h1>Player Benefits — <span>Health &amp; Retirement</span></h1>
+  <p>What you've earned, how it works, and where to go — across every league in our membership.</p>
+</div>
+
+<!-- INTRO -->
+<section>
+  <div class="section-inner">
+    <div class="section-label">Why This Page Exists</div>
+    <h2 class="section-title">Know What You're Entitled To</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">Too many former players leave retirement benefits on the table — not because they don't qualify, but because they don't know what exists or where to look.</p>
+
+    <p style="color: rgba(255,255,255,0.78); line-height: 1.7; max-width: 760px;">This page lays out the retirement and health benefit programs available to alumni of the NBA, WNBA, ABA, and Harlem Globetrotters. Benefits differ significantly across leagues — and within the NBA especially, the dollar value of what you're entitled to scales directly with your years of service. A player with three seasons is in a very different position than one with ten. The single most important thing you can do is contact your league's players association or the NBRPA directly to understand your specific situation.</p>
+
+    <div class="highlight-box" style="margin-top: 1.75rem;">
+      <p><strong>This page is a starting point, not a benefits statement.</strong> Figures cited reflect publicly available CBA terms and official announcements as of mid-2026. Benefit amounts, eligibility rules, and plan administrators can change. Always verify your personal eligibility and current benefit levels directly with the official source for your league.</p>
+    </div>
+  </div>
+</section>
+
+<!-- YEARS OF SERVICE EXPLAINER -->
+<section class="alt">
+  <div class="section-inner">
+    <div class="section-label">The Key Variable</div>
+    <h2 class="section-title">How Years of Service Works</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">Your "credited seasons" are the foundation of nearly every NBA benefit calculation. Here's what that means in practice.</p>
+
+    <div class="benefit-grid" style="margin-top: 1.5rem;">
+      <div class="benefit-card">
+        <h4>What Counts as a Credited Season (NBA)</h4>
+        <p>You earn one credited season for each NBA season in which you were on an active, inactive, or Two-Way contract roster for at least one game. Under the 2023 CBA, Two-Way players earn credit if they are on an active list on February 2nd of that season, or appear in 50% or more of regular season games.</p>
+      </div>
+      <div class="benefit-card">
+        <h4>The Vesting Threshold (NBA)</h4>
+        <p>Three credited seasons is the magic number in the NBA. With three seasons you vest into the pension plan and qualify for lifetime health coverage. Benefits scale upward with every additional credited season — so every year you played matters.</p>
+      </div>
+      <div class="benefit-card">
+        <h4>WNBA &amp; ABA Service</h4>
+        <p>WNBA retirement benefits are based on years of service in the league. ABA recognition payments are based on ABA seasons played (minimum 3 ABA seasons for eligibility). For the Harlem Globetrotters, years of service inform NBRPA Financial Assistance Grant eligibility and priority.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NBA SECTION -->
+<section>
+  <div class="section-inner">
+
+    <div class="benefits-league-section">
+      <div class="benefits-league-header">
+        <span class="league-badge">NBA</span>
+        <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">National Basketball Association</h2>
+      </div>
+      <div class="gold-line"></div>
+      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The NBA has the most comprehensive retired-player benefit structure in professional basketball, established through the NBA-NBPA Collective Bargaining Agreement. The current CBA was ratified in June 2023 and runs through the 2029–30 season. All benefits below are subject to that agreement.</p>
+
+      <div class="benefit-grid">
+
+        <div class="benefit-card">
+          <h4>Pension Plan</h4>
+          <p>A defined-benefit pension based on the number of credited seasons you played. Vests at <strong>3 credited seasons</strong>. You can begin collecting as early as <strong>age 45</strong> (with a reduced amount) or wait until <strong>age 62</strong> for the full benefit.</p>
+          <p style="margin-top: 0.6rem;">Under the 2023 CBA, the monthly benefit rate is approximately <strong>$1,000 per credited season</strong> (at age 62). Example: 10 seasons = roughly $10,000/month at normal retirement age.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>Health Insurance (Retirees)</h4>
+          <ul>
+            <li><strong>3–9 credited seasons:</strong> Lifetime health coverage for the player (medical, dental, vision, mental health, prescriptions)</li>
+            <li><strong>10+ credited seasons:</strong> Lifetime coverage extended to immediate family</li>
+            <li>Plan administered jointly by the NBA and NBPA; verify current insurers and coverage details with NBPA</li>
+          </ul>
+        </div>
+
+        <div class="benefit-card">
+          <h4>401(k) Savings Plan</h4>
+          <p>The NBA-NBPA 401(k) Savings Plan includes a significant employer match — teams contribute to player 401(k) accounts at a matching rate above 100%. Specific current match rates are governed by the CBA; verify with NBPA for your personal account details and how to roll over or access funds post-career.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>Post-Career Income Plan</h4>
+          <p>A separate annuity funded by a portion of Basketball Related Income each season, distributed among eligible players. Provides monthly income after retirement on top of the pension. Contact NBPA to confirm your eligibility and projected amounts.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>Health Reimbursement Account (HRA)</h4>
+          <p>Available to players who played during or after the 2000–01 season. An employer-funded account that reimburses health-related expenses for eligible former players and families under IRS rules. Funded annually. Contact NBPA for your specific HRA balance and eligible expense categories.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>Tuition &amp; Career Transition</h4>
+          <p>Up to <strong>$41,667/year</strong> reimbursed for tuition and career development, with a <strong>$125,000 lifetime cap</strong> (increased by $24,000 for players with 3+ years of service). Apply through the NBPA.</p>
+        </div>
+
+      </div>
+
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">NBA Pension — Approximate Monthly Benefit at Age 62</h3>
+      <p style="font-size: 0.85rem; color: rgba(255,255,255,0.55); margin-bottom: 0.75rem;">Based on the 2023 CBA rate. Actual amounts may vary; verify with NBPA. Collecting before age 62 results in a reduced amount.</p>
+      <table class="service-table">
+        <thead>
+          <tr>
+            <th>Credited Seasons</th>
+            <th>Est. Monthly (age 62)</th>
+            <th>Est. Annual (age 62)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>3 seasons (minimum)</td><td>~$3,000</td><td>~$36,000</td></tr>
+          <tr><td>5 seasons</td><td>~$5,000</td><td>~$60,000</td></tr>
+          <tr><td>8 seasons</td><td>~$8,000</td><td>~$96,000</td></tr>
+          <tr><td>10 seasons</td><td>~$10,000</td><td>~$120,000</td></tr>
+          <tr><td>15 seasons</td><td>~$15,000</td><td>~$180,000</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your NBA Benefits</h3>
+      <div class="resource-links">
+        <a href="https://nbpa.com" target="_blank" rel="noopener" class="resource-link">&#8594; NBPA Official Site</a>
+        <a href="https://portal.nbpa.com" target="_blank" rel="noopener" class="resource-link">&#8594; NBPA Benefits Portal (Player Login)</a>
+        <a href="https://nbpa.com/contact" target="_blank" rel="noopener" class="resource-link">&#8594; Contact the NBPA</a>
+        <a href="https://ak-static.cms.nba.com/wp-content/uploads/sites/4/2023/06/2023-NBA-Collective-Bargaining-Agreement.pdf" target="_blank" rel="noopener" class="resource-link">&#8594; 2023 NBA-NBPA CBA (PDF)</a>
+      </div>
+      <p style="font-size: 0.83rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;"><strong style="color: rgba(255,255,255,0.65);">NBPA direct:</strong> (800) 955-6272 &nbsp;|&nbsp; info@nbpa.com &nbsp;|&nbsp; 1133 Avenue of the Americas, New York, NY 10036</p>
+    </div>
+
+    <hr class="league-divider">
+
+    <!-- WNBA SECTION -->
+    <div class="benefits-league-section">
+      <div class="benefits-league-header">
+        <span class="league-badge">WNBA</span>
+        <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">Women's National Basketball Association</h2>
+      </div>
+      <div class="gold-line"></div>
+      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The WNBA and WNBPA ratified a landmark new Collective Bargaining Agreement in 2026 covering the 2026–2032 seasons. It significantly expands several benefits — particularly for active and recently-retired players. However, there are documented gaps compared to the NBA, especially in post-career health insurance.</p>
+
+      <div class="benefit-grid">
+
+        <div class="benefit-card">
+          <h4>Retirement Savings (401k)</h4>
+          <p>The WNBA does not have a defined-benefit pension like the NBA. The primary retirement vehicle is a team-funded 401(k). The 2026 CBA significantly increased team contributions. Specific rates and vesting schedules are in the full CBA; contact the WNBPA for your personal plan details.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>One-Time Recognition Payment (Retired Players)</h4>
+          <p>The 2026 CBA created a landmark one-time lump-sum payment for already-retired players based on years of service:</p>
+          <ul>
+            <li><strong>5–7 years of service:</strong> $30,000</li>
+            <li><strong>8–11 years of service:</strong> $50,000</li>
+            <li><strong>12+ years of service:</strong> $100,000</li>
+          </ul>
+          <p style="margin-top: 0.5rem;">Minimum 5 years of service required to qualify. Contact WNBPA to confirm your eligibility and payment timeline.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>Life Insurance</h4>
+          <p>The 2026 CBA dramatically expanded life insurance for active WNBA players to over <strong>$700,000 per player</strong> (up from $100,000 under the prior CBA). Verify your current coverage and beneficiary designations with the WNBPA.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>Family Planning Benefits</h4>
+          <p>Players with 2+ years of service qualify for family planning benefits (adoption, surrogacy, egg freezing, fertility treatment) — the eligibility threshold dropped from 8 years in the 2026 CBA. Maternity leave and nursing accommodations are also addressed.</p>
+        </div>
+
+      </div>
+
+      <div class="gap-notice">
+        <p><strong>Important — Retiree Health Coverage Gap:</strong> As of the 2026 CBA, there is <em>no post-career retiree health insurance</em> for former WNBA players. This is a documented gap that the WNBPA has publicly acknowledged. For health coverage options, former WNBA players should explore the NBRPA health insurance marketplace (see the Legends/NBRPA section below) and individual marketplace plans.</p>
+      </div>
+
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your WNBA Benefits</h3>
+      <div class="resource-links">
+        <a href="https://www.wnbpa.com" target="_blank" rel="noopener" class="resource-link">&#8594; WNBPA Official Site</a>
+        <a href="https://www.wnbpa.com/thecba" target="_blank" rel="noopener" class="resource-link">&#8594; WNBPA CBA Page</a>
+        <a href="https://www.wnbpa.com/active-players" target="_blank" rel="noopener" class="resource-link">&#8594; WNBPA Player Resources</a>
+      </div>
+      <p style="font-size: 0.83rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;"><strong style="color: rgba(255,255,255,0.65);">WNBPA direct:</strong> (212) 655-0880 &nbsp;|&nbsp; info@wnbpa.com</p>
+    </div>
+
+    <hr class="league-divider">
+
+    <!-- ABA SECTION -->
+    <div class="benefits-league-section">
+      <div class="benefits-league-header">
+        <span class="league-badge">ABA</span>
+        <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">American Basketball Association</h2>
+      </div>
+      <div class="gold-line"></div>
+      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The ABA operated from 1967 to 1976, when four of its teams merged into the NBA. ABA-only players — those who retired before or during the merger without accumulating NBA pension credits — were left without retirement benefits for decades. In 2022, the NBA and NBPA took meaningful action to address this.</p>
+
+      <div class="benefit-grid">
+
+        <div class="benefit-card">
+          <h4>2022 NBA/NBPA Recognition Payments</h4>
+          <p>In July 2022, the NBA and NBPA jointly announced ongoing recognition payments totaling approximately <strong>$24.5 million</strong> for eligible former ABA players.</p>
+          <p style="margin-top: 0.5rem;"><strong>Eligibility:</strong> Played at least 3 seasons in the ABA <em>and</em> did not qualify for the NBA pension plan.</p>
+          <p style="margin-top: 0.5rem;">Payments are ongoing (not a one-time lump sum) — approximately <strong>$3,828 per year per season of ABA service</strong>, funded equally by the NBA and NBPA. Call the NBA ABA hotline to confirm your status: <strong>1-888-996-1727</strong>.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>ABA Players Who Also Played in the NBA</h4>
+          <p>If you played in both the ABA and NBA, your NBA credited seasons count toward the NBA pension. The recognition payment program is specifically for players who played in the ABA but did not accumulate enough NBA seasons to qualify for the NBA pension separately.</p>
+          <p style="margin-top: 0.5rem;">If you played in both leagues, contact the NBPA to understand how your combined service is calculated.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>ABA Players With Fewer Than 3 ABA Seasons</h4>
+          <p>The 2022 recognition payment program requires a minimum of 3 ABA seasons. Players who fell short of that threshold are not covered by the recognition payment program. The <strong>Dropping Dimes Foundation</strong> — a nonprofit that advocated for the 2022 payments — is the primary resource for ABA players facing hardship outside this program.</p>
+        </div>
+
+      </div>
+
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your ABA Benefits</h3>
+      <div class="resource-links">
+        <a href="https://nbpa.com/news/nbpa-and-nba-announce-recognition-payments-for-former-aba-players" target="_blank" rel="noopener" class="resource-link">&#8594; Official NBPA Announcement (2022)</a>
+        <a href="https://nbpa.com/contact" target="_blank" rel="noopener" class="resource-link">&#8594; Contact the NBPA</a>
+        <a href="https://droppingdimes.org" target="_blank" rel="noopener" class="resource-link">&#8594; Dropping Dimes Foundation</a>
+      </div>
+      <p style="font-size: 0.83rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;">
+        <strong style="color: rgba(255,255,255,0.65);">NBA ABA hotline:</strong> 1-888-996-1727 &nbsp;|&nbsp;
+        <strong style="color: rgba(255,255,255,0.65);">Dropping Dimes:</strong> 317-515-8649 &nbsp;|&nbsp; info@droppingdimes.org
+      </p>
+    </div>
+
+    <hr class="league-divider">
+
+    <!-- HARLEM GLOBETROTTERS SECTION -->
+    <div class="benefits-league-section">
+      <div class="benefits-league-header">
+        <span class="league-badge">GLOBETROTTERS</span>
+        <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">Harlem Globetrotters</h2>
+      </div>
+      <div class="gold-line"></div>
+      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The Harlem Globetrotters operate as a privately held entertainment company (owned by Herschend Enterprises) without a players' union or collective bargaining agreement. As a result, there is no formal league-wide pension or defined retirement benefit plan comparable to the NBA. The primary support network for former Globetrotter players is the NBRPA — Legends of Basketball — which explicitly prioritizes Globetrotter alumni in several of its programs.</p>
+
+      <div class="benefit-grid">
+
+        <div class="benefit-card">
+          <h4>NBRPA Membership (Recommended First Step)</h4>
+          <p>Former Globetrotter players are fully eligible for NBRPA (Legends of Basketball) membership. The NBRPA and Harlem Globetrotters formalized a partnership in 2025 to expand support for former players specifically.</p>
+          <p style="margin-top: 0.5rem;">NBRPA membership unlocks health screenings, insurance marketplace access, financial assistance grants, and scholarship programs. See the full NBRPA section below.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>NBRPA Financial Assistance Grant</h4>
+          <p>Up to <strong>$2,500 per member</strong> (once every two years) for members with AGI of $150,000 or less who demonstrate financial need. <strong>Applications from Harlem Globetrotter alumni receive preference</strong> alongside WNBA alumni and NBA players with fewer than 3 seasons — recognizing that these groups have no formal pension to fall back on.</p>
+        </div>
+
+        <div class="benefit-card">
+          <h4>What to Do First</h4>
+          <ul>
+            <li>Contact NBRPA (Legends of Basketball) to establish membership: 312-913-9400</li>
+            <li>Inquire with Herschend Enterprises (Globetrotters' parent company) about any employer-based retirement plan you may have contributed to during your time with the organization</li>
+            <li>Review your Social Security credits — years of Globetrotter employment may contribute to Social Security retirement benefits</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="resource-links">
+        <a href="https://www.legendsofbasketball.com/alumnis/membership/" target="_blank" rel="noopener" class="resource-link">&#8594; Join NBRPA / Legends of Basketball</a>
+        <a href="https://www.legendsofbasketball.com/grants-and-scholarships/member-grant-program/" target="_blank" rel="noopener" class="resource-link">&#8594; NBRPA Financial Assistance Grant</a>
+        <a href="https://www.legendsofbasketball.com/health-wellness/" target="_blank" rel="noopener" class="resource-link">&#8594; NBRPA Health &amp; Wellness Programs</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- NBRPA ALL-MEMBERS PROGRAMS -->
+<section class="alt">
+  <div class="section-inner">
+    <div class="section-label">For All Members</div>
+    <h2 class="section-title">Legends of Basketball — NBRPA Programs</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">Regardless of which league you played in, the National Basketball Retired Players Association (NBRPA) — Legends of Basketball — offers programs that every former player should know about.</p>
+
+    <div class="benefit-grid" style="margin-top: 1.5rem;">
+
+      <div class="benefit-card">
+        <h4>Health Screenings (Free)</h4>
+        <p>Annual health screenings at All-Star Weekend and other NBA events throughout the year — at no cost to members. Includes cardiac screening (EKG, echocardiogram), blood work, orthopedic consultation, and more. Provided through a partnership with Endeavor Health.</p>
+        <p style="margin-top: 0.5rem;"><a href="https://www.legendsofbasketball.com/health-wellness/endeavor-health/" target="_blank" rel="noopener" style="color: var(--gold-light, #e8c96e);">Learn more →</a></p>
+      </div>
+
+      <div class="benefit-card">
+        <h4>Health Insurance Marketplace</h4>
+        <p>NBRPA members can access a dedicated health insurance marketplace (NBAalumniinsurance.com) with plans tailored for former players. Separate dental coverage through a DentaQuest partnership offers discounted services. This is private marketplace access — not free insurance — but designed for players who aren't covered by NBA or WNBA retiree plans.</p>
+      </div>
+
+      <div class="benefit-card">
+        <h4>Mental Health Services</h4>
+        <p>The NBRPA provides mental health resources and referrals for members navigating the challenges of post-career life. The transition out of professional sports carries real psychological weight — these services exist to help.</p>
+        <p style="margin-top: 0.5rem;"><a href="https://www.legendsofbasketball.com/mental-health/" target="_blank" rel="noopener" style="color: var(--gold-light, #e8c96e);">Learn more →</a></p>
+      </div>
+
+      <div class="benefit-card">
+        <h4>Financial Assistance Grant</h4>
+        <p>Up to <strong>$2,500</strong> per member every two years for members with AGI ≤ $150,000 who demonstrate financial need. Applications accepted monthly (by the 20th). Preference given to WNBA, Globetrotter, and NBA players with fewer than 3 credited seasons.</p>
+        <p style="margin-top: 0.5rem;"><a href="https://www.legendsofbasketball.com/grants-and-scholarships/member-grant-program/" target="_blank" rel="noopener" style="color: var(--gold-light, #e8c96e);">Apply →</a></p>
+      </div>
+
+      <div class="benefit-card">
+        <h4>Scholarships</h4>
+        <p>The <strong>Dave DeBusschere Scholarship Fund</strong> and <strong>Earl Lloyd Scholarship</strong> support members and their children. Over $1 million in scholarship funds has been distributed to former players and families to date.</p>
+        <p style="margin-top: 0.5rem;"><a href="https://www.legendsofbasketball.com/grants-and-scholarships/" target="_blank" rel="noopener" style="color: var(--gold-light, #e8c96e);">Learn more →</a></p>
+      </div>
+
+      <div class="benefit-card">
+        <h4>NBRPA Membership</h4>
+        <p>Eligibility: played at least one professional season in the NBA, WNBA, ABA, or as a Harlem Globetrotter, and officially retired.</p>
+        <ul>
+          <li><strong>Gold:</strong> $250/year</li>
+          <li><strong>Platinum:</strong> $3,500 lifetime</li>
+        </ul>
+        <p style="margin-top: 0.5rem;"><a href="https://www.legendsofbasketball.com/alumnis/membership/" target="_blank" rel="noopener" style="color: var(--gold-light, #e8c96e);">Join or renew →</a></p>
+      </div>
+
+    </div>
+
+    <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2.5rem 0 1rem;">Quick Contact Reference</h3>
+    <div class="quick-contacts">
+      <div class="contact-card">
+        <h4>NBPA (NBA / ABA)</h4>
+        <p>Pension, health, 401(k), HRA, tuition</p>
+        <p><a href="https://nbpa.com">nbpa.com</a></p>
+        <p>(800) 955-6272</p>
+        <p><a href="mailto:info@nbpa.com">info@nbpa.com</a></p>
+        <p>Player Portal: <a href="https://portal.nbpa.com">portal.nbpa.com</a></p>
+      </div>
+      <div class="contact-card">
+        <h4>WNBPA (WNBA)</h4>
+        <p>401(k), recognition payments, benefits</p>
+        <p><a href="https://www.wnbpa.com">wnbpa.com</a></p>
+        <p>(212) 655-0880</p>
+        <p><a href="mailto:info@wnbpa.com">info@wnbpa.com</a></p>
+      </div>
+      <div class="contact-card">
+        <h4>NBRPA / Legends of Basketball</h4>
+        <p>All leagues — health, grants, insurance, scholarships</p>
+        <p><a href="https://www.legendsofbasketball.com">legendsofbasketball.com</a></p>
+        <p>312-913-9400</p>
+        <p><a href="mailto:memberalert@legendsofbasketball.com">memberalert@legendsofbasketball.com</a></p>
+      </div>
+      <div class="contact-card">
+        <h4>NBA ABA Hotline</h4>
+        <p>ABA recognition payment eligibility</p>
+        <p>1-888-996-1727</p>
+        <p style="margin-top: 0.5rem;">Dropping Dimes Foundation (hardship):<br><a href="https://droppingdimes.org">droppingdimes.org</a><br>317-515-8649</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DISCLAIMER -->
+<section>
+  <div class="section-inner">
+    <div class="section-label">Important Notice</div>
+    <h2 class="section-title">Verify Your Situation Directly</h2>
+    <div class="gold-line"></div>
+    <div class="disclaimer-box">
+      <p><strong style="color: rgba(255,255,255,0.85);">This page is informational only and does not constitute financial, legal, or benefits advice.</strong> The information presented is based on publicly available Collective Bargaining Agreement terms, official press releases, and NBRPA program materials as of mid-2026. Benefit structures, eligibility rules, plan administrators, and dollar amounts can change — and the gap between what a CBA establishes and what a given player is actually entitled to is something only your league's players association or plan administrator can tell you.</p>
+      <p>Every player's situation is different. Your credited seasons, the specific years you played, whether you took early retirement, whether you have dependents — all of these affect what you actually receive. The only way to know your personal benefit picture is to call or write the relevant contact for your league and ask directly about <em>your</em> account.</p>
+      <p>The Legends of Basketball Membership Services Committee will continue to update this page as benefit programs evolve. If you believe information here is outdated or incorrect, please <a href="about.html" style="color: var(--gold-light, #e8c96e);">contact the committee</a>.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="player-benefits.html">Player Benefits</a>
+    <a href="recommendations.html">Recommendations</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
+  <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script>
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') {
+      if (event === 'SIGNED_OUT') window.location.replace('/');
+      return;
+    }
+    var user = session ? session.user : null;
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+</script>
+
+<script src="js/legends-knowledge.js"></script>
+<script src="js/legends-guide-config.js"></script>
+<script type="module" src="https://soma-guide.netlify.app/soma-guide.js"></script>
+<script src="js/nav-dropdown.js"></script>
+</body>
+</html>
