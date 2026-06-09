@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Legends of Basketball Membership Services Committee site",
   "scripts": {
-    "test": "node --test tests/suite.test.js tests/soma-guide.test.js"
+    "test": "node --test tests/suite.test.js tests/soma-guide.test.js",
+    "test:e2e": "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY node tools/regression-test.mjs"
   },
   "devDependencies": {
+    "js-yaml": "^4.2.0",
     "jsdom": "^26.0.0"
   }
 }

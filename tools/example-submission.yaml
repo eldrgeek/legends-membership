@@ -1,0 +1,75 @@
+# Legends of Basketball — Member Assessment Submission
+# AI Portal example (YAML format — preferred for readability; JSON also accepted)
+#
+# Submit with:
+#   node tools/submit-member.mjs tools/example-submission.yaml
+#
+# Dry-run (validate only, don't send):
+#   node tools/submit-member.mjs tools/example-submission.yaml --dry-run
+#
+# Schema: https://github.com/eldrgeek/legends-membership
+# All fields are optional except first_name.
+
+# ── Identity ──────────────────────────────────────────────────────────────────
+first_name: "Marcus"
+last_name: "Thompson"
+email: "marcus.thompson@example.com"
+leagues: "NBA"
+years_since_retirement: "5-10"
+membership_status: "associate"
+location: "Atlanta, GA"
+referral: "colleague"
+
+# ── Camaraderie ───────────────────────────────────────────────────────────────
+# cam_connection: scale 1-5 (1=very disconnected, 5=very connected)
+cam_connection: "3"
+cam_frequency: "monthly"
+cam_barriers: "Distance, Busy schedule"
+cam_engagement: "Alumni events, Virtual meetups"
+# cam_isolation: scale 1-5 (1=not isolated, 5=very isolated)
+cam_isolation: "2"
+cam_open: "Would love more structured ways to reconnect with former teammates."
+
+# ── Health ────────────────────────────────────────────────────────────────────
+# health_physical: scale 1-5 (1=poor, 5=excellent)
+health_physical: "4"
+# health_mental: scale 1-5 (1=poor, 5=excellent)
+health_mental: "3"
+health_access: "good"
+health_conditions: "Joint pain"
+health_support: "Physical therapy, Nutrition guidance"
+health_open: "Managing the physical transition has been a challenge."
+
+# ── Financial ────────────────────────────────────────────────────────────────
+# fin_stability: scale 1-5 (1=very unstable, 5=very stable)
+fin_stability: "4"
+fin_income: "Business ventures, Speaking engagements"
+fin_plan: "yes"
+fin_challenges: "Investment decisions"
+fin_support: "Financial planning resources"
+
+# ── Community ────────────────────────────────────────────────────────────────
+# com_local: scale 1-5 (1=not engaged, 5=very engaged)
+com_local: "3"
+# com_skills: scale 1-5 (1=not skilled for community, 5=very skilled)
+com_skills: "4"
+com_interests: "Youth basketball, Entrepreneurship"
+com_mentoring: "yes"
+com_barriers: "Time constraints"
+
+# ── Family ───────────────────────────────────────────────────────────────────
+# fam_relationships: scale 1-5 (1=strained, 5=very strong)
+fam_relationships: "4"
+fam_support: "strong"
+fam_impact: "positive"
+fam_support_needed: "Balancing family time with new career"
+fam_open: "Family has been my anchor through this transition."
+
+# ── Transition ───────────────────────────────────────────────────────────────
+tr_overall: "well"
+tr_unsettled: "Identity, Purpose"
+tr_immediate: "career"
+tr_vision: "Build a business that gives back to my community while mentoring the next generation."
+# tr_readiness: scale 1-5 (1=not ready, 5=fully ready)
+tr_readiness: "4"
+tr_open: "I wish there had been more preparation for life after basketball."
