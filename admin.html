@@ -178,6 +178,7 @@
           <li><a href="minutes.html" role="menuitem">Minutes</a></li>
           <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
           <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
         </ul>
       </li>
       <li><a href="recommendations.html">Recommendations</a></li>
@@ -252,7 +253,7 @@
     </div>
 
     <!-- Section 4: Member Assessment Submissions (native in-app panel) -->
-    <div class="admin-section">
+    <div class="admin-section" id="assessment-section">
       <h2>Member Assessment Submissions</h2>
       <p class="section-sub">Responses from the Member Needs Assessment form, stored in Supabase.</p>
       <div id="assessment-loading" class="panel-loading">Loading submissions…</div>
@@ -276,6 +277,18 @@
         <strong>Table not yet created.</strong> Apply the SQL to enable this panel.<br>
         File: <code>SOMA/standards/soma-assessment-submissions.sql</code><br>
         → <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/sql/new" target="_blank" rel="noopener">Open Supabase SQL Editor</a> and paste + run the contents.
+      </div>
+    </div>
+
+    <!-- Section 5: Resource Visibility -->
+    <div class="admin-section">
+      <h2>Resource Visibility</h2>
+      <p class="section-sub">Control whether each resource is open to everyone or restricted to committee members. Changes are saved to the server immediately.</p>
+      <div id="visibility-loading" class="panel-loading">Loading settings…</div>
+      <div id="visibility-error" class="panel-error" style="display:none;"></div>
+      <div id="visibility-rows" style="display:none;"></div>
+      <div class="limitation-note" style="margin-top: 16px;">
+        <strong>Note:</strong> "Open" means anyone can view the page without logging in. "Committee-only" means a login is required. Page-level gating (the actual redirect) is set in each page's HTML — Player Benefits has no gate and is permanently open; the other resource pages have static gates. The toggle here records intent and is ready for a future dynamic-gate implementation.
       </div>
     </div>
 
@@ -577,6 +590,130 @@
     });
   }
 
+  // ── Resource visibility panel ─────────────────────────────────────────────
+
+  var _visibilitySettings = null;
+
+  var VISIBILITY_LABELS = { 'open': 'Open (public)', 'committee-only': 'Committee only' };
+
+  function loadVisibilitySettings() {
+    var loading = document.getElementById('visibility-loading');
+    var errorEl = document.getElementById('visibility-error');
+    var rowsEl = document.getElementById('visibility-rows');
+
+    loading.style.display = '';
+    errorEl.style.display = 'none';
+    rowsEl.style.display = 'none';
+
+    fetch('/.netlify/functions/resource-settings')
+      .then(function(res) { return res.json(); })
+      .then(function(settings) {
+        _visibilitySettings = settings;
+        loading.style.display = 'none';
+        renderVisibilityRows(settings);
+        rowsEl.style.display = '';
+      })
+      .catch(function(err) {
+        loading.style.display = 'none';
+        errorEl.textContent = 'Could not load settings: ' + err.message;
+        errorEl.style.display = '';
+      });
+  }
+
+  function renderVisibilityRows(settings) {
+    var rowsEl = document.getElementById('visibility-rows');
+    rowsEl.innerHTML = '';
+    var table = document.createElement('table');
+    table.className = 'members-table';
+    table.innerHTML = '<thead><tr><th>Resource</th><th>Visibility</th><th>Change</th></tr></thead>';
+    var tbody = document.createElement('tbody');
+    Object.keys(settings).forEach(function(key) {
+      var cfg = settings[key];
+      var tr = document.createElement('tr');
+
+      var tdLabel = document.createElement('td');
+      var a = document.createElement('a');
+      a.href = cfg.href;
+      a.textContent = cfg.label;
+      a.style.color = 'var(--navy)';
+      tdLabel.appendChild(a);
+      tr.appendChild(tdLabel);
+
+      var tdVis = document.createElement('td');
+      var badge = document.createElement('span');
+      badge.className = 'role-badge ' + (cfg.visibility === 'open' ? 'member' : 'admin');
+      badge.textContent = VISIBILITY_LABELS[cfg.visibility] || cfg.visibility;
+      tdVis.appendChild(badge);
+      tr.appendChild(tdVis);
+
+      var tdAction = document.createElement('td');
+      var sel = document.createElement('select');
+      sel.className = 'role-select';
+      ['open', 'committee-only'].forEach(function(v) {
+        var opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = VISIBILITY_LABELS[v];
+        if (v === cfg.visibility) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      var btn = document.createElement('button');
+      btn.className = 'btn-role-save';
+      btn.textContent = 'Save';
+      var statusSpan = document.createElement('span');
+      statusSpan.className = 'inline-status';
+
+      btn.onclick = function() {
+        var newVis = sel.value;
+        if (newVis === cfg.visibility) return;
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        statusSpan.textContent = '';
+        var updated = Object.assign({}, _visibilitySettings);
+        updated[key] = Object.assign({}, cfg, { visibility: newVis });
+        SomaAuth.getSession().then(function(result) {
+          var token = result.data && result.data.session && result.data.session.access_token;
+          return fetch('/.netlify/functions/resource-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(updated)
+          });
+        })
+        .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
+        .then(function(result) {
+          btn.disabled = false;
+          btn.textContent = 'Save';
+          if (result.ok) {
+            cfg.visibility = newVis;
+            _visibilitySettings = result.data.settings || updated;
+            badge.className = 'role-badge ' + (newVis === 'open' ? 'member' : 'admin');
+            badge.textContent = VISIBILITY_LABELS[newVis];
+            statusSpan.textContent = '✓ saved';
+            statusSpan.className = 'inline-status ok';
+            setTimeout(function() { statusSpan.textContent = ''; }, 3000);
+          } else {
+            statusSpan.textContent = '✗ ' + ((result.data && result.data.error) || 'error');
+            statusSpan.className = 'inline-status err';
+          }
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Save';
+          statusSpan.textContent = '✗ ' + err.message;
+          statusSpan.className = 'inline-status err';
+        });
+      };
+
+      tdAction.appendChild(sel);
+      tdAction.appendChild(document.createTextNode(' '));
+      tdAction.appendChild(btn);
+      tdAction.appendChild(statusSpan);
+      tr.appendChild(tdAction);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    rowsEl.appendChild(table);
+  }
+
   // ── Invite form ────────────────────────────────────────────────────────────
   document.getElementById('invite-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -649,6 +786,7 @@
         _adminSession = session;
         loadMembers();
         loadAssessments();
+        loadVisibilitySettings();
       }
     });
   });

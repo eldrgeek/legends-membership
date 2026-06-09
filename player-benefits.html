@@ -78,11 +78,11 @@
     }
     .service-table td {
       padding: 8px 14px;
-      border-bottom: 1px solid rgba(201,168,76,0.12);
-      color: rgba(255,255,255,0.85);
+      border-bottom: 1px solid var(--border);
+      color: var(--text-dark);
     }
     .service-table tr:nth-child(even) td {
-      background: rgba(255,255,255,0.03);
+      background: rgba(0,0,0,0.03);
     }
     .resource-links {
       display: flex;
@@ -119,14 +119,14 @@
       margin: 0;
       font-size: 0.92rem;
       line-height: 1.6;
-      color: rgba(255,255,255,0.85);
+      color: var(--text-dark);
     }
     .highlight-box strong {
-      color: var(--gold-light, #e8c96e);
+      color: var(--navy);
     }
     .gap-notice {
-      background: rgba(180,60,60,0.12);
-      border-left: 3px solid rgba(180,80,80,0.7);
+      background: #fef2f2;
+      border-left: 3px solid #c53030;
       border-radius: 0 6px 6px 0;
       padding: 0.9rem 1.5rem;
       margin: 1rem 0;
@@ -134,12 +134,12 @@
     .gap-notice p {
       margin: 0;
       font-size: 0.88rem;
-      color: rgba(255,180,180,0.9);
+      color: #7b1c1c;
       line-height: 1.55;
     }
     .disclaimer-box {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.12);
+      background: var(--off-white);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1.5rem 2rem;
       margin-top: 2rem;
@@ -147,7 +147,7 @@
     .disclaimer-box p {
       margin: 0 0 0.75rem 0;
       font-size: 0.88rem;
-      color: rgba(255,255,255,0.6);
+      color: var(--text-medium);
       line-height: 1.6;
     }
     .disclaimer-box p:last-child { margin-bottom: 0; }
@@ -158,25 +158,25 @@
       margin-top: 1.5rem;
     }
     .contact-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(201,168,76,0.18);
+      background: var(--white);
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1.1rem 1.25rem;
     }
     .contact-card h4 {
       font-family: 'Playfair Display', serif;
       font-size: 0.95rem;
-      color: var(--gold);
+      color: var(--navy);
       margin: 0 0 0.5rem 0;
     }
     .contact-card p {
       font-size: 0.82rem;
-      color: rgba(255,255,255,0.7);
+      color: var(--text-medium);
       margin: 0 0 0.25rem 0;
       line-height: 1.45;
     }
     .contact-card a {
-      color: var(--gold-light, #e8c96e);
+      color: var(--navy);
       text-decoration: none;
     }
     .contact-card a:hover { text-decoration: underline; }
@@ -191,6 +191,9 @@
       .service-table { font-size: 0.82rem; }
       .service-table th, .service-table td { padding: 7px 10px; }
     }
+    .dark-section { background: var(--navy); }
+    .dark-section .section-title { color: var(--gold); }
+    .dark-section .section-lead { color: rgba(255,255,255,0.72); }
   </style>
 </head>
 <body>
@@ -240,14 +243,14 @@
 </div>
 
 <!-- INTRO -->
-<section>
+<section class="dark-section">
   <div class="section-inner">
     <div class="section-label">Why This Page Exists</div>
     <h2 class="section-title">Know What You're Entitled To</h2>
     <div class="gold-line"></div>
     <p class="section-lead">Too many former players leave retirement benefits on the table — not because they don't qualify, but because they don't know what exists or where to look.</p>
 
-    <p style="color: rgba(255,255,255,0.78); line-height: 1.7; max-width: 760px;">This page lays out the retirement and health benefit programs available to alumni of the NBA, WNBA, ABA, and Harlem Globetrotters. Benefits differ significantly across leagues — and within the NBA especially, the dollar value of what you're entitled to scales directly with your years of service. A player with three seasons is in a very different position than one with ten. The single most important thing you can do is contact your league's players association or the NBRPA directly to understand your specific situation.</p>
+    <p style="color: var(--text-medium); line-height: 1.7; max-width: 760px;">This page lays out the retirement and health benefit programs available to alumni of the NBA, WNBA, ABA, and Harlem Globetrotters. Benefits differ significantly across leagues — and within the NBA especially, the dollar value of what you're entitled to scales directly with your years of service. A player with three seasons is in a very different position than one with ten. The single most important thing you can do is contact your league's players association or the NBRPA directly to understand your specific situation.</p>
 
     <div class="highlight-box" style="margin-top: 1.75rem;">
       <p><strong>This page is a starting point, not a benefits statement.</strong> Figures cited reflect publicly available CBA terms and official announcements as of mid-2026. Benefit amounts, eligibility rules, and plan administrators can change. Always verify your personal eligibility and current benefit levels directly with the official source for your league.</p>
@@ -281,7 +284,7 @@
 </section>
 
 <!-- NBA SECTION -->
-<section>
+<section class="dark-section">
   <div class="section-inner">
 
     <div class="benefits-league-section">
@@ -290,7 +293,7 @@
         <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">National Basketball Association</h2>
       </div>
       <div class="gold-line"></div>
-      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The NBA has the most comprehensive retired-player benefit structure in professional basketball, established through the NBA-NBPA Collective Bargaining Agreement. The current CBA was ratified in June 2023 and runs through the 2029–30 season. All benefits below are subject to that agreement.</p>
+      <p style="color: var(--text-medium); line-height: 1.65; margin-bottom: 1.5rem;">The NBA has the most comprehensive retired-player benefit structure in professional basketball, established through the NBA-NBPA Collective Bargaining Agreement. The current CBA was ratified in June 2023 and runs through the 2029–30 season. All benefits below are subject to that agreement.</p>
 
       <div class="benefit-grid">
 
@@ -331,8 +334,8 @@
 
       </div>
 
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">NBA Pension — Approximate Monthly Benefit at Age 62</h3>
-      <p style="font-size: 0.85rem; color: rgba(255,255,255,0.55); margin-bottom: 0.75rem;">Based on the 2023 CBA rate. Actual amounts may vary; verify with NBPA. Collecting before age 62 results in a reduced amount.</p>
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); font-size: 1.1rem; margin: 2rem 0 0.75rem;">NBA Pension — Approximate Monthly Benefit at Age 62</h3>
+      <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.75rem;">Based on the 2023 CBA rate. Actual amounts may vary; verify with NBPA. Collecting before age 62 results in a reduced amount.</p>
       <table class="service-table">
         <thead>
           <tr>
@@ -350,14 +353,14 @@
         </tbody>
       </table>
 
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your NBA Benefits</h3>
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your NBA Benefits</h3>
       <div class="resource-links">
         <a href="https://nbpa.com" target="_blank" rel="noopener" class="resource-link">&#8594; NBPA Official Site</a>
         <a href="https://portal.nbpa.com" target="_blank" rel="noopener" class="resource-link">&#8594; NBPA Benefits Portal (Player Login)</a>
         <a href="https://nbpa.com/contact" target="_blank" rel="noopener" class="resource-link">&#8594; Contact the NBPA</a>
         <a href="https://ak-static.cms.nba.com/wp-content/uploads/sites/4/2023/06/2023-NBA-Collective-Bargaining-Agreement.pdf" target="_blank" rel="noopener" class="resource-link">&#8594; 2023 NBA-NBPA CBA (PDF)</a>
       </div>
-      <p style="font-size: 0.83rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;"><strong style="color: rgba(255,255,255,0.65);">NBPA direct:</strong> (800) 955-6272 &nbsp;|&nbsp; info@nbpa.com &nbsp;|&nbsp; 1133 Avenue of the Americas, New York, NY 10036</p>
+      <p style="font-size: 0.83rem; color: var(--text-light); margin-top: 0.75rem;"><strong style="color: var(--navy);">NBPA direct:</strong> (800) 955-6272 &nbsp;|&nbsp; info@nbpa.com &nbsp;|&nbsp; 1133 Avenue of the Americas, New York, NY 10036</p>
     </div>
 
     <hr class="league-divider">
@@ -369,7 +372,7 @@
         <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">Women's National Basketball Association</h2>
       </div>
       <div class="gold-line"></div>
-      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The WNBA and WNBPA ratified a landmark new Collective Bargaining Agreement in 2026 covering the 2026–2032 seasons. It significantly expands several benefits — particularly for active and recently-retired players. However, there are documented gaps compared to the NBA, especially in post-career health insurance.</p>
+      <p style="color: var(--text-medium); line-height: 1.65; margin-bottom: 1.5rem;">The WNBA and WNBPA ratified a landmark new Collective Bargaining Agreement in 2026 covering the 2026–2032 seasons. It significantly expands several benefits — particularly for active and recently-retired players. However, there are documented gaps compared to the NBA, especially in post-career health insurance.</p>
 
       <div class="benefit-grid">
 
@@ -405,13 +408,13 @@
         <p><strong>Important — Retiree Health Coverage Gap:</strong> As of the 2026 CBA, there is <em>no post-career retiree health insurance</em> for former WNBA players. This is a documented gap that the WNBPA has publicly acknowledged. For health coverage options, former WNBA players should explore the NBRPA health insurance marketplace (see the Legends/NBRPA section below) and individual marketplace plans.</p>
       </div>
 
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your WNBA Benefits</h3>
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your WNBA Benefits</h3>
       <div class="resource-links">
         <a href="https://www.wnbpa.com" target="_blank" rel="noopener" class="resource-link">&#8594; WNBPA Official Site</a>
         <a href="https://www.wnbpa.com/thecba" target="_blank" rel="noopener" class="resource-link">&#8594; WNBPA CBA Page</a>
         <a href="https://www.wnbpa.com/active-players" target="_blank" rel="noopener" class="resource-link">&#8594; WNBPA Player Resources</a>
       </div>
-      <p style="font-size: 0.83rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;"><strong style="color: rgba(255,255,255,0.65);">WNBPA direct:</strong> (212) 655-0880 &nbsp;|&nbsp; info@wnbpa.com</p>
+      <p style="font-size: 0.83rem; color: var(--text-light); margin-top: 0.75rem;"><strong style="color: var(--navy);">WNBPA direct:</strong> (212) 655-0880 &nbsp;|&nbsp; info@wnbpa.com</p>
     </div>
 
     <hr class="league-divider">
@@ -423,7 +426,7 @@
         <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">American Basketball Association</h2>
       </div>
       <div class="gold-line"></div>
-      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The ABA operated from 1967 to 1976, when four of its teams merged into the NBA. ABA-only players — those who retired before or during the merger without accumulating NBA pension credits — were left without retirement benefits for decades. In 2022, the NBA and NBPA took meaningful action to address this.</p>
+      <p style="color: var(--text-medium); line-height: 1.65; margin-bottom: 1.5rem;">The ABA operated from 1967 to 1976, when four of its teams merged into the NBA. ABA-only players — those who retired before or during the merger without accumulating NBA pension credits — were left without retirement benefits for decades. In 2022, the NBA and NBPA took meaningful action to address this.</p>
 
       <div class="benefit-grid">
 
@@ -447,15 +450,15 @@
 
       </div>
 
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--gold-light, #e8c96e); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your ABA Benefits</h3>
+      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); font-size: 1.1rem; margin: 2rem 0 0.75rem;">Where to Research Your ABA Benefits</h3>
       <div class="resource-links">
         <a href="https://nbpa.com/news/nbpa-and-nba-announce-recognition-payments-for-former-aba-players" target="_blank" rel="noopener" class="resource-link">&#8594; Official NBPA Announcement (2022)</a>
         <a href="https://nbpa.com/contact" target="_blank" rel="noopener" class="resource-link">&#8594; Contact the NBPA</a>
         <a href="https://droppingdimes.org" target="_blank" rel="noopener" class="resource-link">&#8594; Dropping Dimes Foundation</a>
       </div>
-      <p style="font-size: 0.83rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;">
-        <strong style="color: rgba(255,255,255,0.65);">NBA ABA hotline:</strong> 1-888-996-1727 &nbsp;|&nbsp;
-        <strong style="color: rgba(255,255,255,0.65);">Dropping Dimes:</strong> 317-515-8649 &nbsp;|&nbsp; info@droppingdimes.org
+      <p style="font-size: 0.83rem; color: var(--text-light); margin-top: 0.75rem;">
+        <strong style="color: var(--navy);">NBA ABA hotline:</strong> 1-888-996-1727 &nbsp;|&nbsp;
+        <strong style="color: var(--navy);">Dropping Dimes:</strong> 317-515-8649 &nbsp;|&nbsp; info@droppingdimes.org
       </p>
     </div>
 
@@ -468,7 +471,7 @@
         <h2 class="section-title" style="margin: 0; font-size: 1.6rem;">Harlem Globetrotters</h2>
       </div>
       <div class="gold-line"></div>
-      <p style="color: rgba(255,255,255,0.78); line-height: 1.65; margin-bottom: 1.5rem;">The Harlem Globetrotters operate as a privately held entertainment company (owned by Herschend Enterprises) without a players' union or collective bargaining agreement. As a result, there is no formal league-wide pension or defined retirement benefit plan comparable to the NBA. The primary support network for former Globetrotter players is the NBRPA — Legends of Basketball — which explicitly prioritizes Globetrotter alumni in several of its programs.</p>
+      <p style="color: var(--text-medium); line-height: 1.65; margin-bottom: 1.5rem;">The Harlem Globetrotters operate as a privately held entertainment company (owned by Herschend Enterprises) without a players' union or collective bargaining agreement. As a result, there is no formal league-wide pension or defined retirement benefit plan comparable to the NBA. The primary support network for former Globetrotter players is the NBRPA — Legends of Basketball — which explicitly prioritizes Globetrotter alumni in several of its programs.</p>
 
       <div class="benefit-grid">
 
@@ -505,7 +508,7 @@
 </section>
 
 <!-- NBRPA ALL-MEMBERS PROGRAMS -->
-<section class="alt">
+<section class="dark-section">
   <div class="section-inner">
     <div class="section-label">For All Members</div>
     <h2 class="section-title">Legends of Basketball — NBRPA Programs</h2>
@@ -590,7 +593,7 @@
 </section>
 
 <!-- DISCLAIMER -->
-<section>
+<section class="dark-section">
   <div class="section-inner">
     <div class="section-label">Important Notice</div>
     <h2 class="section-title">Verify Your Situation Directly</h2>
