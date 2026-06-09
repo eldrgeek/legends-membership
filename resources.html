@@ -551,26 +551,87 @@
       Have a suggestion for the committee? We want to hear from you. Use this form to share ideas for programs, membership benefits, or anything that would strengthen the Legends of Basketball community.
     </p>
 
-    <form name="ideas" method="POST" data-netlify="true" style="background: var(--off-white); border: 1px solid var(--border); border-radius: 12px; padding: 40px;">
-      <input type="hidden" name="form-name" value="ideas">
+    <div id="idea-form-wrap" style="background: var(--off-white); border: 1px solid var(--border); border-radius: 12px; padding: 40px;">
+      <!-- Honeypot — invisible to humans, filled by bots -->
+      <input type="text" id="idea-hp" name="website" style="display:none;" tabindex="-1" autocomplete="off">
 
       <div style="margin-bottom: 24px;">
         <label for="idea-name" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em;">Your Name</label>
-        <input type="text" id="idea-name" name="name" required placeholder="First and last name" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <input type="text" id="idea-name" placeholder="First and last name" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
       </div>
 
       <div style="margin-bottom: 24px;">
         <label for="idea-email" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em;">Email <span style="font-weight: 400; color: var(--text-light);">(optional)</span></label>
-        <input type="email" id="idea-email" name="email" placeholder="your@email.com" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <input type="email" id="idea-email" placeholder="your@email.com" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
       </div>
 
       <div style="margin-bottom: 32px;">
-        <label for="idea-text" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em;">Your Idea or Suggestion</label>
-        <textarea id="idea-text" name="idea" required rows="6" placeholder="Describe your idea for the committee — a new program, benefit, event, or anything that could strengthen our membership..." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <label for="idea-text" style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; letter-spacing: 0.02em;">Your Idea or Suggestion <span style="color:var(--gold);">*</span></label>
+        <textarea id="idea-text" rows="6" placeholder="Describe your idea for the committee — a new program, benefit, event, or anything that could strengthen our membership..." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; color: var(--text-dark); background: var(--white); resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
       </div>
 
-      <button type="submit" class="btn btn-gold" style="font-size: 0.95rem; padding: 14px 36px;">Submit Idea →</button>
-    </form>
+      <button id="idea-submit-btn" onclick="submitIdea()" class="btn btn-gold" style="font-size: 0.95rem; padding: 14px 36px;">Submit Idea &rarr;</button>
+      <div id="idea-form-msg" style="display:none; margin-top: 16px; padding: 12px 16px; border-radius: 8px; font-size: 0.88rem;"></div>
+    </div>
+
+    <script>
+      function submitIdea() {
+        var idea = document.getElementById('idea-text').value.trim();
+        var name = document.getElementById('idea-name').value.trim();
+        var email = document.getElementById('idea-email').value.trim();
+        var hp = document.getElementById('idea-hp').value;
+        var btn = document.getElementById('idea-submit-btn');
+        var msgEl = document.getElementById('idea-form-msg');
+
+        msgEl.style.display = 'none';
+
+        if (!idea) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#fee2e2';
+          msgEl.style.color = '#991b1b';
+          msgEl.textContent = 'Please describe your idea before submitting.';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+
+        fetch('/.netlify/functions/submit-recommendation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, email: email, idea: idea, website: hp })
+        })
+        .then(function(r) {
+          return r.json().then(function(d) { return { status: r.status, data: d }; });
+        })
+        .then(function(res) {
+          if (res.status === 200) {
+            msgEl.style.display = 'block';
+            msgEl.style.background = '#d1fae5';
+            msgEl.style.color = '#065f46';
+            msgEl.textContent = res.data.message || 'Thank you! Your idea has been received.';
+            document.getElementById('idea-name').value = '';
+            document.getElementById('idea-email').value = '';
+            document.getElementById('idea-text').value = '';
+          } else {
+            msgEl.style.display = 'block';
+            msgEl.style.background = '#fee2e2';
+            msgEl.style.color = '#991b1b';
+            msgEl.textContent = (res.data && res.data.error) || 'Submission failed. Please try again.';
+          }
+        })
+        .catch(function(e) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#fee2e2';
+          msgEl.style.color = '#991b1b';
+          msgEl.textContent = 'Network error: ' + e.message;
+        })
+        .finally(function() {
+          btn.disabled = false;
+          btn.textContent = 'Submit Idea →';
+        });
+      }
+    </script>
   </div>
 </section>
 
