@@ -10,6 +10,7 @@
   --gold: #c9a84c;
   --gold-light: #e8c96e;
   --gold-pale: #f5e9c5;
+  --gold-dark: #8a6d1c; /* readable gold for text on light backgrounds (WCAG AA) */
   --white: #ffffff;
   --off-white: #f4f6f8;
   --text-dark: #1a1a1a;
@@ -71,18 +72,21 @@ nav {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 4px;
   list-style: none;
 }
+.nav-links span { white-space: nowrap; }
 .nav-links a {
   color: rgba(255,255,255,0.82);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 6px;
   transition: color 0.2s, background 0.2s;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .nav-links a:hover, .nav-links a.active {
   color: var(--gold);
@@ -252,7 +256,7 @@ section.alt { background: var(--off-white); }
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--gold-dark);
   margin-bottom: 12px;
 }
 .section-title {
