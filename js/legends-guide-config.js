@@ -44,6 +44,9 @@ window.SomaGuideConfig = {
   /* ── Cursor lead-in (ms after audio starts → cursor appears) ─────────── */
   cursorLeadIn: 1200,
 
+  /* ── Clean on close: discard tour state when widget is minimised ─────── */
+  cleanOnClose: true,
+
   /* ── Site map ────────────────────────────────────────────────────────── */
   siteMap: [
     { id: 'home',            label: 'Home',              path: 'index.html',           description: 'Overview of the Legends of Basketball Membership Services Committee' },
@@ -69,9 +72,10 @@ window.SomaGuideConfig = {
       keywords: ['tour', 'overview', 'show me', 'around', 'what is this', 'help me navigate'],
       steps: [
 
-        /* Step 1 — Navigation bar */
+        /* Step 1 — Navigation bar; page:'/' ensures we always start from home */
         {
           target: '.nav-inner',
+          page: '/',
           label: 'Navigation',
           demo: 'hover',
           narration:
@@ -140,7 +144,6 @@ window.SomaGuideConfig = {
           substeps: [
             {
               target: 'a[href="minutes.html"]',
-              page: 'minutes',
               label: 'Meeting Minutes',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -151,7 +154,6 @@ window.SomaGuideConfig = {
             },
             {
               target: 'a[href="systems-map.html"]',
-              page: 'systems-map',
               label: 'Systems Map',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -162,7 +164,6 @@ window.SomaGuideConfig = {
             },
             {
               target: 'a[href="assessment.html"]',
-              page: 'assessment',
               label: 'Assessment',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -173,7 +174,6 @@ window.SomaGuideConfig = {
             },
             {
               target: 'a[href="resources.html"]',
-              page: 'resources',
               label: 'Documents',
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown' },
@@ -309,6 +309,7 @@ window.SomaGuideConfig = {
       steps: [
         {
           target: '#ask-bill-section',
+          page: '/',
           label: 'Ask Bill section',
           demo: 'hover',
           narration:
