@@ -435,16 +435,21 @@
         statusSpan.textContent = '';
         statusSpan.className = 'inline-status';
 
-        supaRest('/rest/v1/profiles?id=eq.' + encodeURIComponent(row.id), {
-          method: 'PATCH',
-          headers: { 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ role: newRole })
+        SomaAuth.getSession().then(function(result) {
+          var token = result.data && result.data.session && result.data.session.access_token;
+          return fetch('/.netlify/functions/admin-users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ action: 'setrole', userId: row.id, role: newRole })
+          });
         })
         .then(function(res) {
+          return res.json().then(function(d) { return { ok: res.ok, status: res.status, data: d }; });
+        })
+        .then(function(result) {
           btn.disabled = false;
           btn.textContent = 'Save';
-          if (res.ok || res.status === 204) {
-            // Update local state and re-render badge
+          if (result.ok) {
             row.role = newRole;
             badge.className = 'role-badge ' + newRole;
             badge.textContent = newRole;
@@ -452,17 +457,8 @@
             statusSpan.className = 'inline-status ok';
             setTimeout(function() { statusSpan.textContent = ''; }, 3000);
           } else {
-            return res.text().then(function(body) {
-              var policyNote = document.getElementById('members-policy-note');
-              // 42501 = insufficient_privilege; also catches generic 403
-              if (res.status === 403 || (body && body.indexOf('42501') !== -1)) {
-                policyNote.style.display = '';
-                statusSpan.textContent = '✗ policy not applied';
-              } else {
-                statusSpan.textContent = '✗ error ' + res.status;
-              }
-              statusSpan.className = 'inline-status err';
-            });
+            statusSpan.textContent = '✗ ' + ((result.data && result.data.error) || 'error ' + result.status);
+            statusSpan.className = 'inline-status err';
           }
         })
         .catch(function(err) {

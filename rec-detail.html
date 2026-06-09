@@ -128,8 +128,8 @@
 
 <script>
   var API_BASE = 'https://vpsmikewolf.duckdns.org/api/recommendations';
-  var MANAGER_EMAIL = 'gfos44@gmail.com';
   var currentUser = null;
+  var currentIsAdmin = false;
   var recId = null;
 
   var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
@@ -147,7 +147,7 @@
   }
 
   function isManager() {
-    return currentUser && currentUser.email && currentUser.email.toLowerCase() === MANAGER_EMAIL.toLowerCase();
+    return currentIsAdmin;
   }
 
   function renderDetail(rec, comments) {
@@ -158,7 +158,7 @@
     var decisionPanel = '';
     if (isManager() && ['open','triaged','needs_revision'].includes(rec.status)) {
       decisionPanel = '<div class="decision-panel" id="decision-panel">' +
-        '<h4>Greg\'s Decision</h4>' +
+        '<h4>Admin Decision</h4>' +
         '<textarea class="decision-note" id="decision-note" placeholder="Optional note (will be posted as a comment)"></textarea>' +
         '<div class="decision-btns">' +
           '<button class="decision-btn btn-approve" onclick="makeDecision(\'approved\')">✅ Approve</button>' +
@@ -317,16 +317,19 @@
       if (loginNav) loginNav.style.display = 'none';
       SomaAuth.getRole(user).then(function(role) {
         var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        currentIsAdmin = admin;
         if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
         var adminLink = document.getElementById('footer-admin-link');
         if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+        loadDetail();
       });
     } else {
+      currentIsAdmin = false;
       if (el) el.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
       if (navAdmin) navAdmin.style.display = 'none';
+      loadDetail();
     }
-    loadDetail();
   });
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 </script>

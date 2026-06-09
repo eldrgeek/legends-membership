@@ -94,8 +94,8 @@
 
   <div id="access-denied" class="access-denied" style="display:none;">
     <h2>Access Restricted</h2>
-    <p>This page is for Greg Foster (human manager) only.<br>
-    If you're logged in as Greg, please sign out and sign back in.</p>
+    <p>This page is for site administrators only.<br>
+    If you believe you should have access, contact an administrator.</p>
     <div style="margin-top:20px;">
       <a href="recommendations.html" class="btn btn-gold">View Public Board</a>
     </div>
@@ -103,7 +103,7 @@
 
   <div id="not-logged-in" class="access-denied" style="display:none;">
     <h2>Login Required</h2>
-    <p>This admin panel is for Greg Foster only.</p>
+    <p>This admin panel requires administrator access.</p>
     <button class="btn btn-gold" onclick="window.location.href='/login.html'" style="margin-top:16px;">Sign In</button>
   </div>
 
@@ -142,7 +142,6 @@
 
 <script>
   var API_BASE = 'https://vpsmikewolf.duckdns.org/api/recommendations';
-  var MANAGER_EMAIL = 'gfos44@gmail.com';
   var currentUser = null;
   var allItems = [];
   var currentTab = 'pending';
@@ -288,7 +287,7 @@
       var adminLink = document.getElementById('footer-admin-link');
       if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
 
-      if (user.email.toLowerCase() !== MANAGER_EMAIL.toLowerCase()) {
+      if (!admin) {
         if (accessDenied) accessDenied.style.display = 'block';
         if (adminPanel) adminPanel.style.display = 'none';
       } else {

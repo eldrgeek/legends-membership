@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leslie Johnson's Membership Ideas | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <style>
+    .page-hero {
+      background: var(--navy);
+      padding: 100px 24px 48px;
+      text-align: center;
+      color: var(--white);
+    }
+    .page-hero .hero-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .page-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+    .page-hero p {
+      color: rgba(255,255,255,0.7);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .ideas-content {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+    .back-link {
+      display: inline-block;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      text-decoration: none;
+      margin-bottom: 32px;
+    }
+    .back-link:hover { color: var(--navy); }
+    .ideas-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .ideas-list li {
+      display: flex;
+      gap: 20px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .ideas-list li:last-child { border-bottom: none; }
+    .idea-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--gold);
+      min-width: 36px;
+      line-height: 1.3;
+    }
+    .idea-content strong {
+      display: block;
+      font-size: 1rem;
+      color: var(--navy);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .idea-content p {
+      font-size: 0.9rem;
+      color: var(--text-medium);
+      line-height: 1.7;
+      margin: 0;
+    }
+    .attribution-box {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin-top: 40px;
+    }
+    .attribution-box p {
+      font-size: 0.88rem;
+      color: var(--text-light);
+      font-style: italic;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+    <ul class="nav-links">
+      <li class="nav-dropdown">
+        <a href="members.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Committee &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="members.html" role="menuitem">Committee Members</a></li>
+          <li><a href="transition-services.html" role="menuitem">Transition Services &mdash; Legends Life</a></li>
+        </ul>
+      </li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+        </ul>
+      </li>
+      <li><a href="recommendations.html" class="active">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="ask-bill-nav"><a href="#" onclick="event.preventDefault(); window.somaGuide && window.somaGuide.open();">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size:0.78rem;color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.18);padding:5px 11px;border-radius:4px;">Committee Login</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size:0.78rem;color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.35);padding:5px 11px;border-radius:4px;">Admin</a></li>
+      <li id="auth-nav" style="display:none;border-left:1px solid rgba(255,255,255,0.15);padding-left:12px;margin-left:4px;align-items:center;gap:8px;">
+        <span id="auth-name" style="font-size:0.78rem;color:rgba(255,255,255,0.55);"></span>
+        <button onclick="SomaAuth.signOut()" style="background:none;border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.65);font-size:0.75rem;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="hero-label">Committee Ideas</div>
+  <h1>Leslie Johnson&rsquo;s Membership Proposals</h1>
+  <p>Fifteen proposals to strengthen membership services, recruitment, and member engagement &mdash; submitted by WNBA pioneer and Indiana Basketball Hall of Famer Leslie Johnson.</p>
+</div>
+
+<div class="ideas-content">
+
+  <a href="recommendations.html" class="back-link">&larr; Back to Recommendations</a>
+
+  <ul class="ideas-list">
+    <li>
+      <div class="idea-num">01</div>
+      <div class="idea-content">
+        <strong>Free First-Year Membership</strong>
+        <p>Offer free entry-level membership for the first year after a player's career ends &mdash; the critical window when they are still household names, most open to connection, and most at risk for mental health decline. Prioritize WNBA players (average career 2 years or less) and NBA players who may need more convincing while still benefiting from playing-career income.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">02</div>
+      <div class="idea-content">
+        <strong>New Members Orientation Class</strong>
+        <p>Create a &ldquo;New Beginners NBRPA Membership Class&rdquo; &mdash; a one-day web-based course guiding new members through NBRPA services and training them how to utilize available resources.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">03</div>
+      <div class="idea-content">
+        <strong>Benefits Clarity Diagram</strong>
+        <p>Produce a single-sheet diagram or graphic that clearly maps which programs and benefits each member type (NBA, WNBA, Harlem Globetrotters, ABA) can access &mdash; eliminating confusion about divided offerings.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">04</div>
+      <div class="idea-content">
+        <strong>Flexible Dues Payment Options</strong>
+        <p>Introduce monthly or quarterly installment payment options for dues. At $250/year, monthly payments of ~$20 reduce friction and increase membership retention &mdash; especially for members not receiving automatic deductions.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">05</div>
+      <div class="idea-content">
+        <strong>Annual Web-Based Refresher Courses</strong>
+        <p>Offer yearly web-based refresher courses reminding members of available programs and benefits, while also highlighting association accomplishments throughout the year.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">06</div>
+      <div class="idea-content">
+        <strong>Member Referral Incentive Program</strong>
+        <p>Create a referral rewards program: for every new member who signs a full-year or longer membership, the referring member receives a $25&ndash;$50 gift card. Generates member-driven recruitment and an additional member revenue stream.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">07</div>
+      <div class="idea-content">
+        <strong>NBRPA Headquarters Day Tour</strong>
+        <p>Host an annual one-day tour or shadowing experience at NBRPA headquarters in Chicago. Understanding how the organization operates motivates members to contribute more actively.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">08</div>
+      <div class="idea-content">
+        <strong>Member Volunteer Registry</strong>
+        <p>Establish an opt-in volunteer list of members who are available to contribute to youth programs, NBRPA Cares, Full Court Press programs, and other initiatives &mdash; matching willing members with needs as they arise.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">09</div>
+      <div class="idea-content">
+        <strong>Member Showcase Media Program</strong>
+        <p>Create an NBRPA portal where members upload videos showcasing their post-career talents, businesses, and accomplishments. Promotes member value to potential sponsors and keeps the membership visible and celebrated.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">10</div>
+      <div class="idea-content">
+        <strong>NIL Partnership Opportunities</strong>
+        <p>Convene a focus group of financially savvy NBRPA members to identify opportunities for legends to participate in NIL (Name, Image, and Likeness) agreements with colleges and universities they once attended.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">11</div>
+      <div class="idea-content">
+        <strong>Coaching, Clinics &amp; Training Program</strong>
+        <p>A program where member volunteers are compensated for coaching, individual training, and sports camps booked through the NBRPA. Revenue split: 70% to the player, 30% to the NBRPA. Marketed via social media linking to the NBRPA website.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">12</div>
+      <div class="idea-content">
+        <strong>Legends to Classrooms Program</strong>
+        <p>A &ldquo;Hire a Legend&rdquo; portal where schools use grant funding to book legends for virtual classroom sessions. Revenue split: 50% to the member, 50% to the NBRPA. Open to any school or organization willing to pay per hour of engagement.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">13</div>
+      <div class="idea-content">
+        <strong>Real Estate Investment Program</strong>
+        <p>Partner with national real estate firms to provide members with investment education and opportunities. Companies gain access to NBRPA members; members gain real estate knowledge and deal flow.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">14</div>
+      <div class="idea-content">
+        <strong>Credit Building Program</strong>
+        <p>Partner with a national credit-building organization to help members rebuild credit following financial setbacks &mdash; divorce, child support, property loss &mdash; and position themselves for future financial success.</p>
+      </div>
+    </li>
+    <li>
+      <div class="idea-num">15</div>
+      <div class="idea-content">
+        <strong>Fans Speak to a Legend Program</strong>
+        <p>A separate social media campaign where fans pay to schedule a 30-minute Zoom conversation with a legend of their choice. Revenue split: 60% to the member, 40% to the NBRPA. Members submit a short biography and set their calendar availability.</p>
+      </div>
+    </li>
+  </ul>
+
+  <div class="attribution-box">
+    <p>Submitted by Leslie Johnson, Committee Member &mdash; WNBA pioneer, Indiana Basketball Hall of Famer, and international professional player.</p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="recommendations.html">Recommendations</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
+  <div class="footer-copy">&copy; 2025 Legends of Basketball &mdash; Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script>
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+    var user = session ? session.user : null;
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+</script>
+
+<script src="js/legends-knowledge.js"></script>
+<script src="js/legends-guide-config.js"></script>
+<script type="module" src="https://soma-guide.netlify.app/soma-guide.js"></script>
+<script src="js/nav-dropdown.js"></script>
+</body>
+</html>

@@ -101,7 +101,8 @@ exports.handler = async function (event) {
     return jsonResponse(500, { error: 'Failed to verify caller role' });
   }
 
-  if (callerRole !== 'admin') {
+  const BOOTSTRAP_ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  if (callerRole !== 'admin' && !BOOTSTRAP_ADMIN_EMAILS.includes((callerUser.email || '').toLowerCase())) {
     return jsonResponse(403, { error: 'Caller is not an admin' });
   }
 
