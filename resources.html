@@ -12,16 +12,24 @@
   <script src="/js/soma-auth.js"></script>
   <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <script>
+    // Per-resource visibility config. Edit here to change access.
+    // "open" = visible to all visitors; "committee-only" = login required.
+    var RESOURCE_VISIBILITY = {
+      'player-benefits': 'open',
+      'minutes': 'committee-only',
+      'systems-map': 'committee-only',
+      'assessment': 'committee-only'
+    };
     document.documentElement.style.visibility = 'hidden';
     SomaAuth.onAuthStateChange(function(event, session) {
       if (event === 'SIGNED_OUT') { window.location.href = '/'; return; }
       if (event !== 'INITIAL_SESSION') return;
       var user = session ? session.user : null;
-      if (!user) {
-        window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
-      } else {
-        document.documentElement.style.visibility = '';
-      }
+      // Hide committee-only sections for unauthenticated visitors
+      document.querySelectorAll('[data-access="committee-only"]').forEach(function(el) {
+        el.style.display = user ? '' : 'none';
+      });
+      document.documentElement.style.visibility = '';
     });
     SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
   </script>
@@ -225,6 +233,8 @@
         if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
         var adminLink = document.getElementById('footer-admin-link');
         if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+        var visNote = document.getElementById('resource-visibility-note');
+        if (visNote) visNote.style.display = admin ? 'block' : 'none';
       });
     } else {
       if (el) el.style.display = 'none';
@@ -240,8 +250,34 @@
   <p>Strategic documents, committee ideas, and reference materials for the Membership Services Committee.</p>
 </div>
 
-<section>
+<!-- Player Benefits: open to all visitors, no login required -->
+<section style="padding: 32px 24px 0;">
   <div class="section-inner">
+    <div class="resource-card" style="background: linear-gradient(135deg, var(--navy) 0%, #2a2a50 100%); border-color: rgba(201,168,76,0.3); display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
+      <div style="font-size: 2.5rem; flex-shrink: 0;">🏆</div>
+      <div style="flex: 1; min-width: 220px;">
+        <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px;">Open to Everyone</div>
+        <h3 style="font-family: 'Playfair Display', serif; font-size: 1.2rem; color: #fff; margin-bottom: 8px;">Player Benefits — Health &amp; Retirement</h3>
+        <p style="color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.6; margin-bottom: 0;">What you've earned across the NBA, WNBA, ABA, and Harlem Globetrotters — pension, health coverage, and key contacts. No login required.</p>
+      </div>
+      <a href="player-benefits.html" class="btn btn-gold" style="white-space: nowrap; flex-shrink: 0;">View Player Benefits →</a>
+    </div>
+  </div>
+</section>
+
+<section data-access="committee-only">
+  <div class="section-inner">
+    <!-- Admin: resource visibility summary (admin-only) -->
+    <div id="resource-visibility-note" style="display:none; background: #f0f4f8; border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 28px;">
+      <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px;">Admin · Resource Visibility Config</div>
+      <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 10px;">Visibility is controlled by <code>RESOURCE_VISIBILITY</code> in <code>resources.html</code>. Edit that object to change access. "open" = public, no login. "committee-only" = login required.</p>
+      <table style="font-size: 0.83rem; border-collapse: collapse; max-width: 420px;">
+        <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 5px 14px 5px 0; font-weight: 600; color: var(--text-dark);">Player Benefits</td><td><span style="background:#d1fae5;color:#065f46;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:10px;">open</span></td></tr>
+        <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 5px 14px 5px 0; font-weight: 600; color: var(--text-dark);">Minutes</td><td><span style="background:#e0e7ff;color:#3730a3;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:10px;">committee-only</span></td></tr>
+        <tr style="border-bottom: 1px solid var(--border);"><td style="padding: 5px 14px 5px 0; font-weight: 600; color: var(--text-dark);">Systems Map</td><td><span style="background:#e0e7ff;color:#3730a3;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:10px;">committee-only</span></td></tr>
+        <tr><td style="padding: 5px 14px 5px 0; font-weight: 600; color: var(--text-dark);">Assessment</td><td><span style="background:#e0e7ff;color:#3730a3;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:10px;">committee-only</span></td></tr>
+      </table>
+    </div>
     <!-- Assessment CTA -->
     <div style="background: linear-gradient(135deg, var(--navy) 0%, #2a2a50 100%); border-radius: 14px; padding: 40px 36px; margin-bottom: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 28px;">
       <div style="font-size: 3rem; flex-shrink: 0;">📋</div>
@@ -523,7 +559,7 @@
   </div>
 </section>
 
-<section class="alt">
+<section class="alt" data-access="committee-only">
   <div class="section-inner">
     <div class="section-label">Committee Ideas</div>
     <h2 class="section-title">Recommendations</h2>
@@ -542,7 +578,7 @@
   </div>
 </section>
 
-<section id="share-ideas">
+<section id="share-ideas" data-access="committee-only">
   <div class="section-inner" style="max-width: 760px;">
     <div class="section-label">Your Ideas</div>
     <h2 class="section-title">Share an Idea</h2>
