@@ -127,8 +127,9 @@
     .btn-role-save:disabled { opacity: 0.4; cursor: default; }
     .btn-delete-member {
       background: #fff; color: #c0392b; border: 1px solid #e0a9a3; border-radius: 6px;
-      padding: 5px 12px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
-      font-family: inherit; margin-left: 10px; transition: background 0.15s, color 0.15s;
+      width: 28px; height: 28px; padding: 0; line-height: 1; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; margin-left: 10px; vertical-align: middle;
+      transition: background 0.15s, color 0.15s;
     }
     .btn-delete-member:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
     .btn-delete-member:disabled { opacity: 0.4; cursor: default; }
@@ -536,6 +537,8 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
             row.role = newRole;
             badge.className = 'role-badge ' + newRole;
             badge.textContent = newRole;
+            // Admins can't be deleted — keep the X in sync with the new role.
+            delBtn.style.display = (newRole === 'admin') ? 'none' : '';
             statusSpan.textContent = '✓ saved';
             statusSpan.className = 'inline-status ok';
             setTimeout(function() { statusSpan.textContent = ''; }, 3000);
@@ -552,16 +555,20 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
         });
       };
 
-      // Delete member button
+      // Delete member button (X). Admins are protected — the button is hidden
+      // on admin rows; demote to member first to expose it.
       var delBtn = document.createElement('button');
       delBtn.className = 'btn-delete-member';
-      delBtn.textContent = 'Delete';
+      delBtn.textContent = '×';
+      delBtn.title = 'Delete member';
+      delBtn.setAttribute('aria-label', 'Delete member');
+      delBtn.style.display = ((row.role || 'member') === 'admin') ? 'none' : '';
       delBtn.onclick = function() {
         var label = row.full_name || row.id;
         if (!window.confirm('Delete member "' + label + '"? This removes their account and sign-in access. This cannot be undone.')) return;
         delBtn.disabled = true;
         btn.disabled = true;
-        delBtn.textContent = 'Deleting…';
+        delBtn.textContent = '…';
         statusSpan.textContent = '';
         statusSpan.className = 'inline-status';
 
@@ -582,7 +589,7 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
           } else {
             delBtn.disabled = false;
             btn.disabled = false;
-            delBtn.textContent = 'Delete';
+            delBtn.textContent = '×';
             statusSpan.textContent = '✗ ' + ((result.data && result.data.error) || 'error ' + result.status);
             statusSpan.className = 'inline-status err';
           }
@@ -590,7 +597,7 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
         .catch(function(err) {
           delBtn.disabled = false;
           btn.disabled = false;
-          delBtn.textContent = 'Delete';
+          delBtn.textContent = '×';
           statusSpan.textContent = '✗ ' + err.message;
           statusSpan.className = 'inline-status err';
         });
