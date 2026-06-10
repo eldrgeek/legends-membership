@@ -39,9 +39,11 @@ Lints `js/legends-guide-config.js` against the real pages and the real engine:
 - **Keyword hygiene** — no conversational-filler keywords (the class of bug
   where every question triggered the find-member tour), no cross-walkthrough
   shadowing, nothing that shadows feedback intents.
-- **Selector validity** — every walkthrough step's `target` and
-  `requires.dropdown` is resolved against the actual HTML page that step
-  plays on (page context tracked through the tour like the engine does).
+- **Selector validity** — every walkthrough step's `target`,
+  `requires.dropdown`, and `[[cue]]` selector (see CHOREOGRAPHY.md) is
+  resolved against the actual HTML page that step plays on (page context
+  tracked through the tour like the engine does); cue verbs are checked
+  against the engine's vocabulary.
 - **Audio sync** — every narration's djb2 hash has a pre-generated clip in
   `audio/tour/`. Fails when narration is edited without re-running
   `node scripts/gen-tour-audio.mjs` (which would otherwise silently fall

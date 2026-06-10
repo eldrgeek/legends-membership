@@ -163,6 +163,21 @@ describe('Costume — walkthrough selectors exist on their pages', () => {
             `dropdown selector not found on ${page}: ${step.requires.dropdown}`);
         });
       }
+      if (/\[\[/.test(step.narration || '')) {
+        test(`${wt.id} / "${label}": narration cues are valid and resolve on ${page}`, () => {
+          const { win } = makeBillWindow();
+          const parsed = win.SomaGuide.parseNarration(step.narration);
+          const KNOWN = ['arrow', 'highlight', 'unhighlight', 'click', 'open', 'close', 'scroll'];
+          const doc = domFor(page);
+          for (const cue of parsed.cues) {
+            assert.ok(KNOWN.includes(cue.verb), `unknown cue verb [[${cue.verb}]]`);
+            if (cue.selector) {
+              assert.ok(doc.querySelector(cue.selector),
+                `cue [[${cue.verb} ${cue.selector}]] selector not found on ${page}`);
+            }
+          }
+        });
+      }
     }
   }
 });
@@ -214,6 +229,12 @@ describe('Costume — scope guard', () => {
 
 /* ── Pre-generated tour audio coverage ──────────────────────────────────── */
 
+/* Cue stripping — must match stripCues in soma-guide.js: audio is hashed
+ * and synthesized from narration text with [[cue]] markup removed. */
+function stripCues(raw) {
+  return String(raw == null ? '' : raw).replace(/\s*\[\[(.*?)\]\](?!\])/g, '').replace(/^\s+/, '');
+}
+
 /* djb2-xor hash — must match _tourAudioHash in soma-guide.js and
  * gen-tour-audio.mjs. */
 function tourAudioHash(agentId, narration) {
@@ -238,10 +259,11 @@ describe('Costume — pre-generated tour audio is in sync with narrations', () =
     }
     for (const { label, text } of narrations) {
       test(`${wt.id} / "${label}": audio clip exists for current narration`, () => {
-        const f = tourAudioHash(cfg.voiceAgentId, text) + '.mp3';
+        const f = tourAudioHash(cfg.voiceAgentId, stripCues(text)) + '.mp3';
         assert.ok(fs.existsSync(path.join(audioDir, f)),
-          `audio/tour/${f} missing — narration changed without regenerating audio ` +
-          `(run: node scripts/gen-tour-audio.mjs). Step falls back to slow paid live TTS.`);
+          `audio/tour/${f} missing — narration WORDS changed without regenerating audio ` +
+          `(run: node scripts/gen-tour-audio.mjs). [[cues]] are free to move; words are not. ` +
+          `Step falls back to slow paid live TTS.`);
       });
     }
   }

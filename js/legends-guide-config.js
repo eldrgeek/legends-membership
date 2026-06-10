@@ -119,14 +119,21 @@ window.SomaGuideConfig = {
                  'what is this site', 'help me navigate', 'walk me through the site'],
       steps: [
 
-        /* Step 1 — Navigation bar; page:'/' ensures we always start from home */
+        /* Step 1 — Navigation bar; page:'/' ensures we always start from home.
+         *
+         * Narrations use inline [[cue]] choreography markup (see CHOREOGRAPHY.md):
+         * a cue fires when the spoken narration reaches that point in the text.
+         * Move a cue earlier/later in the sentence to change when it happens.
+         * The words themselves must not change, or the pre-generated audio in
+         * audio/tour/ goes stale (npm test catches this). */
         {
           target: '.nav-inner',
           page: '/',
           label: 'Navigation',
           demo: 'hover',
           narration:
-            'Welcome! Let\'s start at the top. This navigation bar is your map to the whole site.',
+            '[[arrow .nav-inner 2s]] Welcome! Let\'s start at the top. ' +
+            '[[highlight]] This navigation bar is your map to the whole site.',
           instruction:
             'The nav links on the right take you to every section. On mobile, tap the ☰ menu icon.'
         },
@@ -139,7 +146,8 @@ window.SomaGuideConfig = {
           demo: 'click',
           narration:
             'The Committee page shows all nine members of the Membership Services Committee — ' +
-            'former NBA, WNBA, ABA, and Globetrotter legends. Let me show you the layout.',
+            '[[arrow a[href="members.html"] 2s]] former NBA, WNBA, ABA, and Globetrotter legends. ' +
+            '[[highlight]] Let me show you the layout. [[click]]',
           instruction: 'Click "Committee" to browse member profiles.',
           substeps: [
             {
@@ -148,8 +156,8 @@ window.SomaGuideConfig = {
               label: 'Member grid',
               demo: 'hover',
               narration:
-                'Here\'s the member grid — cards for each legend with career highlights ' +
-                'and contact info. Click any card to open a full profile.',
+                '[[arrow .members-grid 2s]] Here\'s the member grid — cards for each legend with career highlights ' +
+                '[[highlight]] and contact info. Click any card to open a full profile.',
               instruction: 'Click any member card to open their full profile.'
             },
             {
@@ -158,8 +166,8 @@ window.SomaGuideConfig = {
               label: 'Greg Foster — Chairman',
               demo: 'click',
               narration:
-                'Greg Foster is our Chairman — thirteen NBA seasons, a championship with ' +
-                'the Lakers in 2001, and deep leadership experience as coach and broadcaster.',
+                'Greg Foster is our Chairman — [[arrow a[href="members/greg-foster.html"] 2s]] thirteen NBA seasons, a championship with ' +
+                '[[highlight]] the Lakers in 2001, and deep leadership experience as coach and broadcaster. [[click]]',
               instruction: 'Click "View Profile" to see Greg\'s full bio and contact details.'
             },
             {
@@ -168,8 +176,8 @@ window.SomaGuideConfig = {
               label: 'Greg\'s profile',
               demo: 'hover',
               narration:
-                'Each member profile has a full bio, career highlights, and contact ' +
-                'information. Use the breadcrumb at the top to return to the full Committee list.',
+                '[[arrow .profile-hero 1500ms]] Each member profile has a full bio, career highlights, and contact ' +
+                '[[highlight]] information. Use the breadcrumb at the top to return to the full Committee list.',
               instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
             }
           ]
@@ -187,7 +195,9 @@ window.SomaGuideConfig = {
           demo: 'openDropdown',
           requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
           narration:
-            'Resources is a dropdown with several sub-sections. Let me walk you through each one.',
+            '[[arrow .nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"]) 2s]] ' +
+            'Resources is a dropdown with several sub-sections. ' +
+            '[[highlight .nav-dropdown-toggle[href="resources.html"]]] Let me walk you through each one.',
           instruction: 'Click "Resources ▾" to see the dropdown menu options.',
           substeps: [
             {
@@ -196,8 +206,8 @@ window.SomaGuideConfig = {
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                'Meeting Minutes is where you\'ll find the official record of every committee ' +
-                'session — decisions, votes, and discussion summaries.',
+                '[[arrow a[href="minutes.html"] 1500ms]] Meeting Minutes is where you\'ll find the official record of every committee ' +
+                '[[highlight]] session — decisions, votes, and discussion summaries.',
               instruction: 'Click "Minutes" to view all meeting records.'
             },
             {
@@ -206,8 +216,8 @@ window.SomaGuideConfig = {
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                'The Systems Map gives you an interactive overview of the organization\'s ' +
-                'initiatives and how they connect — a great place to orient yourself.',
+                '[[arrow a[href="systems-map.html"] 1500ms]] The Systems Map gives you an interactive overview of the organization\'s ' +
+                '[[highlight]] initiatives and how they connect — a great place to orient yourself.',
               instruction: 'Click "Systems Map" to explore the initiative landscape.'
             },
             {
@@ -216,7 +226,8 @@ window.SomaGuideConfig = {
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                'The Assessment is a member satisfaction survey. Your feedback helps the ' +
+                '[[arrow a[href="assessment.html"] 1500ms]] The Assessment is a member satisfaction survey. ' +
+                '[[highlight]] Your feedback helps the ' +
                 'committee prioritize improvements and understand member needs.',
               instruction: 'Click "Assessment" to complete or review the satisfaction survey.'
             },
@@ -226,8 +237,8 @@ window.SomaGuideConfig = {
               demo: 'hover',
               requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                'And the Resources page itself is home to committee documents, the Leslie ' +
-                'Johnson proposals, and other reference materials.',
+                '[[arrow .nav-dropdown-menu a[href="resources.html"] 1500ms]] And the Resources page itself is home to committee documents, the Leslie ' +
+                '[[highlight]] Johnson proposals, and other reference materials.',
               instruction: 'Click "Resources" to browse all committee documents.'
             }
           ]
@@ -243,7 +254,7 @@ window.SomaGuideConfig = {
           demo: 'click',
           narration:
             'The Recommendations board shows current committee proposals and their status. ' +
-            'Let me take you there.',
+            '[[arrow a[href="recommendations.html"] 2s]] [[highlight]] Let me take you there. [[click]]',
           instruction: 'Heading to the Recommendations page…'
         },
         {
@@ -252,8 +263,8 @@ window.SomaGuideConfig = {
           label: 'Recommendations board',
           demo: 'hover',
           narration:
-            'Here\'s the Recommendations board — a living record of committee decisions and ' +
-            'initiatives. Each card shows a proposal and its current status.',
+            '[[arrow #rec-grid 2s]] Here\'s the Recommendations board — a living record of committee decisions and ' +
+            '[[highlight]] initiatives. Each card shows a proposal and its current status.',
           instruction: 'Browse the proposals, or click any card for details.'
         },
 
@@ -267,7 +278,7 @@ window.SomaGuideConfig = {
           demo: 'click',
           narration:
             'About & Contact tells you more about the committee\'s mission and who to reach out to. ' +
-            'Let me take you there.',
+            '[[arrow a[href="about.html"] 2s]] [[highlight]] Let me take you there. [[click]]',
           instruction: 'Heading to the About & Contact page…'
         },
         {
@@ -276,7 +287,7 @@ window.SomaGuideConfig = {
           label: 'About page',
           demo: 'hover',
           narration:
-            'This is the About & Contact page. You\'ll find the committee\'s mission statement, ' +
+            '[[arrow .hero 1500ms]] This is the About & Contact page. [[highlight]] You\'ll find the committee\'s mission statement, ' +
             'key contacts, and information on how to get in touch.',
           instruction: 'Scroll down to find contact details and the committee\'s mission.'
         },
@@ -287,8 +298,8 @@ window.SomaGuideConfig = {
           label: 'Ask Bill nav',
           demo: 'hover',
           narration:
-            'And finally — the "Ask Bill" link in the nav opens this very widget so you can ' +
-            'reach me from any page, any time. That wraps up the site tour!',
+            '[[arrow #ask-bill-nav 2s]] And finally — the "Ask Bill" link in the nav opens this very widget so you can ' +
+            '[[highlight]] reach me from any page, any time. That wraps up the site tour!',
           instruction: 'Click "Ask Bill" in the nav to open this guide widget on any page.'
         }
       ]
