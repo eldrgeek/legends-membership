@@ -129,15 +129,16 @@ window.SomaGuideConfig = {
         },
 
         /* Step 3 — Resources dropdown (parent) with sub-steps for each section.
-         * Each substep navigates to its actual destination page so the user sees the content.
          * page: 'members' on parent ensures we start from a root-level page where nav hrefs
-         * are root-relative (e.g. href="minutes.html", not href="../minutes.html"). */
+         * are root-relative (e.g. href="minutes.html", not href="../minutes.html").
+         * Selector uses :has() to uniquely target the Resources <li>, not the Committee one
+         * (both share .nav-dropdown; querySelector would otherwise return the first match). */
         {
-          target: '.nav-dropdown',
+          target: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])',
           page: 'members',
           label: 'Resources dropdown',
           demo: 'openDropdown',
-          requires: { dropdown: '.nav-dropdown' },
+          requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
           narration:
             'Resources is a dropdown with several sub-sections. Let me walk you through each one.',
           instruction: 'Click "Resources ▾" to see the dropdown menu options.',
@@ -146,7 +147,7 @@ window.SomaGuideConfig = {
               target: 'a[href="minutes.html"]',
               label: 'Meeting Minutes',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown' },
+              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
                 'Meeting Minutes is where you\'ll find the official record of every committee ' +
                 'session — decisions, votes, and discussion summaries.',
@@ -156,7 +157,7 @@ window.SomaGuideConfig = {
               target: 'a[href="systems-map.html"]',
               label: 'Systems Map',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown' },
+              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
                 'The Systems Map gives you an interactive overview of the organization\'s ' +
                 'initiatives and how they connect — a great place to orient yourself.',
@@ -166,17 +167,17 @@ window.SomaGuideConfig = {
               target: 'a[href="assessment.html"]',
               label: 'Assessment',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown' },
+              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
                 'The Assessment is a member satisfaction survey. Your feedback helps the ' +
                 'committee prioritize improvements and understand member needs.',
               instruction: 'Click "Assessment" to complete or review the satisfaction survey.'
             },
             {
-              target: 'a[href="resources.html"]',
+              target: '.nav-dropdown-menu a[href="resources.html"]',
               label: 'Documents',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown' },
+              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
                 'And the Resources page itself is home to committee documents, the Leslie ' +
                 'Johnson proposals, and other reference materials.',
@@ -280,19 +281,19 @@ window.SomaGuideConfig = {
       keywords: ['feature', 'request', 'suggest', 'submit', 'idea', 'improve'],
       steps: [
         {
-          target: '.nav-dropdown-toggle',
+          target: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])',
           label: 'Open Resources',
           demo: 'openDropdown',
-          requires: { dropdown: '.nav-dropdown' },
+          requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
           narration:
             'Feature requests live under the Resources section. Click Resources to open the dropdown.',
           instruction: 'Click "Resources ▾" in the navigation to open the dropdown menu.'
         },
         {
-          target: '.nav-dropdown-menu',
+          target: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"]) .nav-dropdown-menu',
           label: 'Resources dropdown menu',
           demo: 'hover',
-          requires: { dropdown: '.nav-dropdown' },
+          requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
           narration:
             'You\'ll see a menu with Resources, Minutes, Systems Map, and Assessment. ' +
             'Feature Requests is reachable from the main Resources page.',
