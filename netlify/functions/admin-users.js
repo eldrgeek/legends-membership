@@ -147,7 +147,7 @@ exports.handler = async function (event) {
       return jsonResponse(400, { error: 'Valid email is required' });
     }
     try {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/invite`, {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/invite`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${SERVICE_KEY}`,
