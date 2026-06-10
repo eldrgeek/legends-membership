@@ -294,7 +294,14 @@ window.SomaGuideConfig = {
     {
       id: 'find-member',
       label: 'How to find a member',
-      keywords: ['member', 'find', 'profile', 'who is', 'contact', 'legend', 'player'],
+      keywords: [
+        'find a member', 'find a committee member', 'committee member profile',
+        'member profile', 'member list', 'member directory', 'member bio',
+        'browse the committee', 'browse members', 'show me the committee',
+        'members page', 'committee members page', 'contact a member',
+        'how do i find a member', 'where can i find a member',
+        'player profile', 'player bio',
+      ],
       steps: [
         {
           target: 'a[href="members.html"]',
