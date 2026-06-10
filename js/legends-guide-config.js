@@ -112,7 +112,11 @@ window.SomaGuideConfig = {
     {
       id: 'site-tour',
       label: 'Site Tour',
-      keywords: ['tour', 'overview', 'show me', 'around', 'what is this', 'help me navigate'],
+      /* Keep single-word keywords rare — the engine only matches them in short
+       * messages (≤4 words), but multi-word phrases match anywhere. Never use
+       * conversational filler ('show me', 'question', 'chat') as a keyword. */
+      keywords: ['tour', 'overview', 'site tour', 'show me around', 'show me the site',
+                 'what is this site', 'help me navigate', 'walk me through the site'],
       steps: [
 
         /* Step 1 — Navigation bar; page:'/' ensures we always start from home */
@@ -361,7 +365,8 @@ window.SomaGuideConfig = {
     {
       id: 'ask-bill-walkthrough',
       label: 'How to use Ask Bill',
-      keywords: ['ask bill', 'voice', 'chat', 'elevenlabs', 'ai assistant', 'question'],
+      keywords: ['how do i use ask bill', 'how to use ask bill', 'use ask bill',
+                 'talk to bill', 'voice chat', 'speak with bill', 'how do i ask a question'],
       steps: [
         {
           target: '#ask-bill-section',

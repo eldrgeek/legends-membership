@@ -269,22 +269,35 @@ describe('Task 3 — NBRPA replacement in site copy', () => {
     });
   }
 
-  test('resources.html: no NBRPA in site-authored copy before Leslie\'s ideas-list', () => {
+  /* Leslie's proposals moved from an inline drill-down in resources.html to
+   * their own page (leslie-johnson-ideas.html). resources.html is now fully
+   * site-authored, so it must be clean; the member-submitted text on the
+   * Leslie page must keep its original NBRPA wording verbatim. */
+  test('resources.html: no NBRPA anywhere (Leslie\'s proposals moved to their own page)', () => {
     const html = fs.readFileSync(path.join(ROOT, 'resources.html'), 'utf8');
-    const ideasListStart = html.indexOf('class="ideas-list"');
-    assert.ok(ideasListStart > 0, 'ideas-list must exist in resources.html');
-    const beforeIdeas = html.slice(0, ideasListStart);
-    assert.ok(!beforeIdeas.includes('NBRPA'),
-      'NBRPA found in site-authored copy before Leslie\'s proposals in resources.html');
+    assert.ok(!html.includes('NBRPA'),
+      'NBRPA found in resources.html — site-authored copy must say "Legends of Basketball"');
   });
 
-  test('resources.html: Leslie\'s proposals block still contains original NBRPA references', () => {
-    const html = fs.readFileSync(path.join(ROOT, 'resources.html'), 'utf8');
+  test('leslie-johnson-ideas.html: no NBRPA in site-authored copy before the ideas-list', () => {
+    const html = fs.readFileSync(path.join(ROOT, 'leslie-johnson-ideas.html'), 'utf8');
     const ideasListStart = html.indexOf('class="ideas-list"');
+    assert.ok(ideasListStart > 0, 'ideas-list must exist in leslie-johnson-ideas.html');
+    /* Skip the <style> block — CSS class names aren't copy */
+    const bodyStart = html.indexOf('<body');
+    const beforeIdeas = html.slice(bodyStart, ideasListStart);
+    assert.ok(!beforeIdeas.includes('NBRPA'),
+      'NBRPA found in site-authored copy before Leslie\'s proposals');
+  });
+
+  test('leslie-johnson-ideas.html: Leslie\'s proposals still contain original NBRPA references', () => {
+    const html = fs.readFileSync(path.join(ROOT, 'leslie-johnson-ideas.html'), 'utf8');
+    const ideasListStart = html.indexOf('class="ideas-list"');
+    assert.ok(ideasListStart > 0, 'ideas-list must exist');
     const ideasListEnd = html.indexOf('</ul>', ideasListStart);
     const ideasBlock = html.slice(ideasListStart, ideasListEnd);
     assert.ok(ideasBlock.includes('NBRPA'),
-      'Leslie\'s proposals block should still contain NBRPA (member-submitted text must not be modified)');
+      'Leslie\'s proposals must keep their original NBRPA text (member-submitted text must not be modified)');
   });
 
   test('members/willie-davis.html: no NBRPA', () => {
@@ -306,6 +319,18 @@ describe('Task 3 — NBRPA replacement in site copy', () => {
 // ──────────────────────────────────────────────────────────────────────────────
 // Task 4: Resources dropdown nav restructure
 // ──────────────────────────────────────────────────────────────────────────────
+
+/* The nav now has TWO dropdowns (Committee and Resources) — a bare
+ * `.nav-dropdown-menu` query returns whichever comes first in the DOM.
+ * Always scope to the dropdown whose toggle links to the page we mean. */
+function dropdownMenuFor(doc, toggleHref) {
+  const dropdowns = Array.from(doc.querySelectorAll('ul.nav-links .nav-dropdown'));
+  const dd = dropdowns.find(d => {
+    const t = d.querySelector('.nav-dropdown-toggle');
+    return t && (t.getAttribute('href') || '').includes(toggleHref);
+  });
+  return dd ? dd.querySelector('.nav-dropdown-menu') : null;
+}
 
 describe('Task 4 — Resources dropdown nav restructure', () => {
   // Pages that had Minutes / Systems Map / Assessment as standalone top-level items
@@ -366,11 +391,11 @@ describe('Task 4 — Resources dropdown nav restructure', () => {
       assert.ok(dropdown, `nav-dropdown must exist in nav on ${page}`);
     });
 
-    test(`${page}: dropdown contains link to resources.html`, () => {
+    test(`${page}: Resources dropdown contains link to resources.html`, () => {
       const dom = parsePage(page);
       const doc = dom.window.document;
-      const menu = doc.querySelector('.nav-dropdown-menu');
-      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const menu = dropdownMenuFor(doc, 'resources.html');
+      assert.ok(menu, `Resources .nav-dropdown-menu must exist on ${page}`);
       const links = Array.from(menu.querySelectorAll('a'));
       const hasResources = links.some(a => a.href && a.href.includes('resources.html') && !a.href.includes('#'));
       assert.ok(hasResources, `dropdown must contain link to resources.html on ${page}`);
@@ -379,8 +404,8 @@ describe('Task 4 — Resources dropdown nav restructure', () => {
     test(`${page}: dropdown contains link to minutes.html`, () => {
       const dom = parsePage(page);
       const doc = dom.window.document;
-      const menu = doc.querySelector('.nav-dropdown-menu');
-      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const menu = dropdownMenuFor(doc, 'resources.html');
+      assert.ok(menu, `Resources .nav-dropdown-menu must exist on ${page}`);
       const links = Array.from(menu.querySelectorAll('a'));
       const hasMinutes = links.some(a => a.href && a.href.includes('minutes.html'));
       assert.ok(hasMinutes, `dropdown must contain link to minutes.html on ${page}`);
@@ -389,8 +414,8 @@ describe('Task 4 — Resources dropdown nav restructure', () => {
     test(`${page}: dropdown contains link to systems-map.html`, () => {
       const dom = parsePage(page);
       const doc = dom.window.document;
-      const menu = doc.querySelector('.nav-dropdown-menu');
-      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const menu = dropdownMenuFor(doc, 'resources.html');
+      assert.ok(menu, `Resources .nav-dropdown-menu must exist on ${page}`);
       const links = Array.from(menu.querySelectorAll('a'));
       const hasSysMap = links.some(a => a.href && a.href.includes('systems-map.html'));
       assert.ok(hasSysMap, `dropdown must contain link to systems-map.html on ${page}`);
@@ -399,8 +424,8 @@ describe('Task 4 — Resources dropdown nav restructure', () => {
     test(`${page}: dropdown contains link to assessment.html`, () => {
       const dom = parsePage(page);
       const doc = dom.window.document;
-      const menu = doc.querySelector('.nav-dropdown-menu');
-      assert.ok(menu, `.nav-dropdown-menu must exist on ${page}`);
+      const menu = dropdownMenuFor(doc, 'resources.html');
+      assert.ok(menu, `Resources .nav-dropdown-menu must exist on ${page}`);
       const links = Array.from(menu.querySelectorAll('a'));
       const hasAssessment = links.some(a => a.href && a.href.includes('assessment.html'));
       assert.ok(hasAssessment, `dropdown must contain link to assessment.html on ${page}`);
@@ -470,12 +495,12 @@ describe('Punchlist — Admin page robustness', () => {
     assert.strictEqual(el.style.display, 'none', 'not-authorized should start hidden');
   });
 
-  test('admin.html: has netlifyIdentity error handler', () => {
+  test('admin.html: uses Supabase auth (netlifyIdentity fully removed)', () => {
     const html = fs.readFileSync(path.join(ROOT, 'admin.html'), 'utf8');
-    assert.ok(
-      html.includes("netlifyIdentity.on('error'") || html.includes('netlifyIdentity.on("error"'),
-      'admin.html must register a netlifyIdentity error handler to prevent blank page on widget failure'
-    );
+    assert.ok(!html.includes('netlifyIdentity'),
+      'admin.html must not reference the retired Netlify Identity widget');
+    assert.ok(html.includes('SomaAuth.getSession'),
+      'admin.html must gate on SomaAuth.getSession');
   });
 });
 
@@ -623,81 +648,38 @@ describe('Punchlist — No redundant Home nav item', () => {
 // Task 6: Leslie card drill-down (resources.html)
 // ──────────────────────────────────────────────────────────────────────────────
 
-describe('Task 6 — Leslie card drill-down', () => {
-  test('resources.html: #leslie-card element exists', () => {
-    const dom = parsePage('resources.html');
-    const el = dom.window.document.getElementById('leslie-card');
-    assert.ok(el, '#leslie-card must exist in resources.html');
+describe('Task 6 — Leslie proposals page (moved out of resources.html)', () => {
+  test('recommendations.html: card links to leslie-johnson-ideas.html', () => {
+    const dom = parsePage('recommendations.html');
+    const link = dom.window.document.querySelector('a[href="leslie-johnson-ideas.html"]');
+    assert.ok(link, 'recommendations.html must link to the Leslie proposals page');
   });
 
-  test('resources.html: #leslie-card is initially collapsed (aria-expanded=false)', () => {
-    const dom = parsePage('resources.html');
-    const el = dom.window.document.getElementById('leslie-card');
-    assert.ok(el, '#leslie-card must exist in resources.html');
-    assert.strictEqual(el.getAttribute('aria-expanded'), 'false',
-      '#leslie-card must start with aria-expanded="false"');
+  test('leslie-johnson-ideas.html: page exists and has the standard nav', () => {
+    const dom = parsePage('leslie-johnson-ideas.html');
+    const nav = dom.window.document.querySelector('ul.nav-links');
+    assert.ok(nav, 'leslie-johnson-ideas.html must have the standard nav');
   });
 
-  test('resources.html: #leslie-card is visible (not display:none) by default', () => {
-    const dom = parsePage('resources.html');
-    const el = dom.window.document.getElementById('leslie-card');
-    assert.ok(el, '#leslie-card must exist in resources.html');
-    assert.notStrictEqual(el.style.display, 'none',
-      '#leslie-card should be visible (not hidden) by default');
-  });
-
-  test('resources.html: #leslie-card has aria-controls pointing to detail panel', () => {
-    const dom = parsePage('resources.html');
-    const el = dom.window.document.getElementById('leslie-card');
-    assert.ok(el, '#leslie-card must exist');
-    assert.strictEqual(el.getAttribute('aria-controls'), 'leslie-ideas-detail',
-      '#leslie-card must have aria-controls="leslie-ideas-detail"');
-  });
-
-  test('resources.html: #leslie-ideas-detail exists', () => {
-    const dom = parsePage('resources.html');
-    const el = dom.window.document.getElementById('leslie-ideas-detail');
-    assert.ok(el, '#leslie-ideas-detail must exist in resources.html');
-  });
-
-  test('resources.html: #leslie-ideas-detail is initially hidden', () => {
-    const dom = parsePage('resources.html');
-    const el = dom.window.document.getElementById('leslie-ideas-detail');
-    assert.ok(el, '#leslie-ideas-detail must exist in resources.html');
-    assert.strictEqual(el.style.display, 'none',
-      '#leslie-ideas-detail should be hidden by default');
-  });
-
-  test('resources.html: #leslie-ideas-detail starts with aria-hidden=true', () => {
-    const dom = parsePage('resources.html');
-    const el = dom.window.document.getElementById('leslie-ideas-detail');
-    assert.ok(el, '#leslie-ideas-detail must exist');
-    assert.strictEqual(el.getAttribute('aria-hidden'), 'true',
-      '#leslie-ideas-detail must start aria-hidden="true"');
-  });
-
-  test('resources.html: ideas-list is inside #leslie-ideas-detail', () => {
-    const dom = parsePage('resources.html');
-    const detail = dom.window.document.getElementById('leslie-ideas-detail');
-    assert.ok(detail, '#leslie-ideas-detail must exist');
-    const list = detail.querySelector('ul.ideas-list');
-    assert.ok(list, 'ul.ideas-list must be inside #leslie-ideas-detail');
-  });
-
-  test('resources.html: back button (.leslie-back-btn) exists inside detail panel', () => {
-    const dom = parsePage('resources.html');
-    const detail = dom.window.document.getElementById('leslie-ideas-detail');
-    assert.ok(detail, '#leslie-ideas-detail must exist');
-    const btn = detail.querySelector('.leslie-back-btn');
-    assert.ok(btn, '.leslie-back-btn must exist inside #leslie-ideas-detail');
-  });
-
-  test('resources.html: ideas-list has 15 items (all proposals present)', () => {
-    const dom = parsePage('resources.html');
+  test('leslie-johnson-ideas.html: ideas-list has 15 items (all proposals present)', () => {
+    const dom = parsePage('leslie-johnson-ideas.html');
     const list = dom.window.document.querySelector('ul.ideas-list');
-    assert.ok(list, 'ul.ideas-list must exist in resources.html');
-    const items = list.querySelectorAll('li');
+    assert.ok(list, 'ul.ideas-list must exist');
+    const items = list.querySelectorAll(':scope > li');
     assert.strictEqual(items.length, 15, 'ideas-list must contain all 15 proposals');
+  });
+
+  test('leslie-johnson-ideas.html: has a back link to recommendations', () => {
+    const dom = parsePage('leslie-johnson-ideas.html');
+    const back = dom.window.document.querySelector('a[href="recommendations.html"].back-link');
+    assert.ok(back, 'back link to recommendations.html must exist');
+  });
+
+  test('resources.html: no leftover inline Leslie drill-down markup', () => {
+    const dom = parsePage('resources.html');
+    const doc = dom.window.document;
+    assert.strictEqual(doc.getElementById('leslie-ideas-detail'), null,
+      'old inline drill-down panel should be gone from resources.html');
   });
 });
 

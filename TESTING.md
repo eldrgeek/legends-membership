@@ -1,26 +1,78 @@
 # Testing
 
-## Setup
+Four complementary layers guard this site and its AI guide (Bill). Each layer
+catches a class of failure the others can't.
 
 ```sh
 npm install
+npm test                 # layers 2–4 (no network, no browser; ~8s)
+npm run verify:deploy    # layer 5 — live drift check (network; ~5s)
 ```
 
-## Run the test suite
+## Layer 1 — SOMA engine behavior (lives in soma-platform)
+
+The soma-guide engine is shared across SOMA sites and tests itself:
 
 ```sh
-npm test
+cd ~/Projects/soma-platform/packages/soma-guide && npm test    # 291 tests
 ```
 
-## What is tested
+- `tests/soma-guide.test.js` — walkthrough navigation, TTS, resume, sub-steps,
+  navigator, state-version guard, question classifier, inference path.
+- `tests/engine-behaviors.test.js` — routing precedence (feedback → scope
+  guard → walkthrough → inference), keyword matching rules, feedback buttons
+  never pre-start the voice session, stop-tour restores the starting state
+  (page + scroll + widget panel), and tour choreography (cursor glide →
+  highlight on arrival → click ripple at narration end → navigate).
 
-195 tests across 4 suites (node:test + jsdom, no browser required):
+## Layer 2 — Site DOM regression (`tests/suite.test.js`)
 
-- **Task 1 — Login nav visibility**: `#login-nav` exists on all 13 nav pages; hidden when signed in, visible when signed out.
-- **Task 1b — Sign Out visibility**: `#auth-nav` exists on all 13 nav pages; visible when signed in, hidden when signed out.
-- **Task 2 — Admin link gating**: `#nav-admin-link` exists on all 13 nav pages; hidden for anonymous and non-admin users; visible only for users in `ADMIN_EMAILS`. Same checks for `#footer-admin-link` on the 12 pages that have it.
-- **Task 3 — NBRPA replacement**: all site-authored pages contain zero `NBRPA` occurrences; Leslie Johnson's 15 member-submitted proposals in `resources.html` still contain their original `NBRPA` text verbatim.
+Parses every page with jsdom (no scripts) and applies the auth-UI logic with
+mock users: login/sign-out/admin gating, nav dropdown structure (scoped per
+dropdown — there are two), NBRPA copy rules, Leslie proposals page, Ask Bill
+presence on all pages.
 
-## How it works
+## Layer 3 — Bill costume validation (`tests/bill-costume.test.js`)
 
-Tests parse each HTML file with jsdom (no browser, no network), then apply the `updateAuthUI` logic using three mock user states: anonymous, regular member, and admin. This approach tests the DOM structure and visibility logic without requiring a live server or Netlify Identity connection.
+Lints `js/legends-guide-config.js` against the real pages and the real engine:
+
+- **Keyword hygiene** — no conversational-filler keywords (the class of bug
+  where every question triggered the find-member tour), no cross-walkthrough
+  shadowing, nothing that shadows feedback intents.
+- **Selector validity** — every walkthrough step's `target` and
+  `requires.dropdown` is resolved against the actual HTML page that step
+  plays on (page context tracked through the tour like the engine does).
+- **Audio sync** — every narration's djb2 hash has a pre-generated clip in
+  `audio/tour/`. Fails when narration is edited without re-running
+  `node scripts/gen-tour-audio.mjs` (which would otherwise silently fall
+  back to paid live TTS).
+- siteMap paths exist; scope guard doesn't swallow on-domain questions.
+
+## Layer 4 — Conversation scenarios (`tests/bill-conversations.test.js`)
+
+The real engine + the real Bill config in jsdom, table-driven:
+**"member types X → Bill must do Y"** where Y ∈ tour / feedback form /
+deflect / inference / voice-agent fallthrough. Also end-to-end flows: the
+🐛 button renders the form with no ElevenLabs greeting hijack, form submit
+POSTs to the Netlify function, stop-tour returns to the starting page, and
+voice-input affordances render.
+
+**When a routing bug ships, add the failing utterance to `SCENARIOS` first,
+then fix.** That table is the regression contract for Bill's brain.
+
+The engine source is resolved from `$SOMA_GUIDE_SRC`, then
+`../soma-platform/packages/soma-guide/soma-guide.js` (sibling checkout) —
+it is deliberately not vendored here.
+
+## Layer 5 — Deploy drift (`npm run verify:deploy`)
+
+The engine deploys **manually** to soma-guide.netlify.app; this site deploys
+via git CD. `tools/verify-deploy.mjs` diffs every live surface against local
+sources (engine js/css, config, knowledge pack) and probes the
+submit-feedback function and the inference endpoint. Exit 1 on drift.
+Run it after every engine change and after every push.
+
+## Layer 6 — Supabase E2E (`npm run test:e2e`)
+
+`tools/regression-test.mjs` — live-service checks (needs
+`SUPABASE_SERVICE_ROLE_KEY`).
