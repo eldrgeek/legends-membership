@@ -21,6 +21,9 @@
  *     → returns all auth users (id, email, created_at, last_sign_in_at)
  *   { action: "setrole", userId: "<uuid>", role: "admin"|"member" }
  *     → updates the profiles.role column for a user (server-side override)
+ *   { action: "delete", userId: "<uuid>" }
+ *     → deletes the auth user (and their profile row). Refuses self-deletion
+ *       and protected bootstrap-admin accounts.
  *
  * Security: every request must carry the caller's Supabase JWT in the
  * Authorization: Bearer <token> header. The function verifies the JWT with
@@ -187,6 +190,55 @@ exports.handler = async function (event) {
       return jsonResponse(200, { message: `Role updated to ${role} for user ${userId}` });
     } catch (err) {
       return jsonResponse(500, { error: 'Failed to update role' });
+    }
+  }
+
+  // ── Action: delete a user ─────────────────────────────────────────────────
+  if (action === 'delete') {
+    const { userId } = body;
+    if (!userId) return jsonResponse(400, { error: 'userId is required' });
+    if (userId === callerUser.id) {
+      return jsonResponse(400, { error: 'You cannot delete your own account' });
+    }
+
+    // Protect bootstrap admins: look up the target's email and refuse if it's
+    // one of the always-admin addresses. A failed lookup is non-fatal.
+    try {
+      const lookup = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+        headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY },
+      });
+      if (lookup.ok) {
+        const targetUser = await lookup.json();
+        if (BOOTSTRAP_ADMIN_EMAILS.includes((targetUser.email || '').toLowerCase())) {
+          return jsonResponse(403, { error: 'This account is a protected administrator and cannot be deleted.' });
+        }
+      }
+    } catch (err) {
+      // ignore — proceed with delete
+    }
+
+    try {
+      // Delete the auth user (authoritative — removes their ability to sign in).
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY },
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        return jsonResponse(res.status, { error: errText || 'Delete failed' });
+      }
+      // Also remove the profile row in case there's no FK cascade. Idempotent.
+      await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          apikey: SERVICE_KEY,
+          Prefer: 'return=minimal',
+        },
+      });
+      return jsonResponse(200, { message: `Deleted user ${userId}` });
+    } catch (err) {
+      return jsonResponse(500, { error: 'Failed to delete user' });
     }
   }
 
