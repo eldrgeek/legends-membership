@@ -152,6 +152,18 @@
     .invite-feedback.err { background: #fff0f0; border: 1px solid #e74c3c; color: #9b2b2b; }
     .invite-feedback.warn { background: var(--gold-pale, #fffdf5); border: 1px solid var(--gold); color: var(--text-dark); }
     .members-id { font-family: monospace; font-size: 0.75rem; color: var(--text-light); }
+    /* Bill feedback tabs */
+    .fb-tab {
+      background: var(--border); border: 1px solid var(--border); border-radius: 20px;
+      padding: 5px 14px; font-size: 0.82rem; font-family: inherit; cursor: pointer;
+      color: var(--text-medium); transition: background 0.15s;
+    }
+    .fb-tab:hover { background: #e8e0d0; }
+    .fb-tab--active { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+    .fb-type-bug { background: #fee2e2; color: #991b1b; display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+    .fb-type-feature { background: #dbeafe; color: #1e40af; display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+    .fb-desc { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fb-status-new { color: #7c3aed; font-size: 0.8rem; }
   </style>
 </head>
 <body>
@@ -250,6 +262,54 @@
       <a href="admin-recommendations.html" class="activity-link">
         View Recommendations Admin →
       </a>
+    </div>
+
+    <!-- Section 3b: Bill Feedback — Feature Requests & Bug Reports via Bill widget -->
+    <div class="admin-section" id="bill-feedback-section">
+      <h2>Bill Feedback — Feature Requests &amp; Bug Reports</h2>
+      <p class="section-sub">Members submit these directly through Bill (the AI widget). They route here for Greg's review before any action is taken.</p>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button id="fb-tab-all" class="fb-tab fb-tab--active" onclick="filterFeedback('all')">All</button>
+        <button id="fb-tab-feature" class="fb-tab" onclick="filterFeedback('feature')">💡 Feature Requests</button>
+        <button id="fb-tab-bug" class="fb-tab" onclick="filterFeedback('bug')">🐛 Bug Reports</button>
+      </div>
+      <div id="fb-loading" class="panel-loading">Loading…</div>
+      <div id="fb-error" class="panel-error" style="display:none;"></div>
+      <div id="fb-empty" style="display:none; color: var(--text-light); font-size: 0.88rem; padding: 14px 0;">No Bill feedback yet.</div>
+      <div id="fb-table-wrap" style="display:none; overflow-x: auto;">
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Member</th>
+              <th>Page</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="fb-tbody"></tbody>
+        </table>
+      </div>
+      <div id="fb-setup-note" class="policy-note" style="display:none;">
+        <strong>Table not yet created.</strong> Apply the SQL to enable this panel.<br>
+        Run in <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/sql/new" target="_blank" rel="noopener">Supabase SQL Editor</a>:<br>
+        <pre style="font-size:0.75rem; margin-top:8px; white-space:pre-wrap;">CREATE TABLE IF NOT EXISTS public.bill_feedback (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  type           text NOT NULL CHECK (type IN ('bug', 'feature')),
+  description    text NOT NULL,
+  member_name    text,
+  member_email   text,
+  page_context   text,
+  assistant_id   text DEFAULT 'legends-bill',
+  source         text DEFAULT 'bill-widget',
+  ip             text,
+  user_agent     text,
+  status         text DEFAULT 'new',
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
+      </div>
     </div>
 
     <!-- Section 4: Member Assessment Submissions (native in-app panel) -->
@@ -590,6 +650,146 @@
     });
   }
 
+  // ── Bill Feedback panel ───────────────────────────────────────────────────
+
+  var _billFeedbackAll = [];
+  var _billFeedbackFilter = 'all';
+
+  function filterFeedback(type) {
+    _billFeedbackFilter = type;
+    document.querySelectorAll('.fb-tab').forEach(function(t) { t.classList.remove('fb-tab--active'); });
+    var activeTab = document.getElementById('fb-tab-' + type);
+    if (activeTab) activeTab.classList.add('fb-tab--active');
+    renderFeedbackTable(_billFeedbackAll);
+  }
+
+  function loadBillFeedback() {
+    var loading = document.getElementById('fb-loading');
+    var errorEl = document.getElementById('fb-error');
+    var emptyEl = document.getElementById('fb-empty');
+    var tableWrap = document.getElementById('fb-table-wrap');
+    var setupNote = document.getElementById('fb-setup-note');
+
+    loading.style.display = '';
+    errorEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    tableWrap.style.display = 'none';
+    setupNote.style.display = 'none';
+
+    supaRest('/rest/v1/bill_feedback?select=id,created_at,type,description,member_name,member_email,page_context,status&order=created_at.desc&limit=200')
+      .then(function(res) {
+        return res.text().then(function(text) {
+          var data;
+          try { data = JSON.parse(text); } catch(e) { data = null; }
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      })
+      .then(function(result) {
+        loading.style.display = 'none';
+        if (!result.ok && (result.status === 400 || result.status === 404 || result.status === 422)) {
+          setupNote.style.display = '';
+          return;
+        }
+        if (!result.ok) {
+          errorEl.textContent = 'Could not load Bill feedback (status ' + result.status + ').';
+          errorEl.style.display = '';
+          return;
+        }
+        _billFeedbackAll = Array.isArray(result.data) ? result.data : [];
+        renderFeedbackTable(_billFeedbackAll);
+      })
+      .catch(function(err) {
+        loading.style.display = 'none';
+        errorEl.textContent = 'Network error loading feedback: ' + err.message;
+        errorEl.style.display = '';
+      });
+  }
+
+  function renderFeedbackTable(rows) {
+    var emptyEl = document.getElementById('fb-empty');
+    var tableWrap = document.getElementById('fb-table-wrap');
+    var tbody = document.getElementById('fb-tbody');
+
+    var filtered = rows.filter(function(r) {
+      return _billFeedbackFilter === 'all' || r.type === _billFeedbackFilter;
+    });
+
+    if (filtered.length === 0) {
+      tableWrap.style.display = 'none';
+      emptyEl.style.display = '';
+      emptyEl.textContent = _billFeedbackFilter === 'all'
+        ? 'No Bill feedback yet.'
+        : 'No ' + _billFeedbackFilter + ' requests yet.';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    tableWrap.style.display = '';
+    tbody.innerHTML = '';
+
+    filtered.forEach(function(row) {
+      var tr = document.createElement('tr');
+
+      var tdDate = document.createElement('td');
+      if (row.created_at) {
+        var d = new Date(row.created_at);
+        tdDate.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        tdDate.title = d.toISOString();
+      } else {
+        tdDate.textContent = '—';
+      }
+      tr.appendChild(tdDate);
+
+      var tdType = document.createElement('td');
+      var typeBadge = document.createElement('span');
+      typeBadge.className = row.type === 'bug' ? 'fb-type-bug' : 'fb-type-feature';
+      typeBadge.textContent = row.type === 'bug' ? '🐛 Bug' : '💡 Feature';
+      tdType.appendChild(typeBadge);
+      tr.appendChild(tdType);
+
+      var tdDesc = document.createElement('td');
+      tdDesc.className = 'fb-desc';
+      tdDesc.title = row.description || '';
+      tdDesc.textContent = row.description || '—';
+      tr.appendChild(tdDesc);
+
+      var tdMember = document.createElement('td');
+      if (row.member_name || row.member_email) {
+        tdMember.textContent = row.member_name || '';
+        if (row.member_email) {
+          var a = document.createElement('a');
+          a.href = 'mailto:' + row.member_email;
+          a.textContent = row.member_email;
+          a.style.cssText = 'display:block; font-size:0.78rem; color:var(--navy);';
+          tdMember.appendChild(a);
+        }
+      } else {
+        tdMember.textContent = '—';
+        tdMember.style.color = 'var(--text-light)';
+      }
+      tr.appendChild(tdMember);
+
+      var tdPage = document.createElement('td');
+      if (row.page_context) {
+        var pg = row.page_context.replace(/^https?:\/\/[^/]+/, '');
+        tdPage.textContent = pg || row.page_context;
+        tdPage.title = row.page_context;
+        tdPage.style.fontSize = '0.78rem';
+      } else {
+        tdPage.textContent = '—';
+        tdPage.style.color = 'var(--text-light)';
+      }
+      tr.appendChild(tdPage);
+
+      var tdStatus = document.createElement('td');
+      tdStatus.className = 'fb-status-new';
+      tdStatus.textContent = row.status || 'new';
+      tr.appendChild(tdStatus);
+
+      tbody.appendChild(tr);
+    });
+  }
+
   // ── Resource visibility panel ─────────────────────────────────────────────
 
   var _visibilitySettings = null;
@@ -786,6 +986,7 @@
         _adminSession = session;
         loadMembers();
         loadAssessments();
+        loadBillFeedback();
         loadVisibilitySettings();
       }
     });

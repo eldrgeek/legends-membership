@@ -47,6 +47,49 @@ window.SomaGuideConfig = {
   /* ── Clean on close: discard tour state when widget is minimised ─────── */
   cleanOnClose: true,
 
+  /* ── Feedback intake (Capability 1) ─────────────────────────────────── */
+  /* Bill captures bug reports and feature requests inline and POSTs them   */
+  /* server-side to this Netlify function. Greg reviews in admin.html.      */
+  feedbackUrl: '/.netlify/functions/submit-feedback',
+
+  /* ── Domain scope guard (Capability 2) ──────────────────────────────── */
+  /* Off-topic pattern list — matched client-side before inference.         */
+  /* contextNote is prepended to knowledge sent to the inference endpoint   */
+  /* so the LLM also deflects nuanced off-domain questions.                 */
+  scopeGuard: {
+    deflect: "That's a bit outside my lane — I'm here to help with the Legends of Basketball membership site, member benefits, and how this works. What can I help you with here?",
+    offTopicPatterns: [
+      /\bweather\b/i,
+      /write (me )?(a |an )?(poem|story|essay|song|haiku|sonnet|limerick)/i,
+      /tell me a (joke|story)/i,
+      /\b(stock price|stock market|stock ticker|share price)\b/i,
+      /^(translate|how do you say |what is .* in [a-z]+\?)/i,
+      /\brecipe for\b/i,
+      /\b(sports score|game score|who won (the |a )?(game|match|series))\b/i,
+      /\b(latest news|news today|current events|headlines)\b/i,
+      /\b(solve this|calculate|what is \d+[\s+\-*/])/i,
+      /\b(write me|draft me|compose me)\b/i,
+      /\b(president|prime minister|congress|senator|governor)\b(?!.*legends|.*basketball|.*nbrpa)/i,
+    ],
+    contextNote: [
+      'SCOPE INSTRUCTIONS FOR BILL:',
+      'You are Bill, the AI assistant for the Legends of Basketball membership site.',
+      'You ONLY answer questions about these three domains:',
+      '1. LEGENDS DOMAIN: retired professional basketball, NBRPA history and mission, player benefits',
+      '   (pension, health programs, financial support), the five pillars (Camaraderie, Health,',
+      '   Financial Stability, Community, Family), committee members and their careers.',
+      '2. WEBSITE NAVIGATION: how to use this membership site, where to find things, what each',
+      '   page does, how to submit forms, how the Committee section works, etc.',
+      '3. SOMA: what SOMA (Shared Orchestration & Memory Architecture) is, how the human+AI',
+      '   collaboration model works, what Bill\'s role is, who Greg Foster is in this context.',
+      'For ANY question outside these three domains (general trivia, current events, writing',
+      'tasks, other sports, unrelated topics), respond with exactly:',
+      '"That\'s a bit outside my lane — I\'m here to help with the Legends of Basketball',
+      'membership site, member benefits, and how this works. What can I help you with here?"',
+      'Do not attempt to answer off-domain questions even if you know the answer.',
+    ].join('\n')
+  },
+
   /* ── Site map ────────────────────────────────────────────────────────── */
   siteMap: [
     { id: 'home',            label: 'Home',              path: 'index.html',           description: 'Overview of the Legends of Basketball Membership Services Committee' },
