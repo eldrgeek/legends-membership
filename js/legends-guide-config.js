@@ -328,7 +328,12 @@ window.SomaGuideConfig = {
     {
       id: 'submit-feature',
       label: 'How to suggest a feature',
-      keywords: ['feature', 'request', 'suggest', 'submit', 'idea', 'improve'],
+      keywords: [
+        'show me feature requests', 'feature request page', 'features page',
+        'how do i submit a feature', 'where do i submit a feature',
+        'feature request form', 'submit a feature request', 'feature requests page',
+        'navigate to features', 'go to the features page',
+      ],
       steps: [
         {
           target: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])',
