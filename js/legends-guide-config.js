@@ -323,7 +323,8 @@ window.SomaGuideConfig = {
           label: 'Go to Committee',
           demo: 'click',
           narration:
-            'To find a committee member, head to the Committee page. I\'ll take you there now.',
+            '[[arrow a[href="members.html"] 2s]] To find a committee member, head to the Committee page. ' +
+            '[[highlight]] I\'ll take you there now. [[click]]',
           instruction: 'Heading to the Committee page…'
         },
         {
@@ -332,8 +333,8 @@ window.SomaGuideConfig = {
           label: 'Member grid',
           demo: 'hover',
           narration:
-            'Here\'s the Committee page — you\'ll find cards for each member with their photo, ' +
-            'NBA career highlights, and contact information.',
+            '[[arrow .members-grid 2s]] Here\'s the Committee page — you\'ll find cards for each member with their photo, ' +
+            '[[highlight]] NBA career highlights, and contact information.',
           instruction: 'Click any member card to open their full profile.'
         }
       ]
@@ -356,7 +357,9 @@ window.SomaGuideConfig = {
           demo: 'openDropdown',
           requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
           narration:
-            'Feature requests live under the Resources section. Click Resources to open the dropdown.',
+            '[[arrow .nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"]) 2s]] ' +
+            'Feature requests live under the Resources section. ' +
+            '[[highlight .nav-dropdown-toggle[href="resources.html"]]] Click Resources to open the dropdown. [[click]]',
           instruction: 'Click "Resources ▾" in the navigation to open the dropdown menu.'
         },
         {
@@ -365,8 +368,9 @@ window.SomaGuideConfig = {
           demo: 'hover',
           requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
           narration:
+            '[[arrow .nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"]) .nav-dropdown-menu 1500ms]] ' +
             'You\'ll see a menu with Resources, Minutes, Systems Map, and Assessment. ' +
-            'Feature Requests is reachable from the main Resources page.',
+            '[[highlight .nav-dropdown-menu a[href="resources.html"]]] Feature Requests is reachable from the main Resources page.',
           instruction: 'Click "Resources" in the dropdown to go to the resources page, then look for the Feature Requests link.'
         }
       ]
@@ -385,8 +389,8 @@ window.SomaGuideConfig = {
           label: 'Ask Bill section',
           demo: 'hover',
           narration:
-            'The "Have a Question? Ask Bill" section on the home page is a shortcut to me. ' +
-            'I\'m an AI trained on Legends of Basketball materials.',
+            '[[arrow #ask-bill-section 2s]] The "Have a Question? Ask Bill" section on the home page is a shortcut to me. ' +
+            '[[highlight]] I\'m an AI trained on Legends of Basketball materials.',
           instruction: 'Scroll down the home page to find the Ask Bill section (visible when signed in).'
         },
         {
@@ -394,7 +398,8 @@ window.SomaGuideConfig = {
           label: 'Ask Bill nav link',
           demo: 'hover',
           narration:
-            'The "Ask Bill" link in the nav is always visible — clicking it opens this widget ' +
+            '[[arrow #ask-bill-nav 2s]] The "Ask Bill" link in the nav is always visible — ' +
+            '[[highlight]] clicking it opens this widget ' +
             'so you can chat with me on any page.',
           instruction: 'Click "Ask Bill" in the navigation to open this guide widget.'
         },
@@ -403,7 +408,8 @@ window.SomaGuideConfig = {
           label: 'This guide widget',
           demo: 'hover',
           narration:
-            'And of course — you\'re already talking to me right here! Use this widget anytime for ' +
+            '[[arrow #soma-guide 2s]] And of course — you\'re already talking to me right here! ' +
+            '[[highlight]] Use this widget anytime for ' +
             'a quick question, or switch to text mode for a longer conversation.',
           instruction: 'Use the 💬 or 🎙 buttons at the top of this panel to switch modes.'
         }

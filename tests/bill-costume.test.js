@@ -171,7 +171,9 @@ describe('Costume — walkthrough selectors exist on their pages', () => {
           const doc = domFor(page);
           for (const cue of parsed.cues) {
             assert.ok(KNOWN.includes(cue.verb), `unknown cue verb [[${cue.verb}]]`);
-            if (cue.selector) {
+            /* #soma-guide is the widget itself — engine-injected at runtime,
+             * never present in the static HTML (same skip as step targets). */
+            if (cue.selector && cue.selector !== '#soma-guide') {
               assert.ok(doc.querySelector(cue.selector),
                 `cue [[${cue.verb} ${cue.selector}]] selector not found on ${page}`);
             }
