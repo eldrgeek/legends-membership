@@ -201,43 +201,43 @@ window.SomaGuideConfig = {
           instruction: 'Click "Resources ▾" to see the dropdown menu options.',
           substeps: [
             {
-              target: 'a[href="minutes.html"]',
+              target: '.hero',
+              page: 'minutes',
               label: 'Meeting Minutes',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                '[[arrow a[href="minutes.html"] 1500ms]] Meeting Minutes is where you\'ll find the official record of every committee ' +
+                '[[arrow .hero 1500ms]] Meeting Minutes is where you\'ll find the official record of every committee ' +
                 '[[highlight]] session — decisions, votes, and discussion summaries.',
               instruction: 'Click "Minutes" to view all meeting records.'
             },
             {
-              target: 'a[href="systems-map.html"]',
+              target: '#map-container',
+              page: 'systems-map',
               label: 'Systems Map',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                '[[arrow a[href="systems-map.html"] 1500ms]] The Systems Map gives you an interactive overview of the organization\'s ' +
+                '[[arrow #map-container 1500ms]] The Systems Map gives you an interactive overview of the organization\'s ' +
                 '[[highlight]] initiatives and how they connect — a great place to orient yourself.',
               instruction: 'Click "Systems Map" to explore the initiative landscape.'
             },
             {
-              target: 'a[href="assessment.html"]',
+              target: '.assessment-header',
+              page: 'assessment',
               label: 'Assessment',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                '[[arrow a[href="assessment.html"] 1500ms]] The Assessment is a member satisfaction survey. ' +
+                '[[arrow .assessment-header 1500ms]] The Assessment is a member satisfaction survey. ' +
                 '[[highlight]] Your feedback helps the ' +
                 'committee prioritize improvements and understand member needs.',
               instruction: 'Click "Assessment" to complete or review the satisfaction survey.'
             },
             {
-              target: '.nav-dropdown-menu a[href="resources.html"]',
+              target: '.hero',
+              page: 'resources',
               label: 'Documents',
               demo: 'hover',
-              requires: { dropdown: '.nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"])' },
               narration:
-                '[[arrow .nav-dropdown-menu a[href="resources.html"] 1500ms]] And the Resources page itself is home to committee documents, the Leslie ' +
+                '[[arrow .hero 1500ms]] And the Resources page itself is home to committee documents, the Leslie ' +
                 '[[highlight]] Johnson proposals, and other reference materials.',
               instruction: 'Click "Resources" to browse all committee documents.'
             }
