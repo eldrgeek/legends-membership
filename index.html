@@ -48,7 +48,7 @@
       </li>
       <li><a href="recommendations.html">Recommendations</a></li>
       <li><a href="about.html">About &amp; Contact</a></li>
-      <li id="ask-bill-nav"><a href="#" onclick="event.preventDefault(); window.somaGuide && window.somaGuide.open();">Ask Bill</a></li>
+      <li id="ask-bill-nav"><a href="https://bill-talk.netlify.app" onclick="if(window.somaGuide){event.preventDefault(); window.somaGuide.open();}">Ask Bill</a></li>
       <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
       <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
       <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
@@ -168,7 +168,7 @@
   </div>
 </section>
 
-<section id="ask-bill-section" style="display:none;">
+<section id="ask-bill-section">
   <div class="section-inner text-center">
     <div class="section-label">AI Assistant</div>
     <h2 class="section-title">Have a Question? Ask Bill.</h2>
@@ -204,7 +204,6 @@
     var nm = document.getElementById('auth-name');
     var loginNav = document.getElementById('login-nav');
     var navAdmin = document.getElementById('nav-admin-link');
-    var askBillSection = document.getElementById('ask-bill-section');
     if (!el) return;
     if (user) {
       var name = (user.user_metadata && user.user_metadata.full_name) || user.email;
@@ -213,14 +212,12 @@
       if (loginNav) loginNav.style.display = 'none';
       var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
       if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
-      if (askBillSection) askBillSection.style.display = '';
       var adminLink = document.getElementById('footer-admin-link');
       if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
     } else {
       el.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
       if (navAdmin) navAdmin.style.display = 'none';
-      if (askBillSection) askBillSection.style.display = 'none';
       var adminLink = document.getElementById('footer-admin-link');
       if (adminLink) adminLink.style.display = 'none';
     }
