@@ -193,6 +193,27 @@
   </div>
 </section>
 
+<section id="subcommittee-documents" data-access="committee-only" style="display:none; border-top: 1px solid rgba(255,255,255,0.07);">
+  <div class="section-inner">
+    <div class="section-label">Committee Documents</div>
+    <h2 class="section-title">Subcommittee Resources</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead" style="margin-bottom: 2rem;">Working documents and data files for the New Membership &amp; Retention subcommittee. Committee login required.</p>
+
+    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 24px; display: flex; align-items: flex-start; gap: 20px; max-width: 560px;">
+      <div style="font-size: 2rem; flex-shrink: 0; margin-top: 2px;">📊</div>
+      <div style="flex: 1;">
+        <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold, #d4af37); margin-bottom: 4px;">Membership Data</div>
+        <div style="font-weight: 600; color: rgba(255,255,255,0.9); font-size: 1rem; margin-bottom: 6px;">Platinum &amp; Gold Memberships</div>
+        <div style="font-size: 0.84rem; color: rgba(255,255,255,0.55); margin-bottom: 16px;">Member roster with gift dates, fiscal year classifications, and contact information. For committee use only.</div>
+        <a href="/downloads/Memberships_Platinum_Gold_Inc.xlsx" download class="btn btn-navy" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 8px 18px;">
+          ↓ Download Spreadsheet
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="footer-brand">Legends of Basketball</div>
   <div class="footer-tagline">Where The Story Continues</div>
@@ -223,6 +244,7 @@
       if (el) el.style.display = 'flex';
       if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
       if (loginNav) loginNav.style.display = 'none';
+      document.querySelectorAll('[data-access="committee-only"]').forEach(function(s) { s.style.display = ''; });
       SomaAuth.getRole(user).then(function(role) {
         var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
         if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
