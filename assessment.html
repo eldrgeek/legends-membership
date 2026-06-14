@@ -320,6 +320,7 @@
           <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
           <li><a href="assessment.html" role="menuitem">Assessment</a></li>
           <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
+          <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
         </ul>
       </li>
       <li><a href="recommendations.html">Recommendations</a></li>
@@ -1035,6 +1036,14 @@
     }
   });
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+
+  // Hide nav/footer when embedded via ?embed=1
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var navEl = document.querySelector('nav');
+    var footerEl = document.querySelector('footer');
+    if (navEl) navEl.style.display = 'none';
+    if (footerEl) footerEl.style.display = 'none';
+  }
 
   // ===== Assessment logic =====
   let currentSection = 0;
