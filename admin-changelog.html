@@ -83,6 +83,20 @@
     .btn-clear-dates { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 7px 14px; font-size: 0.8rem; color: var(--text-medium); cursor: pointer; font-family: inherit; }
     .btn-clear-dates:hover { border-color: var(--gold); color: var(--navy); }
 
+    /* Search box */
+    .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+      border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; background: var(--white); }
+    .search-row:focus-within { outline: 2px solid var(--gold); outline-offset: 1px; }
+    .search-row svg { flex: 0 0 auto; color: var(--text-light); }
+    .search-row input[type="search"] { flex: 1; border: none; outline: none; background: transparent;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--text-dark); }
+    .search-row input[type="search"]::-webkit-search-decoration,
+    .search-row input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+    .btn-clear-search { display: none; background: none; border: none; cursor: pointer; padding: 2px 6px;
+      font-size: 1.1rem; line-height: 1; color: var(--text-light); font-family: inherit; }
+    .btn-clear-search:hover { color: var(--navy); }
+    .search-row.has-text .btn-clear-search { display: inline-block; }
+
     /* New request form */
     .new-request-section { background: var(--white); border: 1px solid var(--gold); border-radius: 12px; padding: 24px; margin-bottom: 32px; }
     .new-request-section h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); margin-bottom: 6px; }
@@ -240,6 +254,15 @@ ALTER TABLE public.changelog_notes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admin read notes" ON public.changelog_notes FOR SELECT USING (true);
 CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHECK (true);</pre>
       </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-row" id="search-row">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="search" id="search-input" placeholder="Search the change log…" oninput="applySearch()" aria-label="Search the change log">
+      <button type="button" class="btn-clear-search" onclick="clearSearch()" aria-label="Clear search">&times;</button>
     </div>
 
     <!-- Date range filter -->
@@ -490,6 +513,14 @@ var CHANGELOG = [
     title: 'Date range filtering + email log backfill',
     summary: 'Added date range (From / To) filtering to this Site Change Log so history can be time-bounded alongside the existing status tabs. Back-filled missing CHANGELOG entries for the June 11 Greg batch, June 12 Purvis Short update, and June 15 pre-launch changes. Also added a scripts/scrape-email-log.py utility to extract Legends-related completion emails from the claude@ inbox and print candidate changelog entries for review.',
     status: 'completed'
+  },
+  {
+    id: 'cl-025',
+    date: '2026-06-15',
+    requester: 'Mike',
+    title: 'Search box on the Site Change Log',
+    summary: 'Added a search box to this Site Change Log that filters entries by title, summary, requester, or date as you type. Works alongside the existing status tabs and date-range filter.',
+    status: 'completed'
   }
 ];
 
@@ -536,6 +567,29 @@ function supaRest(path, opts) {
 var _currentTab = 'all';
 var _fromDate = '';
 var _toDate = '';
+var _searchTerm = '';
+
+function applySearch() {
+  var input = document.getElementById('search-input');
+  _searchTerm = (input.value || '').trim().toLowerCase();
+  document.getElementById('search-row').classList.toggle('has-text', _searchTerm.length > 0);
+  renderChangelog();
+}
+
+function clearSearch() {
+  _searchTerm = '';
+  var input = document.getElementById('search-input');
+  if (input) input.value = '';
+  document.getElementById('search-row').classList.remove('has-text');
+  renderChangelog();
+}
+
+function itemMatchesSearch(item) {
+  if (!_searchTerm) return true;
+  var hay = [item.title, item.summary, item.requester, item.date]
+    .filter(Boolean).join(' ').toLowerCase();
+  return hay.indexOf(_searchTerm) !== -1;
+}
 
 function showTab(tab, el) {
   _currentTab = tab;
@@ -726,7 +780,7 @@ function renderChangelog() {
   var list = document.getElementById('changelog-list');
   var items = CHANGELOG.filter(function(item) {
     if (_currentTab !== 'all' && item.status !== _currentTab) return false;
-    return itemMatchesDateFilter(item);
+    return itemMatchesDateFilter(item) && itemMatchesSearch(item);
   });
 
   // Update stats
