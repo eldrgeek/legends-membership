@@ -105,17 +105,23 @@ exports.handler = async function (event) {
     return jsonResponse(400, { error: 'description is required' });
   }
 
+  const memberEmail = str(body.member_email, 255);
+
+  /* Greg (gfos44@gmail.com) submits on his own authority — auto-approve. */
+  const GREG_EMAIL = 'gfos44@gmail.com';
+  const autoApprove = memberEmail && memberEmail.toLowerCase() === GREG_EMAIL;
+
   const row = {
     type,
     description,
     member_name:   str(body.member_name, 120),
-    member_email:  str(body.member_email, 255),
+    member_email:  memberEmail,
     page_context:  str(body.page_context, 500),
     assistant_id:  str(body.assistant_id, 60) || 'legends-bill',
     source:        'bill-widget',
     ip:            str(event.headers['x-forwarded-for'] || event.headers['client-ip'] || null, 100),
     user_agent:    str(event.headers['user-agent'] || null, 500),
-    status:        'new',
+    status:        autoApprove ? 'greg-approved' : 'new',
   };
 
   try {

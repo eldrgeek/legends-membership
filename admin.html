@@ -175,6 +175,10 @@
     .fb-type-feature { background: #dbeafe; color: #1e40af; display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
     .fb-desc { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .fb-status-new { color: #7c3aed; font-size: 0.8rem; }
+    .decision-btn { padding: 5px 12px; border: none; border-radius: 5px; font-family: 'Inter', sans-serif; font-size: 0.76rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+    .decision-btn:hover:not(:disabled) { opacity: 0.85; }
+    .decision-btn:disabled { opacity: 0.45; cursor: default; }
+    .btn-approve { background: #065f46; color: #fff; }
   </style>
 </head>
 <body>
@@ -307,6 +311,7 @@
               <th>Member</th>
               <th>Page</th>
               <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="fb-tbody"></tbody>
@@ -858,8 +863,89 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
       tdStatus.textContent = row.status || 'new';
       tr.appendChild(tdStatus);
 
+      /* Actions column */
+      var tdActions = document.createElement('td');
+      tdActions.style.whiteSpace = 'nowrap';
+      var actionStatus = document.createElement('span');
+      actionStatus.className = 'inline-status';
+
+      function makeFbBtn(label, cls, onclick) {
+        var b = document.createElement('button');
+        b.className = 'decision-btn ' + cls;
+        b.textContent = label;
+        b.style.cssText = 'margin-right:4px; margin-bottom:2px;';
+        b.addEventListener('click', onclick);
+        return b;
+      }
+
+      var currentStatus = row.status || 'new';
+
+      if (currentStatus !== 'greg-approved' && currentStatus !== 'dispatched' && currentStatus !== 'shipped') {
+        var approveBtn = makeFbBtn('Approve', 'btn-approve', function() {
+          approveBtn.disabled = true;
+          approveBtn.textContent = '…';
+          actionStatus.textContent = '';
+          SomaAuth.getSession().then(function(result) {
+            var token = result && result.data && result.data.session && result.data.session.access_token;
+            return fetch('/.netlify/functions/update-feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body: JSON.stringify({ id: row.id, status: 'greg-approved' })
+            });
+          }).then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
+          .then(function(res) {
+            if (res.ok) {
+              row.status = 'greg-approved';
+              tdStatus.textContent = 'greg-approved';
+              approveBtn.remove();
+              actionStatus.textContent = '✓';
+              actionStatus.className = 'inline-status ok';
+              /* Show dispatch button after approval */
+              tdActions.insertBefore(makeDispatchBtn(row), actionStatus);
+            } else {
+              approveBtn.disabled = false;
+              approveBtn.textContent = 'Approve';
+              actionStatus.textContent = '✗ ' + ((res.data && res.data.error) || 'error');
+              actionStatus.className = 'inline-status err';
+            }
+          }).catch(function(e) {
+            approveBtn.disabled = false;
+            approveBtn.textContent = 'Approve';
+            actionStatus.textContent = '✗ ' + e.message;
+            actionStatus.className = 'inline-status err';
+          });
+        });
+        tdActions.appendChild(approveBtn);
+      }
+
+      if (currentStatus === 'greg-approved') {
+        tdActions.appendChild(makeDispatchBtn(row));
+      }
+
+      tdActions.appendChild(actionStatus);
+      tr.appendChild(tdActions);
+
       tbody.appendChild(tr);
     });
+  }
+
+  function makeDispatchBtn(row) {
+    var b = document.createElement('button');
+    b.className = 'decision-btn btn-approve';
+    b.textContent = 'Dispatch';
+    b.style.cssText = 'margin-right:4px; margin-bottom:2px; background:#1e40af;';
+    b.addEventListener('click', function() {
+      var subject = encodeURIComponent('[DISPATCH:Mac] ' + (row.type === 'bug' ? 'Fix Bug: ' : 'Feature: ') + (row.description || '').slice(0, 60));
+      var pageRef = row.page_context ? '\n- Page: ' + row.page_context : '';
+      var submitter = (row.member_name || row.member_email) ? '\n- Submitted by: ' + (row.member_name || row.member_email) : '';
+      var body = encodeURIComponent(
+        '## Context\nBill widget ' + (row.type === 'bug' ? 'bug report' : 'feature request') + ' submitted on Legends of Basketball site.' + pageRef + submitter +
+        '\n\n## Task\n' + (row.description || '') +
+        '\n\n## Done criteria\nFix implemented, tested, deployed. Summary written to SOMA/audits/.'
+      );
+      window.location.href = 'mailto:claude@mike-wolf.com?subject=' + subject + '&body=' + body;
+    });
+    return b;
   }
 
   // ── Resource visibility panel ─────────────────────────────────────────────
