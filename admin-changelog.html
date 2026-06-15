@@ -72,6 +72,17 @@
     .note-status.ok { color: #1a7a1a; }
     .note-status.err { color: #c0392b; }
 
+    /* Date range filter */
+    .date-filter-row { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .date-filter-row label { font-size: 0.82rem; font-weight: 600; color: var(--text-dark); white-space: nowrap; }
+    .date-filter-row input[type="date"] {
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+      font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-dark);
+    }
+    .date-filter-row input[type="date"]:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+    .btn-clear-dates { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 7px 14px; font-size: 0.8rem; color: var(--text-medium); cursor: pointer; font-family: inherit; }
+    .btn-clear-dates:hover { border-color: var(--gold); color: var(--navy); }
+
     /* New request form */
     .new-request-section { background: var(--white); border: 1px solid var(--gold); border-radius: 12px; padding: 24px; margin-bottom: 32px; }
     .new-request-section h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); margin-bottom: 6px; }
@@ -231,7 +242,16 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
       </div>
     </div>
 
-    <!-- Filter tabs -->
+    <!-- Date range filter -->
+    <div class="date-filter-row">
+      <label for="filter-from">From</label>
+      <input type="date" id="filter-from" onchange="applyFilters()">
+      <label for="filter-to">To</label>
+      <input type="date" id="filter-to" onchange="applyFilters()">
+      <button class="btn-clear-dates" onclick="clearDateFilter()">Clear dates</button>
+    </div>
+
+    <!-- Status tabs -->
     <div class="tab-bar">
       <div class="tab active" onclick="showTab('all', this)">All</div>
       <div class="tab" onclick="showTab('completed', this)">Completed</div>
@@ -430,6 +450,46 @@ var CHANGELOG = [
     title: 'Site change log summary page (this page)',
     summary: 'Added this admin-gated Site Change Log page: a chronological list of all website communications and requests with status, a place for Greg to add refinement notes on any item, and a form for Greg or Mike to submit new requests.',
     status: 'completed'
+  },
+  {
+    id: 'cl-020',
+    date: '2026-06-11',
+    requester: 'Greg',
+    title: 'Greg\'s June 11 batch A: minutes, nav, committee updates, Bill tour',
+    summary: 'Large batch from Greg\'s June 11 emails: (1) June 10 meeting minutes published to the Minutes page. (2) 4 subcommittee pages (Legends Life, Membership, Scholarships, Chapter Presidents) added to the Committee nav dropdown. (3) Work Stream Delegation section added to the Committee Members page. (4) Meeting agendas moved from Resources to the Minutes page. (5) Bill guided tour fixed to navigate to resource pages. (6) Chapter Presidents directory table added. (7) MS&B Committee contact directory added.',
+    status: 'completed'
+  },
+  {
+    id: 'cl-021',
+    date: '2026-06-11',
+    requester: 'Greg',
+    title: 'Greg\'s June 11 batch B: Platinum spreadsheet, member corrections, Ask Bill fix',
+    summary: 'Continuation of Greg\'s June 11 requests: (1) Platinum & Gold membership spreadsheet download added to the subcommittee page. (2) Choo Smith added to the committee contact directory (corrected from "Chu Smith"). (3) Hollins and Tinsley removed from the Work Stream Delegation section per Greg\'s request — they remain as regular committee members. (4) Ask Bill nav link made reliably visible with an always-visible home section.',
+    status: 'completed'
+  },
+  {
+    id: 'cl-022',
+    date: '2026-06-12',
+    requester: 'Mike',
+    title: 'Purvis Short + all 4 subcommittee tabs added to Committee Members page',
+    summary: 'Added Purvis Short to the committee roster. Integrated all 4 subcommittee pages (Legends Life, Membership, Scholarships, Chapter Presidents) as navigable tabs within the Committee Members page for easier access without leaving the page.',
+    status: 'completed'
+  },
+  {
+    id: 'cl-023',
+    date: '2026-06-15',
+    requester: 'Mike',
+    title: 'Work Stream Delegation removal and Scholarship America section expansion',
+    summary: 'Removed the Work Stream Delegation section from the Committee Members page per Greg and Mike\'s request — subcommittee navigation is handled by the nav dropdown. Also expanded the Scholarship America partnership section on the Scholarships subcommittee page with accurate factual detail.',
+    status: 'completed'
+  },
+  {
+    id: 'cl-024',
+    date: '2026-06-15',
+    requester: 'Mike',
+    title: 'Date range filtering + email log backfill',
+    summary: 'Added date range (From / To) filtering to this Site Change Log so history can be time-bounded alongside the existing status tabs. Back-filled missing CHANGELOG entries for the June 11 Greg batch, June 12 Purvis Short update, and June 15 pre-launch changes. Also added a scripts/scrape-email-log.py utility to extract Legends-related completion emails from the claude@ inbox and print candidate changelog entries for review.',
+    status: 'completed'
   }
 ];
 
@@ -472,14 +532,37 @@ function supaRest(path, opts) {
   return fetch(cfg.url + path, Object.assign({}, opts, { headers: headers }));
 }
 
-// ── Tab filter ────────────────────────────────────────────────────────────────
+// ── Filters ───────────────────────────────────────────────────────────────────
 var _currentTab = 'all';
+var _fromDate = '';
+var _toDate = '';
 
 function showTab(tab, el) {
   _currentTab = tab;
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   if (el) el.classList.add('active');
   renderChangelog();
+}
+
+function applyFilters() {
+  _fromDate = document.getElementById('filter-from').value || '';
+  _toDate = document.getElementById('filter-to').value || '';
+  renderChangelog();
+}
+
+function clearDateFilter() {
+  _fromDate = '';
+  _toDate = '';
+  document.getElementById('filter-from').value = '';
+  document.getElementById('filter-to').value = '';
+  renderChangelog();
+}
+
+function itemMatchesDateFilter(item) {
+  var d = (item.date || item.created_at || '').slice(0, 10);
+  if (_fromDate && d < _fromDate) return false;
+  if (_toDate && d > _toDate) return false;
+  return true;
 }
 
 // ── Notes (Supabase) ──────────────────────────────────────────────────────────
@@ -642,8 +725,8 @@ function renderItem(item, isNew, authorEmail) {
 function renderChangelog() {
   var list = document.getElementById('changelog-list');
   var items = CHANGELOG.filter(function(item) {
-    if (_currentTab === 'all') return true;
-    return item.status === _currentTab;
+    if (_currentTab !== 'all' && item.status !== _currentTab) return false;
+    return itemMatchesDateFilter(item);
   });
 
   // Update stats
