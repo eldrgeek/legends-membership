@@ -97,6 +97,49 @@
     .btn-clear-search:hover { color: var(--navy); }
     .search-row.has-text .btn-clear-search { display: inline-block; }
 
+    /* Add-request toggle */
+    .add-request-bar { margin-bottom: 24px; }
+    .btn-add-request { display: inline-flex; align-items: center; gap: 7px; background: var(--navy); color: #fff;
+      border: none; border-radius: 8px; padding: 10px 18px; font-size: 0.86rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; }
+    .btn-add-request:hover { background: var(--gold); color: var(--navy); }
+    .new-request-section.collapsed { display: none; }
+    .new-request-section .btn-close-form { float: right; background: none; border: none; font-size: 1.2rem;
+      line-height: 1; color: var(--text-light); cursor: pointer; }
+
+    /* Approval actions + badges */
+    .cl-approve-actions { display: flex; gap: 10px; margin: 12px 0 4px; flex-wrap: wrap; }
+    .btn-accept { background: #1f8b4c; color: #fff; border: none; border-radius: 7px; padding: 8px 18px;
+      font-size: 0.83rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-accept:hover { background: #176b3a; }
+    .btn-refine { background: none; color: var(--navy); border: 1px solid var(--border); border-radius: 7px;
+      padding: 8px 16px; font-size: 0.83rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-refine:hover { border-color: var(--gold); }
+    .badge-awaiting { background: #fff3d6; color: #8a6d1a; border: 1px solid #e6cf8a; }
+    .badge-accepted { background: #e3f4ea; color: #1f8b4c; border: 1px solid #b7e0c6; }
+
+    /* Clickable title / page link */
+    .cl-title-link { color: var(--navy); text-decoration: none; border-bottom: 1px dashed var(--gold); cursor: pointer; }
+    .cl-title-link:hover { color: var(--gold); }
+    .cl-title-ext { font-size: 0.75em; color: var(--text-light); }
+    .cl-page-line { font-size: 0.78rem; color: var(--text-light); margin-top: 6px; }
+    .cl-page-link { color: var(--navy); font-weight: 600; cursor: pointer; }
+    .cl-item.previewing { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+    /* Inline page preview panel */
+    .page-preview { border: 1px solid var(--gold); border-radius: 12px; overflow: hidden; margin-bottom: 24px;
+      background: var(--white); box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+    .page-preview-header { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+      background: var(--navy); color: #fff; flex-wrap: wrap; }
+    .page-preview-header .pp-title { font-weight: 700; font-size: 0.9rem; flex: 1; min-width: 140px; }
+    .page-preview-header .pp-page { font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+    .page-preview-header a, .page-preview-header button { font-family: inherit; cursor: pointer; }
+    .pp-accept { background: #1f8b4c; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-weight: 700; font-size: 0.78rem; }
+    .pp-refine { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; }
+    .pp-open { color: var(--gold); font-size: 0.78rem; text-decoration: none; }
+    .pp-close { background: none; border: none; color: #fff; font-size: 1.3rem; line-height: 1; }
+    .page-preview iframe { width: 100%; height: 65vh; border: none; display: block; background: #fff; }
+
     /* New request form */
     .new-request-section { background: var(--white); border: 1px solid var(--gold); border-radius: 12px; padding: 24px; margin-bottom: 32px; }
     .new-request-section h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); margin-bottom: 6px; }
@@ -135,6 +178,7 @@
     <a href="index.html" class="nav-brand">
       <span class="brand-main">Legends of Basketball</span>
       <span class="brand-sub">Membership Services Committee</span>
+      <span class="brand-home">Home Page</span>
     </a>
     <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
     <ul class="nav-links">
@@ -193,14 +237,19 @@
 
     <!-- Stats -->
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Requests</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-completed">0</div><div class="stat-label">Completed</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-inprogress">0</div><div class="stat-label">In Progress</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-deferred">0</div><div class="stat-label">Deferred</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-awaiting">0</div><div class="stat-label">Awaiting Approval</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-accepted">0</div><div class="stat-label">Accepted</div></div>
     </div>
 
-    <!-- Submit new request -->
-    <div class="new-request-section">
+    <!-- Add new request (compact toggle) -->
+    <div class="add-request-bar">
+      <button type="button" class="btn-add-request" id="add-request-btn" onclick="toggleRequestForm()">+ New request or refinement</button>
+    </div>
+
+    <!-- Submit new request (collapsed by default) -->
+    <div class="new-request-section collapsed" id="new-request-section">
+      <button type="button" class="btn-close-form" onclick="toggleRequestForm()" aria-label="Close">&times;</button>
       <h3>Submit a New Request or Refinement</h3>
       <p class="sub">Use this form to request changes, report issues, or note refinements needed on any part of the site.</p>
       <form id="new-request-form">
@@ -274,12 +323,26 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
       <button class="btn-clear-dates" onclick="clearDateFilter()">Clear dates</button>
     </div>
 
-    <!-- Status tabs -->
+    <!-- Approval tabs -->
     <div class="tab-bar">
-      <div class="tab active" onclick="showTab('all', this)">All</div>
-      <div class="tab" onclick="showTab('completed', this)">Completed</div>
-      <div class="tab" onclick="showTab('in-progress', this)">In Progress</div>
-      <div class="tab" onclick="showTab('deferred', this)">Deferred</div>
+      <div class="tab active" onclick="showTab('awaiting', this)">Awaiting Approval</div>
+      <div class="tab" onclick="showTab('accepted', this)">Accepted</div>
+      <div class="tab" onclick="showTab('all', this)">All</div>
+    </div>
+
+    <!-- Inline page preview -->
+    <div class="page-preview" id="page-preview" style="display:none;">
+      <div class="page-preview-header">
+        <div>
+          <div class="pp-title" id="preview-title">Preview</div>
+          <div class="pp-page" id="preview-page"></div>
+        </div>
+        <button type="button" class="pp-accept" id="preview-accept" style="display:none;">&#10003; Accept</button>
+        <button type="button" class="pp-refine" id="preview-refine">Needs refinement</button>
+        <a class="pp-open" id="preview-open-tab" href="#" target="_blank" rel="noopener">Open in new tab &#8599;</a>
+        <button type="button" class="pp-close" onclick="closePreview()" aria-label="Close preview">&times;</button>
+      </div>
+      <iframe id="preview-frame" title="Page preview" src="about:blank"></iframe>
     </div>
 
     <div class="section-heading">Change History</div>
@@ -504,7 +567,8 @@ var CHANGELOG = [
     requester: 'Mike',
     title: 'Work Stream Delegation removal and Scholarship America section expansion',
     summary: 'Removed the Work Stream Delegation section from the Committee Members page per Greg and Mike\'s request — subcommittee navigation is handled by the nav dropdown. Also expanded the Scholarship America partnership section on the Scholarships subcommittee page with accurate factual detail.',
-    status: 'completed'
+    status: 'completed',
+    page: 'members.html'
   },
   {
     id: 'cl-024',
@@ -512,7 +576,8 @@ var CHANGELOG = [
     requester: 'Mike',
     title: 'Date range filtering + email log backfill',
     summary: 'Added date range (From / To) filtering to this Site Change Log so history can be time-bounded alongside the existing status tabs. Back-filled missing CHANGELOG entries for the June 11 Greg batch, June 12 Purvis Short update, and June 15 pre-launch changes. Also added a scripts/scrape-email-log.py utility to extract Legends-related completion emails from the claude@ inbox and print candidate changelog entries for review.',
-    status: 'completed'
+    status: 'completed',
+    page: 'admin-changelog.html'
   },
   {
     id: 'cl-025',
@@ -520,7 +585,8 @@ var CHANGELOG = [
     requester: 'Mike',
     title: 'Search box on the Site Change Log',
     summary: 'Added a search box to this Site Change Log that filters entries by title, summary, requester, or date as you type. Works alongside the existing status tabs and date-range filter.',
-    status: 'completed'
+    status: 'completed',
+    page: 'admin-changelog.html'
   }
 ];
 
@@ -564,7 +630,7 @@ function supaRest(path, opts) {
 }
 
 // ── Filters ───────────────────────────────────────────────────────────────────
-var _currentTab = 'all';
+var _currentTab = 'awaiting';   // default view: review queue
 var _fromDate = '';
 var _toDate = '';
 var _searchTerm = '';
@@ -586,9 +652,146 @@ function clearSearch() {
 
 function itemMatchesSearch(item) {
   if (!_searchTerm) return true;
-  var hay = [item.title, item.summary, item.requester, item.date]
+  var hay = [item.title, item.summary, item.details, item.requester, item.date, item.page]
     .filter(Boolean).join(' ').toLowerCase();
   return hay.indexOf(_searchTerm) !== -1;
+}
+
+// ── Approval (Accept / Awaiting) ────────────────────────────────────────────────
+// Static history accepts are stored per-browser in localStorage; submitted requests
+// (Supabase) persist their accept as status='accepted' on the server.
+var ACCEPT_KEY = 'legends_changelog_accepted';
+var _previewId = null;
+
+function getAcceptedSet() {
+  try { return JSON.parse(localStorage.getItem(ACCEPT_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+function markStaticAccepted(id) {
+  var s = getAcceptedSet();
+  if (s.indexOf(id) === -1) { s.push(id); }
+  try { localStorage.setItem(ACCEPT_KEY, JSON.stringify(s)); } catch (e) {}
+}
+function isAccepted(item, isNew) {
+  if (isNew) return item.status === 'accepted';
+  return getAcceptedSet().indexOf(item.id) !== -1;
+}
+function itemMatchesApprovalTab(item, isNew) {
+  if (_currentTab === 'all') return true;
+  var accepted = isAccepted(item, isNew);
+  return _currentTab === 'accepted' ? accepted : !accepted;  // default: awaiting
+}
+
+// ── Page association ────────────────────────────────────────────────────────────
+// Explicit item.page wins (the agent that made the change records where). A light
+// keyword fallback gives older entries a useful link too.
+var _PAGE_KEYWORDS = [
+  ['change log', 'admin-changelog.html'], ['changelog', 'admin-changelog.html'],
+  ['scholarship', 'subcommittee-scholarships.html'],
+  ['chapter president', 'subcommittee-chapter-presidents.html'],
+  ['work stream', 'members.html'], ['committee member', 'members.html'], ['roster', 'members.html'],
+  ['subcommittee', 'members.html'],
+  ['minute', 'minutes.html'], ['agenda', 'minutes.html'], ['meeting', 'minutes.html'],
+  ['player benefit', 'player-benefits.html'], ['pension', 'player-benefits.html'],
+  ['membership offering', 'membership-offerings.html'],
+  ['systems map', 'systems-map.html'],
+  ['transition', 'transition-services.html'], ['legends life', 'transition-services.html'],
+  ['recommendation', 'recommendations.html'],
+  ['assessment', 'assessment.html'],
+  ['bug', 'bugs.html'],
+  ['resource', 'resources.html'],
+  ['about', 'about.html'], ['contact', 'about.html'],
+  ['homepage', 'index.html'], ['home page', 'index.html'], ['landing', 'index.html'],
+  ['ask bill', 'index.html'], ['bill widget', 'index.html']
+];
+function pageForItem(item) {
+  if (item.page) return item.page;
+  var text = ((item.title || '') + ' ' + (item.summary || item.details || '')).toLowerCase();
+  for (var i = 0; i < _PAGE_KEYWORDS.length; i++) {
+    if (text.indexOf(_PAGE_KEYWORDS[i][0]) !== -1) return _PAGE_KEYWORDS[i][1];
+  }
+  return null;
+}
+function findItemById(id) {
+  var f = CHANGELOG.filter(function (i) { return i.id === id; });
+  if (f.length) return { item: f[0], isNew: false };
+  var g = _newRequests.filter(function (i) { return (i.id || ('nr-' + i.created_at)) === id; });
+  if (g.length) return { item: g[0], isNew: true };
+  return null;
+}
+
+// ── Inline page preview ─────────────────────────────────────────────────────────
+function openPreview(page, id) {
+  var found = findItemById(id);
+  _previewId = id;
+  document.getElementById('preview-title').textContent = (found && found.item.title) || page;
+  document.getElementById('preview-page').textContent = page;
+  document.getElementById('preview-open-tab').href = '/' + page;
+  document.getElementById('preview-frame').src = '/' + page;
+
+  var acc = document.getElementById('preview-accept');
+  var accepted = found ? isAccepted(found.item, found.isNew) : true;
+  acc.style.display = accepted ? 'none' : '';
+  acc.onclick = function () { acceptItem(id, found ? found.isNew : false); };
+  document.getElementById('preview-refine').onclick = function () {
+    var form = document.getElementById('note-form-' + id);
+    if (form) { form.classList.add('open'); form.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  };
+
+  document.getElementById('page-preview').style.display = '';
+  document.querySelectorAll('.cl-item.previewing').forEach(function (e) { e.classList.remove('previewing'); });
+  var itemEl = document.getElementById('item-' + id);
+  if (itemEl) itemEl.classList.add('previewing');
+  document.getElementById('page-preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function closePreview() {
+  _previewId = null;
+  document.getElementById('page-preview').style.display = 'none';
+  document.getElementById('preview-frame').src = 'about:blank';
+  document.querySelectorAll('.cl-item.previewing').forEach(function (e) { e.classList.remove('previewing'); });
+}
+
+// ── Accept ──────────────────────────────────────────────────────────────────────
+function acceptItem(id, isNew) {
+  if (isNew) {
+    if (!_dbAvailable) { alert('Database not set up yet — cannot save acceptance.'); return; }
+    supaRest('/rest/v1/changelog_requests?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ status: 'accepted' })
+    }).then(function (res) {
+      if (res.ok || res.status === 204) {
+        var f = _newRequests.filter(function (i) { return (i.id || ('nr-' + i.created_at)) === id; });
+        if (f.length) f[0].status = 'accepted';
+        _afterAccept(id);
+      } else { alert('Could not accept (server returned ' + res.status + ').'); }
+    }).catch(function () { alert('Could not accept (network error).'); });
+  } else {
+    markStaticAccepted(id);
+    _afterAccept(id);
+  }
+}
+function _afterAccept(id) {
+  if (_previewId === id) {
+    var acc = document.getElementById('preview-accept');
+    if (acc) acc.style.display = 'none';
+  }
+  renderChangelog();
+}
+
+// ── Add-request form toggle ───────────────────────────────────────────────────────
+function toggleRequestForm() {
+  var sec = document.getElementById('new-request-section');
+  var btn = document.getElementById('add-request-btn');
+  var collapsed = sec.classList.toggle('collapsed');
+  if (btn) btn.textContent = collapsed ? '+ New request or refinement' : '− Hide form';
+  if (!collapsed) { sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+
+function approvalBadgeHtml(accepted) {
+  return accepted
+    ? '<span class="badge badge-accepted">Accepted</span>'
+    : '<span class="badge badge-awaiting">Awaiting approval</span>';
 }
 
 function showTab(tab, el) {
@@ -744,23 +947,48 @@ function escHtml(s) {
 function renderItem(item, isNew, authorEmail) {
   var id = item.id || ('nr-' + item.created_at);
   var statusKey = isNew ? (item.status || 'open') : item.status;
+  var accepted = isAccepted(item, isNew);
+  var page = pageForItem(item);
   var requesterLabel = isNew ? (item.requester || 'Admin') : item.requester;
   var requesterBadge = isNew
     ? '<span class="badge badge-greg">' + escHtml(requesterLabel.split('@')[0]) + '</span>'
     : requesterBadgeHtml(item.requester);
 
+  // Title: clickable when we know which page the change is on.
+  var titleHtml;
+  if (page) {
+    titleHtml = '<a class="cl-title-link" href="javascript:void(0)" onclick="openPreview(\'' +
+      page + '\',\'' + id + '\')">' + escHtml(item.title) +
+      ' <span class="cl-title-ext">&#8599;</span></a>';
+  } else {
+    titleHtml = escHtml(item.title);
+  }
+
   var html = '<div class="cl-item" id="item-' + id + '" data-status="' + statusKey + '">';
   html += '<div class="cl-item-header">';
   html += '<div class="cl-date">' + formatDate(item.date || item.created_at) + '</div>';
-  html += '<div class="cl-title">' + escHtml(item.title) + '</div>';
-  html += requesterBadge + '&nbsp;' + statusBadgeHtml(statusKey);
+  html += '<div class="cl-title">' + titleHtml + '</div>';
+  html += requesterBadge + '&nbsp;' + statusBadgeHtml(statusKey) + '&nbsp;' + approvalBadgeHtml(accepted);
   html += '</div>';
   html += '<div class="cl-summary">' + escHtml(item.summary || item.details || '') + '</div>';
+
+  if (page) {
+    html += '<div class="cl-page-line">On: <a class="cl-page-link" href="javascript:void(0)" onclick="openPreview(\'' +
+      page + '\',\'' + id + '\')">' + escHtml(page) + '</a></div>';
+  }
+
+  // Approval actions — Accept, or "Needs refinement" (which opens the note form).
+  if (!accepted) {
+    html += '<div class="cl-approve-actions">';
+    html += '<button class="btn-accept" onclick="acceptItem(\'' + id + '\',' + (isNew ? 'true' : 'false') + ')">&#10003; Accept</button>';
+    html += '<button class="btn-refine" onclick="toggleNoteForm(\'' + id + '\')">Needs refinement</button>';
+    html += '</div>';
+  }
 
   // Notes
   html += renderNotesFor(id);
 
-  // Add note button + form
+  // Add note button + form (a refinement note is the response when not accepted)
   html += '<button class="cl-add-note-toggle" onclick="toggleNoteForm(\'' + id + '\')">' +
     ((_notes[id] && _notes[id].length) ? 'Add another note' : '+ Add refinement note') +
     '</button>';
@@ -778,41 +1006,46 @@ function renderItem(item, isNew, authorEmail) {
 
 function renderChangelog() {
   var list = document.getElementById('changelog-list');
-  var items = CHANGELOG.filter(function(item) {
-    if (_currentTab !== 'all' && item.status !== _currentTab) return false;
-    return itemMatchesDateFilter(item) && itemMatchesSearch(item);
+
+  // Unified list: submitted requests (newest first) then change history (newest first).
+  var combined = _newRequests.map(function (i) { return { item: i, isNew: true }; })
+    .concat(CHANGELOG.slice().reverse().map(function (i) { return { item: i, isNew: false }; }));
+
+  // Stats (approval-based)
+  var total = combined.length;
+  var awaiting = combined.filter(function (e) { return !isAccepted(e.item, e.isNew); }).length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-awaiting').textContent = awaiting;
+  document.getElementById('stat-accepted').textContent = total - awaiting;
+
+  var filtered = combined.filter(function (e) {
+    return itemMatchesApprovalTab(e.item, e.isNew)
+      && itemMatchesDateFilter(e.item)
+      && itemMatchesSearch(e.item);
   });
 
-  // Update stats
-  var total = CHANGELOG.length + _newRequests.length;
-  var completed = CHANGELOG.filter(function(i) { return i.status === 'completed'; }).length;
-  var inprog = CHANGELOG.filter(function(i) { return i.status === 'in-progress'; }).length + _newRequests.filter(function(i) { return i.status === 'open'; }).length;
-  var deferred = CHANGELOG.filter(function(i) { return i.status === 'deferred'; }).length;
-
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-completed').textContent = completed;
-  document.getElementById('stat-inprogress').textContent = inprog;
-  document.getElementById('stat-deferred').textContent = deferred;
-
-  if (!items.length) {
-    list.innerHTML = '<p class="empty-state">No items match this filter.</p>';
+  if (!filtered.length) {
+    list.innerHTML = '<p class="empty-state">' +
+      (_currentTab === 'awaiting' ? 'All caught up — nothing awaiting approval.' : 'No items match this filter.') +
+      '</p>';
   } else {
     var authorEmail = (_session && _session.user) ? _session.user.email : 'Admin';
-    list.innerHTML = items.map(function(item) {
-      return renderItem(item, false, authorEmail);
-    }).reverse().join('');
+    list.innerHTML = filtered.map(function (e) {
+      return renderItem(e.item, e.isNew, authorEmail);
+    }).join('');
+  }
+
+  // Keep the preview highlight after a re-render
+  if (_previewId) {
+    var el = document.getElementById('item-' + _previewId);
+    if (el) el.classList.add('previewing');
   }
 }
 
+// Submitted requests now live in the unified list above; keep this section hidden.
 function renderNewRequests() {
   var sec = document.getElementById('new-requests-section');
-  var lst = document.getElementById('new-requests-list');
-  if (!_newRequests.length) { sec.style.display = 'none'; return; }
-  sec.style.display = '';
-  var authorEmail = (_session && _session.user) ? _session.user.email : 'Admin';
-  lst.innerHTML = _newRequests.map(function(item) {
-    return renderItem(item, true, authorEmail);
-  }).join('');
+  if (sec) sec.style.display = 'none';
 }
 
 // ── Interaction handlers ──────────────────────────────────────────────────────

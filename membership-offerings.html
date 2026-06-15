@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="/favicon-192.png">
+  <title>Membership Offerings | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <style>
+    .offering-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 24px;
+      transition: box-shadow 0.2s;
+    }
+    .offering-card:hover { box-shadow: var(--shadow); }
+    .offering-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .offering-icon {
+      font-size: 2.2rem;
+      flex-shrink: 0;
+    }
+    .offering-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .offering-meta {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .offering-card p {
+      color: var(--text-medium);
+      font-size: 0.92rem;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .offering-card .btn { display: inline-block; }
+    .featured-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--navy);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+      <span class="brand-home">Home Page</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li class="nav-dropdown">
+        <a href="members.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Committee &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="members.html" role="menuitem">Committee Members</a></li>
+          <li style="padding: 4px 16px 2px; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.3); cursor: default; pointer-events: none;">Subcommittees</li>
+          <li><a href="subcommittee-chapter-presidents.html" role="menuitem">Chapter President Communication</a></li>
+          <li><a href="subcommittee-membership.html" role="menuitem">New Membership &amp; Retention</a></li>
+          <li><a href="subcommittee-scholarships.html" role="menuitem">Scholarships &amp; Grants</a></li>
+          <li><a href="transition-services.html" role="menuitem">Legends Life</a></li>
+        </ul>
+      </li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle active" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
+          <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
+        </ul>
+      </li>
+      <li><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="ask-bill-nav"><a href="https://bill-talk.netlify.app" onclick="if(window.somaGuide){event.preventDefault(); window.somaGuide.open();}">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Committee Login</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+<script>
+  var ADMIN_EMAILS_MO = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+    var user = session ? session.user : null;
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS_MO.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+      });
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+  });
+</script>
+
+<div class="hero hero-small">
+  <div class="hero-eyebrow">Membership Programs</div>
+  <h1>Membership <span>Offerings</span></h1>
+  <p>Programs, tiers, and opportunities available to Legends of Basketball members — current, prospective, and returning.</p>
+</div>
+
+<section style="padding: 48px 24px;">
+  <div class="section-inner">
+
+    <div class="section-label">Membership Programs</div>
+    <h2 class="section-title">What We Offer</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">
+      The following documents outline the membership programs and offerings available through Legends of Basketball. The Member Offerings overview is the starting point — it describes what membership means and what you can expect.
+    </p>
+
+    <!-- Member Offerings PDF — first -->
+    <div class="offering-card" style="border-color: rgba(201,168,76,0.4); border-width: 2px;">
+      <div class="offering-card-header">
+        <div class="offering-icon">📄</div>
+        <div>
+          <div class="offering-meta">Member Offerings Overview <span class="featured-badge">Start Here</span></div>
+          <h3>Membership Services — One-Page Deliverable</h3>
+        </div>
+      </div>
+      <p>
+        A concise summary of membership offerings and priorities prepared by Legends of Basketball President Antonio Davis. This document was reviewed at the May 7, 2026 committee meeting and outlines key priorities and action items — the essential starting point for understanding what Legends membership includes.
+      </p>
+      <a href="https://nbrpa-my.sharepoint.com/:b:/g/personal/adavis_legendsofbasketball_com/IQCHE4-53UWARI9usT-T7LhIAXKJ7MrhHaF57bRwPs3plFg?e=s2unAR" class="btn btn-gold" target="_blank" rel="noopener">View Member Offerings PDF →</a>
+    </div>
+
+    <!-- Strategic Overview -->
+    <div class="offering-card">
+      <div class="offering-card-header">
+        <div class="offering-icon">📊</div>
+        <div>
+          <div class="offering-meta">President's Documents — Antonio Davis</div>
+          <h3>Membership Services — Strategic Overview</h3>
+        </div>
+      </div>
+      <p>
+        A strategic presentation on membership services prepared by President Antonio Davis, covering committee priorities, membership growth strategy, and the framework for the transition program initiative. Provides the broader context behind our membership offering structure.
+      </p>
+      <a href="https://nbrpa-my.sharepoint.com/:p:/g/personal/adavis_legendsofbasketball_com/IQASHUEJSVvDRYq395StEI51AVR991bPgx2yV1G8R8-fqkI?e=h1u2GO" class="btn btn-gold" target="_blank" rel="noopener">View Strategic Overview →</a>
+    </div>
+
+    <!-- Platinum & Gold Membership Tiers -->
+    <div class="offering-card">
+      <div class="offering-card-header">
+        <div class="offering-icon">🏅</div>
+        <div>
+          <div class="offering-meta">Membership Tiers</div>
+          <h3>Platinum &amp; Gold Membership Levels</h3>
+        </div>
+      </div>
+      <p>
+        A detailed breakdown of the Platinum and Gold membership tiers — eligibility criteria, benefits, and what each level includes. Use this reference to understand which membership level best fits your situation or to guide conversations with prospective members.
+      </p>
+      <a href="downloads/Memberships_Platinum_Gold_Inc.xlsx" class="btn btn-gold" download>Download Membership Tiers Spreadsheet →</a>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Player Benefits CTA -->
+    <div class="offering-card" style="background: linear-gradient(135deg, var(--navy) 0%, #2a2a50 100%); border-color: rgba(201,168,76,0.3); display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
+      <div style="font-size: 2.5rem; flex-shrink: 0;">🏆</div>
+      <div style="flex: 1; min-width: 220px;">
+        <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px;">Also Available</div>
+        <h3 style="font-family: 'Playfair Display', serif; font-size: 1.1rem; color: #fff; margin-bottom: 8px;">Player Benefits — Health &amp; Retirement</h3>
+        <p style="color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.6; margin-bottom: 0;">What you've earned across the NBA, WNBA, ABA, and Harlem Globetrotters — pension, health coverage, and key contacts. No login required.</p>
+      </div>
+      <a href="player-benefits.html" class="btn btn-gold" style="white-space: nowrap; flex-shrink: 0;">View Player Benefits →</a>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="membership-offerings.html">Membership Offerings</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
+  <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script src="js/legends-knowledge.js"></script>
+<script src="js/legends-guide-config.js"></script>
+<script type="module" src="https://soma-guide.netlify.app/soma-guide.js"></script>
+<script src="js/nav-dropdown.js"></script>
+</body>
+</html>
