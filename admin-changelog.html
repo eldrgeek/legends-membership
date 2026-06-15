@@ -781,39 +781,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ── Auth init ─────────────────────────────────────────────────────────────────
 
-window.addEventListener('soma-auth-ready', function(e) {
-  var detail = e.detail || {};
-  var user = detail.user;
-  var role = detail.role;
-  var session = detail.session;
-  _session = session;
+SomaAuth.onAuthStateChange(function(event, session) {
+  var user = session ? session.user : null;
+  if (event === 'SIGNED_OUT') {
+    window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
+    return;
+  }
+  if (event === 'TOKEN_REFRESHED' && session) { _session = session; return; }
+  if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
 
-  updateAuthNav(user, role);
+  _session = session;
 
   if (!user) {
     document.getElementById('not-logged-in').style.display = '';
     document.documentElement.style.visibility = 'visible';
     return;
   }
-  if (!isAdmin(user, role)) {
-    document.getElementById('access-denied').style.display = '';
+
+  SomaAuth.getRole(user).then(function(role) {
+    updateAuthNav(user, role);
+
+    if (!isAdmin(user, role)) {
+      document.getElementById('access-denied').style.display = '';
+      document.documentElement.style.visibility = 'visible';
+      return;
+    }
+
+    document.getElementById('main-panel').style.display = '';
     document.documentElement.style.visibility = 'visible';
-    return;
-  }
 
-  document.getElementById('main-panel').style.display = '';
-  document.documentElement.style.visibility = 'visible';
-
-  // Load notes then render
-  Promise.all([loadNotes(), loadNewRequests(user.email)])
-    .then(function() {
-      if (!_dbAvailable) {
-        document.getElementById('req-setup-note').style.display = '';
-      }
-      renderChangelog();
-      renderNewRequests();
-    });
+    Promise.all([loadNotes(), loadNewRequests(user.email)])
+      .then(function() {
+        if (!_dbAvailable) {
+          document.getElementById('req-setup-note').style.display = '';
+        }
+        renderChangelog();
+        renderNewRequests();
+      });
+  });
 });
+
+SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 
 // Hide page until auth resolves
 document.documentElement.style.visibility = 'hidden';
