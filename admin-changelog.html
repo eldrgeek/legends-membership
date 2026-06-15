@@ -735,6 +735,7 @@ function openPreview(page, id) {
   var acc = document.getElementById('preview-accept');
   var accepted = found ? isAccepted(found.item, found.isNew) : true;
   acc.style.display = accepted ? 'none' : '';
+  acc.innerHTML = (found && found.item.branch) ? '&#10003; Accept &amp; publish' : '&#10003; Accept';
   acc.onclick = function () { acceptItem(id, found ? found.isNew : false); };
   document.getElementById('preview-refine').onclick = function () {
     var form = document.getElementById('note-form-' + id);
@@ -755,7 +756,30 @@ function closePreview() {
 }
 
 // ── Accept ──────────────────────────────────────────────────────────────────────
+// Breaking changes live on a preview branch and must be merged to master to go live.
+// The browser can't merge, so Accept composes an approval email to the build agent
+// (claude@mike-wolf.com); the daemon dispatches the merge + deploy. Non-breaking
+// changes are already live, so Accept is just sign-off.
+function composePublishEmail(item, branch) {
+  var subject = 'Publish approved change: ' + (item.title || branch);
+  var body = 'Approved for production.\n\n'
+    + 'Please publish this previewed change: merge branch "' + branch + '" into master '
+    + 'and push, so Netlify deploys it to production. Then confirm the deploy.\n\n'
+    + 'Change: ' + (item.title || '') + '\n'
+    + (item.page ? 'Preview: ' + item.page + '\n' : '')
+    + 'Branch: ' + branch + '\n';
+  window.location.href = 'mailto:claude@mike-wolf.com?subject=' +
+    encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+
 function acceptItem(id, isNew) {
+  var found = findItemById(id);
+  var branch = (found && found.item) ? found.item.branch : null;
+  if (branch) {
+    if (!confirm('Publish this change to production?\n\nThis opens an approval email to merge "' +
+        branch + '" into master and deploy it live.')) return;
+    composePublishEmail(found.item, branch);
+  }
   if (isNew) {
     if (!_dbAvailable) { alert('Database not set up yet — cannot save acceptance.'); return; }
     supaRest('/rest/v1/changelog_requests?id=eq.' + encodeURIComponent(id), {
@@ -982,8 +1006,9 @@ function renderItem(item, isNew, authorEmail) {
 
   // Approval actions — Accept, or "Needs refinement" (which opens the note form).
   if (!accepted) {
+    var acceptLabel = item.branch ? '&#10003; Accept &amp; publish' : '&#10003; Accept';
     html += '<div class="cl-approve-actions">';
-    html += '<button class="btn-accept" onclick="acceptItem(\'' + id + '\',' + (isNew ? 'true' : 'false') + ')">&#10003; Accept</button>';
+    html += '<button class="btn-accept" onclick="acceptItem(\'' + id + '\',' + (isNew ? 'true' : 'false') + ')">' + acceptLabel + '</button>';
     html += '<button class="btn-refine" onclick="toggleNoteForm(\'' + id + '\')">Needs refinement</button>';
     html += '</div>';
   }
