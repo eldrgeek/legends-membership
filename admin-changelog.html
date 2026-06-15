@@ -1129,10 +1129,17 @@ document.addEventListener('DOMContentLoaded', function() {
       btn.disabled = false;
       if (ok) {
         feedback.className = 'request-feedback ok';
-        feedback.textContent = 'Request submitted. It will appear in the Submitted Requests section below.';
+        feedback.textContent = 'Request submitted. It now appears under Awaiting Approval above.';
         feedback.style.display = '';
         form.reset();
-        renderNewRequests();
+        loadNewRequests(authorEmail).then(function () {
+          renderChangelog();
+          setTimeout(function () {
+            feedback.style.display = 'none';
+            var sec = document.getElementById('new-request-section');
+            if (sec && !sec.classList.contains('collapsed')) toggleRequestForm();
+          }, 1400);
+        });
       } else {
         feedback.className = 'request-feedback err';
         // If the error indicates the table doesn't exist, show setup note
