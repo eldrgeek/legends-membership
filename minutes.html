@@ -41,12 +41,85 @@
     .resource-card h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--navy); margin-bottom: 6px; }
     .resource-meta { font-size: 0.78rem; font-weight: 600; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em; }
     .resource-card p { color: var(--text-medium); font-size: 0.92rem; line-height: 1.7; margin-bottom: 16px; }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 20, 50, 0.72);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 40px 16px 60px;
+    }
+    .modal-overlay.open { display: block; }
+    .modal-box {
+      background: var(--off-white, #f9f8f5);
+      border-radius: 14px;
+      max-width: 860px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .modal-header {
+      background: var(--navy, #0d1f4c);
+      color: #fff;
+      padding: 28px 32px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .modal-header .modal-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold, #c9a84c);
+      margin-bottom: 6px;
+    }
+    .modal-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.45rem;
+      margin: 0;
+      color: #fff;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: #fff;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 6px 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.22); }
+    .modal-body {
+      padding: 32px;
+    }
+    .view-link {
+      color: var(--navy, #0d1f4c);
+      font-weight: 600;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      font-family: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .view-link:hover { color: var(--gold, #c9a84c); }
   </style>
   <!-- SOMA Auth (replaces Netlify Identity) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/js/soma-auth-config.js"></script>
   <script src="/js/soma-auth.js"></script>
-  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <script>
     document.documentElement.style.visibility = 'hidden';
     SomaAuth.onAuthStateChange(function(event, session) {
@@ -91,6 +164,7 @@
           <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
           <li><a href="assessment.html" role="menuitem">Assessment</a></li>
           <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
+          <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
         </ul>
       </li>
       <li><a href="recommendations.html">Recommendations</a></li>
@@ -145,7 +219,7 @@
     <div class="gold-line"></div>
 
     <p class="section-lead mb-0" style="font-size: 0.95rem; margin-bottom: 32px;">
-      Official meeting records and agendas are listed below in reverse chronological order.
+      Official meeting records and agendas are listed below in reverse chronological order. Click any link to view the full document.
     </p>
 
     <div style="overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); box-shadow: var(--shadow);">
@@ -163,25 +237,25 @@
             <td><strong>June 10, 2026</strong></td>
             <td>Regular Session</td>
             <td>Basketball Camp Initiative · Tentpole Events · Chapter President Communication · Workstream Delegation · Scholarship Criteria · Transition Services · Tiered Membership Model · Website &amp; Benefits Updates</td>
-            <td><a href="#june-10-minutes">View Minutes →</a></td>
+            <td><button class="view-link" onclick="openModal('modal-june-10-minutes')">View Minutes &rarr;</button></td>
           </tr>
           <tr>
             <td><strong>June 7, 2026</strong></td>
             <td>Regular Session</td>
             <td>President's One-Pager Review · Workstream Delegation · Transition Program Update · Open Discussion &amp; Next Steps</td>
-            <td><span class="badge-placeholder">Pending</span> &nbsp;<a href="#june-7-agenda">View Agenda →</a></td>
+            <td><span class="badge-placeholder">Pending</span> &nbsp;<button class="view-link" onclick="openModal('modal-june-7-agenda')">View Agenda &rarr;</button></td>
           </tr>
           <tr>
             <td><strong>May 7, 2026</strong></td>
             <td>Regular Session</td>
             <td>Membership Growth Strategy · Transition Program · Workstream Assignments · President's One-Pager Review</td>
-            <td><a href="#may-7-agenda">View Agenda →</a></td>
+            <td><button class="view-link" onclick="openModal('modal-may-7-agenda')">View Agenda &rarr;</button></td>
           </tr>
           <tr>
             <td>April 9, 2026</td>
             <td>Regular Session</td>
             <td>Committee Reset · Mission Reaffirmation · Strategic Priorities · Scholarship Modernization · Financial Literacy</td>
-            <td><a href="#april-9-minutes">View Minutes →</a></td>
+            <td><button class="view-link" onclick="openModal('modal-april-9-minutes')">View Minutes &rarr;</button></td>
           </tr>
           <tr>
             <td>April 7, 2026</td>
@@ -205,300 +279,320 @@
   </div>
 </section>
 
-<section id="june-7-agenda">
-  <div class="section-inner">
-    <div class="section-label">June 7, 2026 · 5:00 PM ET · Zoom</div>
-    <h2 class="section-title">Meeting Agenda — June 7, 2026</h2>
-    <div class="gold-line"></div>
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
 
-    <div class="resource-card">
-      <div class="resource-card-header">
-        <div class="resource-icon">📋</div>
-        <div>
-          <div class="resource-meta">Legends of Basketball · June 7, 2026 · 5:00 PM ET</div>
-          <h3>Member Services &amp; Benefits Committee — Meeting Agenda</h3>
+<!-- June 7, 2026 Agenda Modal -->
+<div class="modal-overlay" id="modal-june-7-agenda" role="dialog" aria-modal="true" aria-labelledby="title-june-7-agenda">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-eyebrow">June 7, 2026 · 5:00 PM ET · Zoom</div>
+      <h2 id="title-june-7-agenda">Meeting Agenda — June 7, 2026</h2>
+      <button class="modal-close" onclick="closeModal('modal-june-7-agenda')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="resource-card">
+        <div class="resource-card-header">
+          <div class="resource-icon">📋</div>
+          <div>
+            <div class="resource-meta">Legends of Basketball · June 7, 2026 · 5:00 PM ET</div>
+            <h3>Member Services &amp; Benefits Committee — Meeting Agenda</h3>
+          </div>
         </div>
-      </div>
 
-      <p>Official agenda for the June 7, 2026 committee session, covering President's one-page deliverable review, workstream delegation, transition program planning, and open discussion.</p>
+        <p>Official agenda for the June 7, 2026 committee session, covering President's one-page deliverable review, workstream delegation, transition program planning, and open discussion.</p>
 
-      <div class="stats-row">
-        <div class="stat-pill"><strong>June 7, 2026</strong>Meeting Date</div>
-        <div class="stat-pill"><strong>5:00 PM ET</strong>Start Time</div>
-        <div class="stat-pill"><strong>Zoom</strong>Format</div>
-      </div>
+        <div class="stats-row">
+          <div class="stat-pill"><strong>June 7, 2026</strong>Meeting Date</div>
+          <div class="stat-pill"><strong>5:00 PM ET</strong>Start Time</div>
+          <div class="stat-pill"><strong>Zoom</strong>Format</div>
+        </div>
 
-      <div style="margin: 16px 0 24px; font-size: 0.85rem; color: var(--text-medium);">
-        <strong style="color: var(--navy);">Zoom:</strong>
-        <a href="https://us06web.zoom.us/j/85901839500?pwd=DCp3Gg2PXNvUVfPDzsJyX7XYUYNets.1" target="_blank" rel="noopener" style="color: var(--navy);">Join Meeting</a>
-        &nbsp;·&nbsp; <strong style="color: var(--navy);">Meeting ID:</strong> 859 0183 9500
-      </div>
+        <div style="margin: 16px 0 24px; font-size: 0.85rem; color: var(--text-medium);">
+          <strong style="color: var(--navy);">Zoom:</strong>
+          <a href="https://us06web.zoom.us/j/85901839500?pwd=DCp3Gg2PXNvUVfPDzsJyX7XYUYNets.1" target="_blank" rel="noopener" style="color: var(--navy);">Join Meeting</a>
+          &nbsp;·&nbsp; <strong style="color: var(--navy);">Meeting ID:</strong> 859 0183 9500
+        </div>
 
-      <h4 class="sub-section-heading" style="margin-top: 24px;">Agenda Items</h4>
-      <div class="agenda-grid">
-        <div class="agenda-item">
-          <h4>1. Welcome &amp; Opening Remarks</h4>
-          <p>Call to order (Greg Foster). Roll call/quorum (Bruce Capers): Foster, Tinsley, Hollins, L. Johnson, W. Davis (medical), M. Evans, H. Lang, B. Capers, M. Jones, A. Davis. Approval of minutes. Recap of May 12 initial strategy meeting. Reaffirm committee purpose.</p>
+        <h4 class="sub-section-heading" style="margin-top: 24px;">Agenda Items</h4>
+        <div class="agenda-grid">
+          <div class="agenda-item">
+            <h4>1. Welcome &amp; Opening Remarks</h4>
+            <p>Call to order (Greg Foster). Roll call/quorum (Bruce Capers): Foster, Tinsley, Hollins, L. Johnson, W. Davis (medical), M. Evans, H. Lang, B. Capers, M. Jones, A. Davis. Approval of minutes. Recap of May 12 initial strategy meeting. Reaffirm committee purpose.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>2. President's One-Page Deliverable</h4>
+            <p>Lead: Antonio Davis. Review membership-services deliverable. Discuss key priorities and action items. Identify committee support and execution roles. Determine next steps for refining and distributing the one-pager.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>3. Workstream Responsibilities</h4>
+            <p>Lead: Greg Foster. Chapter president communication (Capers/L. Johnson). New membership &amp; retention (Lang, Jones, W. Davis). Scholarships &amp; grants (Tinsley, Hollins, M. Evans). Transition Services (Foster, Purvis Short).</p>
+          </div>
+          <div class="agenda-item">
+            <h4>4. Transition Program Update</h4>
+            <p>Lead: Greg Foster. Player transition program as priority initiative. Possible structure, partners, rollout timeline. Form a 5-member task force for strategy, purpose, and goals. NBA/NBPA partnership.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>5. Open Discussion &amp; Next Steps</h4>
+            <p>Committee feedback, questions, and recommendations. Additional ideas for services, benefits, engagement. Immediate follow-up tasks. Reporting expectations. What should be ready before the June 7 meeting.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>6. Upcoming Meeting Dates</h4>
+            <p>June 7 · July 7 · August 4 · September 15, 2026 — all at 5:00 PM ET. Next meeting: July 7, 2026.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>7. Committee Website</h4>
+            <p><a href="https://legends-membership.netlify.app" target="_blank" rel="noopener" style="color: var(--navy);">legends-membership.netlify.app</a></p>
+          </div>
         </div>
-        <div class="agenda-item">
-          <h4>2. President's One-Page Deliverable</h4>
-          <p>Lead: Antonio Davis. Review membership-services deliverable. Discuss key priorities and action items. Identify committee support and execution roles. Determine next steps for refining and distributing the one-pager.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>3. Workstream Responsibilities</h4>
-          <p>Lead: Greg Foster. Chapter president communication (Capers/L. Johnson). New membership &amp; retention (Lang, Jones, W. Davis). Scholarships &amp; grants (Tinsley, Hollins, M. Evans). Transition Services (Foster, Purvis Short).</p>
-        </div>
-        <div class="agenda-item">
-          <h4>4. Transition Program Update</h4>
-          <p>Lead: Greg Foster. Player transition program as priority initiative. Possible structure, partners, rollout timeline. Form a 5-member task force for strategy, purpose, and goals. NBA/NBPA partnership.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>5. Open Discussion &amp; Next Steps</h4>
-          <p>Committee feedback, questions, and recommendations. Additional ideas for services, benefits, engagement. Immediate follow-up tasks. Reporting expectations. What should be ready before the June 7 meeting.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>6. Upcoming Meeting Dates</h4>
-          <p>June 7 · July 7 · August 4 · September 15, 2026 — all at 5:00 PM ET. Next meeting: July 7, 2026.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>7. Committee Website</h4>
-          <p><a href="https://legends-membership.netlify.app" target="_blank" rel="noopener" style="color: var(--navy);">legends-membership.netlify.app</a></p>
-        </div>
-      </div>
 
-      <h4 class="sub-section-heading">Upcoming Meeting Schedule</h4>
-      <div style="display: flex; flex-wrap: wrap; gap: 12px;">
-        <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
-          <strong style="color: var(--navy); display: block;">July 7, 2026</strong>
-          <span style="color: var(--text-medium);">5:00 PM ET</span>
-        </div>
-        <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
-          <strong style="color: var(--navy); display: block;">August 4, 2026</strong>
-          <span style="color: var(--text-medium);">5:00 PM ET</span>
-        </div>
-        <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
-          <strong style="color: var(--navy); display: block;">September 15, 2026</strong>
-          <span style="color: var(--text-medium);">5:00 PM ET</span>
+        <h4 class="sub-section-heading">Upcoming Meeting Schedule</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+          <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
+            <strong style="color: var(--navy); display: block;">July 7, 2026</strong>
+            <span style="color: var(--text-medium);">5:00 PM ET</span>
+          </div>
+          <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
+            <strong style="color: var(--navy); display: block;">August 4, 2026</strong>
+            <span style="color: var(--text-medium);">5:00 PM ET</span>
+          </div>
+          <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.88rem;">
+            <strong style="color: var(--navy); display: block;">September 15, 2026</strong>
+            <span style="color: var(--text-medium);">5:00 PM ET</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<section class="alt" id="may-7-agenda">
-  <div class="section-inner">
-    <div class="section-label">May 7, 2026 · 5:00 PM EST · Zoom</div>
-    <h2 class="section-title">Meeting Agenda — May 7, 2026</h2>
-    <div class="gold-line"></div>
+<!-- May 7, 2026 Agenda Modal -->
+<div class="modal-overlay" id="modal-may-7-agenda" role="dialog" aria-modal="true" aria-labelledby="title-may-7-agenda">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-eyebrow">May 7, 2026 · 5:00 PM EST · Zoom</div>
+      <h2 id="title-may-7-agenda">Meeting Agenda — May 7, 2026</h2>
+      <button class="modal-close" onclick="closeModal('modal-may-7-agenda')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="resource-card">
+        <div class="resource-card-header">
+          <div class="resource-icon">📋</div>
+          <div>
+            <div class="resource-meta">Legends of Basketball · May 7, 2026 · 5:00 PM EST</div>
+            <h3>Member Services &amp; Benefits Committee — Meeting Agenda</h3>
+          </div>
+        </div>
 
-    <div class="resource-card">
-      <div class="resource-card-header">
-        <div class="resource-icon">📋</div>
-        <div>
-          <div class="resource-meta">Legends of Basketball · May 7, 2026 · 5:00 PM EST</div>
-          <h3>Member Services &amp; Benefits Committee — Meeting Agenda</h3>
-        </div>
-      </div>
+        <p>Official agenda for the May 7, 2026 committee session, covering membership growth strategy, transition program planning, and committee workstream assignments.</p>
 
-      <p>Official agenda for the May 7, 2026 committee session, covering membership growth strategy, transition program planning, and committee workstream assignments.</p>
+        <div class="stats-row">
+          <div class="stat-pill"><strong>May 7, 2026</strong>Meeting Date</div>
+          <div class="stat-pill"><strong>5:00 PM EST</strong>Start Time</div>
+          <div class="stat-pill"><strong>Zoom</strong>Format</div>
+        </div>
 
-      <div class="stats-row">
-        <div class="stat-pill"><strong>May 7, 2026</strong>Meeting Date</div>
-        <div class="stat-pill"><strong>5:00 PM EST</strong>Start Time</div>
-        <div class="stat-pill"><strong>Zoom</strong>Format</div>
-      </div>
+        <h4 class="sub-section-heading" style="margin-top: 24px;">Agenda Items</h4>
+        <div class="agenda-grid">
+          <div class="agenda-item">
+            <h4>1. Welcome &amp; Opening Remarks</h4>
+            <p>Greg Foster, Committee Chair. Recap of April 7 initial meeting. Reaffirmation of committee purpose.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>2. President's One-Page Deliverable</h4>
+            <p>Review of Antonio Davis' membership services summary. Discussion of key priorities and committee support strategy.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>3. Membership Growth Strategy</h4>
+            <p>Delegation of responsibilities. Identifying prospects. Retention strategy. Clarifying the value message for former players.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>4. Transition Program Update</h4>
+            <p>Player transition program as priority initiative. 5-member task force to be formed (due 5/18). NBA/NBPA partnership target: 7/9.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>5. Workstream Assignments</h4>
+            <p>Membership Identification &amp; Recruitment. Communication with Chapter Presidents (Mo Evans lead). Growth targets by 6/29.</p>
+          </div>
+          <div class="agenda-item">
+            <h4>6. Open Discussion &amp; Next Steps</h4>
+            <p>Committee feedback. Immediate follow-up tasks. Reporting expectations. Preparation for June 2 meeting.</p>
+          </div>
+        </div>
 
-      <h4 class="sub-section-heading" style="margin-top: 24px;">Agenda Items</h4>
-      <div class="agenda-grid">
-        <div class="agenda-item">
-          <h4>1. Welcome &amp; Opening Remarks</h4>
-          <p>Greg Foster, Committee Chair. Recap of April 7 initial meeting. Reaffirmation of committee purpose.</p>
+        <h4 class="sub-section-heading">Membership Growth Targets</h4>
+        <div style="overflow-x: auto; border-radius: 10px; border: 1px solid var(--border);">
+          <table class="minutes-table">
+            <thead>
+              <tr>
+                <th>Member Group</th>
+                <th>Current</th>
+                <th>Ever Paid</th>
+                <th>Engagement Goal</th>
+                <th>Growth Goal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Harlem Globetrotters</td>
+                <td>73</td>
+                <td>60</td>
+                <td>100%</td>
+                <td>10% by 6/29</td>
+              </tr>
+              <tr>
+                <td>WNBA</td>
+                <td>514</td>
+                <td>113</td>
+                <td>25%</td>
+                <td>10% by 6/29</td>
+              </tr>
+              <tr>
+                <td>ABA</td>
+                <td>77</td>
+                <td>61</td>
+                <td>100%</td>
+                <td>10% by 6/29</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="agenda-item">
-          <h4>2. President's One-Page Deliverable</h4>
-          <p>Review of Antonio Davis' membership services summary. Discussion of key priorities and committee support strategy.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>3. Membership Growth Strategy</h4>
-          <p>Delegation of responsibilities. Identifying prospects. Retention strategy. Clarifying the value message for former players.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>4. Transition Program Update</h4>
-          <p>Player transition program as priority initiative. 5-member task force to be formed (due 5/18). NBA/NBPA partnership target: 7/9.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>5. Workstream Assignments</h4>
-          <p>Membership Identification &amp; Recruitment. Communication with Chapter Presidents (Mo Evans lead). Growth targets by 6/29.</p>
-        </div>
-        <div class="agenda-item">
-          <h4>6. Open Discussion &amp; Next Steps</h4>
-          <p>Committee feedback. Immediate follow-up tasks. Reporting expectations. Preparation for June 2 meeting.</p>
-        </div>
-      </div>
-
-      <h4 class="sub-section-heading">Membership Growth Targets</h4>
-      <div style="overflow-x: auto; border-radius: 10px; border: 1px solid var(--border);">
-        <table class="minutes-table">
-          <thead>
-            <tr>
-              <th>Member Group</th>
-              <th>Current</th>
-              <th>Ever Paid</th>
-              <th>Engagement Goal</th>
-              <th>Growth Goal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Harlem Globetrotters</td>
-              <td>73</td>
-              <td>60</td>
-              <td>100%</td>
-              <td>10% by 6/29</td>
-            </tr>
-            <tr>
-              <td>WNBA</td>
-              <td>514</td>
-              <td>113</td>
-              <td>25%</td>
-              <td>10% by 6/29</td>
-            </tr>
-            <tr>
-              <td>ABA</td>
-              <td>77</td>
-              <td>61</td>
-              <td>100%</td>
-              <td>10% by 6/29</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<section id="june-10-minutes">
-  <div class="section-inner">
-    <div class="section-label">June 10, 2026 · 4:51 PM ET · Zoom · 1 hr 6 min</div>
-    <h2 class="section-title">Member Services Committee Meeting Minutes</h2>
-    <div class="gold-line"></div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
-      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
-        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Chair</strong>Greg Foster
-      </div>
-      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
-        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Present</strong>Foster, Hollins, A. Davis (CEO), Willie Davis, Mo Evans, M. Jones, L. Johnson, Herb Lang, B. Capers
-      </div>
+<!-- June 10, 2026 Minutes Modal -->
+<div class="modal-overlay" id="modal-june-10-minutes" role="dialog" aria-modal="true" aria-labelledby="title-june-10-minutes">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-eyebrow">June 10, 2026 · 4:51 PM ET · Zoom · 1 hr 6 min</div>
+      <h2 id="title-june-10-minutes">Member Services Committee Meeting Minutes</h2>
+      <button class="modal-close" onclick="closeModal('modal-june-10-minutes')" aria-label="Close">&times;</button>
     </div>
+    <div class="modal-body">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+        <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+          <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Chair</strong>Greg Foster
+        </div>
+        <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+          <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Present</strong>Foster, Hollins, A. Davis (CEO), Willie Davis, Mo Evans, M. Jones, L. Johnson, Herb Lang, B. Capers
+        </div>
+      </div>
 
-    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Programming &amp; Outreach</h3>
-      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
-        Lionel Hollins raised the opportunity for a basketball camp at Overton High School as a member engagement and community outreach initiative. Anthony Davis (Legends CEO) emphasized the need for higher-visibility <em>tentpole events</em> to energize the membership, and stressed the importance of improved, direct communication with chapter presidents to ensure alignment across the organization.
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Programming &amp; Outreach</h3>
+        <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
+          Lionel Hollins raised the opportunity for a basketball camp at Overton High School as a member engagement and community outreach initiative. Anthony Davis (Legends CEO) emphasized the need for higher-visibility <em>tentpole events</em> to energize the membership, and stressed the importance of improved, direct communication with chapter presidents to ensure alignment across the organization.
+        </p>
+      </div>
+
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Workstream Delegation</h3>
+        <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-bottom: 12px;">
+          Greg Foster proposed a delegation model to distribute committee responsibilities. Assignments discussed for the following members:
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Willie Davis</strong> — Workstream TBD</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Mo Evans</strong> — Workstream TBD</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Major Jones</strong> — Workstream TBD</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Leslie Johnson</strong> — Membership recruitment &amp; retention outreach</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Herb Lang</strong> — Workstream TBD</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Bruce Capers</strong> — Workstream TBD</div>
+        </div>
+      </div>
+
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Programs &amp; Membership Model</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Scholarship criteria improvements — review and modernize eligibility and selection standards</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Transition services — enhancements to life-after-basketball support programming</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Tiered membership model — exploration of structure to better serve different member segments</div>
+        </div>
+      </div>
+
+      <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin-bottom: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 12px; font-size: 1.05rem;">Key Decisions &amp; Action Items</h3>
+        <ul style="padding-left: 20px; font-size: 0.92rem; color: var(--text-medium); line-height: 2.1; margin: 0;">
+          <li>Committee agreed to create and maintain a website for member communication and resource sharing (this site).</li>
+          <li>Benefits page to be updated with accurate, current information.</li>
+          <li><strong>Greg Foster</strong> — Circulate meeting summary with all decisions and assignments to the full committee.</li>
+          <li><strong>Greg Foster</strong> — Send Leslie Johnson the membership spreadsheet (paid vs. non-paying members, contact details) for recruitment and retention outreach.</li>
+        </ul>
+      </div>
+
+      <p style="font-size: 0.78rem; color: var(--text-light); font-style: italic; margin-top: 24px;">
+        Minutes prepared by Greg Foster, Chair — Member Services Committee, Legends of Basketball · Transcription via Otter.ai
       </p>
     </div>
-
-    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Workstream Delegation</h3>
-      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-bottom: 12px;">
-        Greg Foster proposed a delegation model to distribute committee responsibilities. Assignments discussed for the following members:
-      </p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Willie Davis</strong> — Workstream TBD</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Mo Evans</strong> — Workstream TBD</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Major Jones</strong> — Workstream TBD</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Leslie Johnson</strong> — Membership recruitment &amp; retention outreach</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Herb Lang</strong> — Workstream TBD</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);"><strong>Bruce Capers</strong> — Workstream TBD</div>
-      </div>
-    </div>
-
-    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Programs &amp; Membership Model</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Scholarship criteria improvements — review and modernize eligibility and selection standards</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Transition services — enhancements to life-after-basketball support programming</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Tiered membership model — exploration of structure to better serve different member segments</div>
-      </div>
-    </div>
-
-    <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin-bottom: 24px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 12px; font-size: 1.05rem;">Key Decisions &amp; Action Items</h3>
-      <ul style="padding-left: 20px; font-size: 0.92rem; color: var(--text-medium); line-height: 2.1; margin: 0;">
-        <li>Committee agreed to create and maintain a website for member communication and resource sharing (this site).</li>
-        <li>Benefits page to be updated with accurate, current information.</li>
-        <li><strong>Greg Foster</strong> — Circulate meeting summary with all decisions and assignments to the full committee.</li>
-        <li><strong>Greg Foster</strong> — Send Leslie Johnson the membership spreadsheet (paid vs. non-paying members, contact details) for recruitment and retention outreach.</li>
-      </ul>
-    </div>
-
-    <p style="font-size: 0.78rem; color: var(--text-light); font-style: italic; margin-top: 24px;">
-      Minutes prepared by Greg Foster, Chair — Member Services Committee, Legends of Basketball · Transcription via Otter.ai
-    </p>
   </div>
-</section>
+</div>
 
-<section class="alt" id="april-9-minutes">
-  <div class="section-inner">
-    <div class="section-label">April 9, 2026 · 4:32 PM ET · Zoom</div>
-    <h2 class="section-title">Member Services Committee Meeting Minutes</h2>
-    <div class="gold-line"></div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
-      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
-        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Chair</strong>Greg Foster
-      </div>
-      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
-        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Present</strong>Foster, Tinsley, Hollins, L. Johnson, Capers, M. Jones, A. Davis, S. Lovelace
-      </div>
-      <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
-        <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Absent</strong>Willie Davis (medical leave) · Mo Evans (conflict)
-      </div>
+<!-- April 9, 2026 Minutes Modal -->
+<div class="modal-overlay" id="modal-april-9-minutes" role="dialog" aria-modal="true" aria-labelledby="title-april-9-minutes">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-eyebrow">April 9, 2026 · 4:32 PM ET · Zoom</div>
+      <h2 id="title-april-9-minutes">Member Services Committee Meeting Minutes</h2>
+      <button class="modal-close" onclick="closeModal('modal-april-9-minutes')" aria-label="Close">&times;</button>
     </div>
+    <div class="modal-body">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+        <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+          <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Chair</strong>Greg Foster
+        </div>
+        <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+          <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Present</strong>Foster, Tinsley, Hollins, L. Johnson, Capers, M. Jones, A. Davis, S. Lovelace
+        </div>
+        <div style="background: var(--navy); color: var(--white); border-radius: 8px; padding: 16px 20px; font-size: 0.85rem;">
+          <strong style="display: block; color: var(--gold); margin-bottom: 4px;">Absent</strong>Willie Davis (medical leave) · Mo Evans (conflict)
+        </div>
+      </div>
 
-    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Opening / Committee Reset</h3>
-      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
-        The committee formally began the new committee year with a renewed focus on structure, accountability, and active participation. Bruce Capers volunteered to handle roll call moving forward.
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Opening / Committee Reset</h3>
+        <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
+          The committee formally began the new committee year with a renewed focus on structure, accountability, and active participation. Bruce Capers volunteered to handle roll call moving forward.
+        </p>
+      </div>
+
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Mission and Committee Focus</h3>
+        <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-bottom: 12px;">The committee reaffirmed its purpose to:</p>
+        <ul style="padding-left: 20px; font-size: 0.92rem; color: var(--text-medium); line-height: 2;">
+          <li>Identify beneficial member programs and services</li>
+          <li>Support existing members</li>
+          <li>Recruit and retain membership</li>
+        </ul>
+        <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-top: 12px;">Discussion centered on alignment with the organization's five pillars and improving member-facing programming.</p>
+      </div>
+
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Key Strategic Priorities Discussed</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Membership recruitment and retention</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Transition services and life-after-basketball support</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Streamlining current programs</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Scholarship modernization</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Financial literacy and strategic partner activation</div>
+          <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Improved messaging of member value</div>
+        </div>
+      </div>
+
+      <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 12px; padding: 28px;">
+        <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 12px; font-size: 1.05rem;">Key Action Direction</h3>
+        <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
+          By the June meeting, the committee will work toward identifying the top three priority initiatives within the five pillars, with a goal of presenting Q4 deliverables and budget recommendations.
+        </p>
+      </div>
+
+      <p style="font-size: 0.78rem; color: var(--text-light); font-style: italic; margin-top: 24px;">
+        Minutes prepared by Greg Foster, Chair — Member Services Committee, Legends of Basketball
       </p>
     </div>
-
-    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Mission and Committee Focus</h3>
-      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-bottom: 12px;">The committee reaffirmed its purpose to:</p>
-      <ul style="padding-left: 20px; font-size: 0.92rem; color: var(--text-medium); line-height: 2;">
-        <li>Identify beneficial member programs and services</li>
-        <li>Support existing members</li>
-        <li>Recruit and retain membership</li>
-      </ul>
-      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75; margin-top: 12px;">Discussion centered on alignment with the organization's five pillars and improving member-facing programming.</p>
-    </div>
-
-    <div style="background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 16px; font-size: 1.05rem;">Key Strategic Priorities Discussed</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Membership recruitment and retention</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Transition services and life-after-basketball support</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Streamlining current programs</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Scholarship modernization</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Financial literacy and strategic partner activation</div>
-        <div style="background: var(--off-white); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; font-size: 0.88rem; color: var(--text-dark);">Improved messaging of member value</div>
-      </div>
-    </div>
-
-    <div style="background: var(--gold-pale); border: 1px solid var(--border); border-radius: 12px; padding: 28px;">
-      <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 12px; font-size: 1.05rem;">Key Action Direction</h3>
-      <p style="font-size: 0.92rem; color: var(--text-medium); line-height: 1.75;">
-        By the June meeting, the committee will work toward identifying the top three priority initiatives within the five pillars, with a goal of presenting Q4 deliverables and budget recommendations.
-      </p>
-    </div>
-
-    <p style="font-size: 0.78rem; color: var(--text-light); font-style: italic; margin-top: 24px;">
-      Minutes prepared by Greg Foster, Chair — Member Services Committee, Legends of Basketball
-    </p>
   </div>
-</section>
+</div>
 
 <footer>
   <div class="footer-brand">Legends of Basketball</div>
@@ -513,6 +607,37 @@
   <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
   <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
 </footer>
+
+<script>
+  function openModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('open');
+    el.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+    el.addEventListener('keydown', trapFocus);
+    var closeBtn = el.querySelector('.modal-close');
+    if (closeBtn) closeBtn.focus();
+  }
+  function closeModal(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('open');
+    document.body.style.overflow = '';
+    el.removeEventListener('keydown', trapFocus);
+  }
+  function trapFocus(e) {
+    if (e.key === 'Escape') {
+      closeModal(e.currentTarget.id);
+    }
+  }
+  // Close on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeModal(overlay.id);
+    });
+  });
+</script>
 
 <script src="js/legends-knowledge.js"></script>
   <script src="js/legends-guide-config.js"></script>
