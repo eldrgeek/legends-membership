@@ -723,6 +723,9 @@ function findItemById(id) {
 // ── Inline page preview ─────────────────────────────────────────────────────────
 function openPreview(page, id) {
   var found = findItemById(id);
+  // Breaking changes carry an absolute preview-deploy URL (different origin); those
+  // can't be iframed under X-Frame-Options SAMEORIGIN, so open them in a new tab.
+  if (/^https?:\/\//i.test(page)) { window.open(page, '_blank', 'noopener'); return; }
   _previewId = id;
   document.getElementById('preview-title').textContent = (found && found.item.title) || page;
   document.getElementById('preview-page').textContent = page;
