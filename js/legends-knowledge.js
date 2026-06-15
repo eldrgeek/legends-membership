@@ -10,7 +10,7 @@ LEGENDS OF BASKETBALL — MEMBERSHIP SERVICES COMMITTEE
 Site: legends-membership.netlify.app
 
 ORGANIZATION OVERVIEW:
-Legends of Basketball is the official home of the National Basketball Retired Players Association (NBRPA), supporting former professional basketball players since 1992. Tagline: "Where The Story Continues."
+Legends of Basketball — referred to simply as "Legends" — is the official home of the National Basketball Retired Players Association, supporting former professional basketball players since 1992. Tagline: "Where The Story Continues." (Always call it "Legends," never the acronym NBRPA.)
 
 The Membership Services Committee is a nine-member standing body of Legends of Basketball composed of former professional players. The committee advocates for member benefits, coordinates programming across five pillars (Camaraderie, Health, Financial Stability, Community, Family), and ensures legends maintain meaningful connections to the game and to each other.
 

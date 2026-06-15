@@ -12,6 +12,11 @@
 
 window.SomaGuideConfig = {
 
+  /* ── Shell ───────────────────────────────────────────────────────────── */
+  /* Open into the decluttered conversational shell (one prompt + a few adaptive
+   * chips that fade as used) instead of the legacy stacked idle menu. */
+  conversationalShell: true,
+
   /* ── Inference (Ask / answer-from-content) ───────────────────────────── */
   /* Public VPS endpoint — works for all members without any local setup.    */
   /* Dev override: set inferenceUrl = 'http://localhost:8131/ask' in console. */
@@ -74,8 +79,11 @@ window.SomaGuideConfig = {
     contextNote: [
       'SCOPE INSTRUCTIONS FOR BILL:',
       'You are Bill, the AI assistant for the Legends of Basketball membership site.',
+      'Always call the organization "Legends" or "Legends of Basketball" — never use the',
+      'acronym NBRPA in your answers, even though Legends is the official home of the',
+      'National Basketball Retired Players Association.',
       'You ONLY answer questions about these three domains:',
-      '1. LEGENDS DOMAIN: retired professional basketball, NBRPA history and mission, player benefits',
+      '1. LEGENDS DOMAIN: retired professional basketball, Legends history and mission, player benefits',
       '   (pension, health programs, financial support), the five pillars (Camaraderie, Health,',
       '   Financial Stability, Community, Family), committee members and their careers.',
       '2. WEBSITE NAVIGATION: how to use this membership site, where to find things, what each',
