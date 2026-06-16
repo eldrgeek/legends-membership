@@ -324,7 +324,7 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
     </div>
 
     <!-- Approval tabs -->
-    <div class="tab-bar">
+    <div class="tab-bar" style="display:none;">
       <div class="tab active" onclick="showTab('awaiting', this)">Awaiting Approval</div>
       <div class="tab" onclick="showTab('accepted', this)">Accepted</div>
       <div class="tab" onclick="showTab('all', this)">All</div>
@@ -655,6 +655,7 @@ function applySearch() {
   var input = document.getElementById('search-input');
   _searchTerm = (input.value || '').trim().toLowerCase();
   document.getElementById('search-row').classList.toggle('has-text', _searchTerm.length > 0);
+  renderChangeRequests();
   renderChangelog();
 }
 
@@ -663,6 +664,7 @@ function clearSearch() {
   var input = document.getElementById('search-input');
   if (input) input.value = '';
   document.getElementById('search-row').classList.remove('has-text');
+  renderChangeRequests();
   renderChangelog();
 }
 
@@ -819,6 +821,7 @@ function _afterAccept(id) {
     var acc = document.getElementById('preview-accept');
     if (acc) acc.style.display = 'none';
   }
+  renderChangeRequests();
   renderChangelog();
 }
 
@@ -841,12 +844,14 @@ function showTab(tab, el) {
   _currentTab = tab;
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   if (el) el.classList.add('active');
+  renderChangeRequests();
   renderChangelog();
 }
 
 function applyFilters() {
   _fromDate = document.getElementById('filter-from').value || '';
   _toDate = document.getElementById('filter-to').value || '';
+  renderChangeRequests();
   renderChangelog();
 }
 
@@ -855,6 +860,7 @@ function clearDateFilter() {
   _toDate = '';
   document.getElementById('filter-from').value = '';
   document.getElementById('filter-to').value = '';
+  renderChangeRequests();
   renderChangelog();
 }
 
@@ -1048,42 +1054,38 @@ function renderItem(item, isNew, authorEmail) {
   return html;
 }
 
+function crMatchesSearch(r) {
+  if (!_searchTerm) return true;
+  var hay = [r.title, r.description, r.page, r.requester_name].filter(Boolean).join(' ').toLowerCase();
+  return hay.indexOf(_searchTerm) !== -1;
+}
+function crMatchesDate(r) {
+  var d = (r.created_at || '').slice(0, 10);
+  if (_fromDate && d < _fromDate) return false;
+  if (_toDate && d > _toDate) return false;
+  return true;
+}
+
+// Change History now renders accepted/deferred items from the unified queue (new
+// card format), so legacy items and new ones share one model and one look.
 function renderChangelog() {
   var list = document.getElementById('changelog-list');
+  var OPEN = ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review'];
 
-  // Unified list: submitted requests (newest first) then change history (newest first).
-  var combined = _newRequests.map(function (i) { return { item: i, isNew: true }; })
-    .concat(CHANGELOG.slice().reverse().map(function (i) { return { item: i, isNew: false }; }));
+  document.getElementById('stat-total').textContent = _changeRequests.length;
+  document.getElementById('stat-awaiting').textContent =
+    _changeRequests.filter(function (r) { return OPEN.indexOf(r.status) !== -1; }).length;
+  document.getElementById('stat-accepted').textContent =
+    _changeRequests.filter(function (r) { return r.status === 'accepted' || r.status === 'deferred'; }).length;
 
-  // Stats (approval-based)
-  var total = combined.length;
-  var awaiting = combined.filter(function (e) { return !isAccepted(e.item, e.isNew); }).length;
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-awaiting').textContent = awaiting;
-  document.getElementById('stat-accepted').textContent = total - awaiting;
+  var hist = _changeRequests
+    .filter(function (r) { return (r.status === 'accepted' || r.status === 'deferred') && crMatchesSearch(r) && crMatchesDate(r); })
+    .sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
 
-  var filtered = combined.filter(function (e) {
-    return itemMatchesApprovalTab(e.item, e.isNew)
-      && itemMatchesDateFilter(e.item)
-      && itemMatchesSearch(e.item);
-  });
+  list.innerHTML = hist.length ? hist.map(crCard).join('')
+    : '<p class="empty-state">No history matches this filter.</p>';
 
-  if (!filtered.length) {
-    list.innerHTML = '<p class="empty-state">' +
-      (_currentTab === 'awaiting' ? 'All caught up — nothing awaiting approval.' : 'No items match this filter.') +
-      '</p>';
-  } else {
-    var authorEmail = (_session && _session.user) ? _session.user.email : 'Admin';
-    list.innerHTML = filtered.map(function (e) {
-      return renderItem(e.item, e.isNew, authorEmail);
-    }).join('');
-  }
-
-  // Keep the preview highlight after a re-render
-  if (_previewId) {
-    var el = document.getElementById('item-' + _previewId);
-    if (el) el.classList.add('previewing');
-  }
+  if (_previewId) { var el = document.getElementById(_previewId); if (el) el.classList.add('previewing'); }
 }
 
 // Submitted requests now live in the unified list above; keep this section hidden.
@@ -1118,9 +1120,9 @@ function crButtons(r) {
            '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
   if (s === 'approved' || s === 'in-progress')
     return '<span class="cr-status">building…</span><button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
-  if (s === 'awaiting-review')
+  if (s === 'awaiting-review' || s === 'accepted')
     return '<button class="btn-accept" onclick="crReview(\'' + id + '\')">Review work</button>' +
-           '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'revert-requested\')">Revert change</button>';
+           (r.commit_sha ? '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'revert-requested\')">Revert change</button>' : '');
   return '';
 }
 
@@ -1150,7 +1152,8 @@ function renderChangeRequests() {
   var list = document.getElementById('change-requests-list');
   if (!sec || !list) return;
   var open = _changeRequests.filter(function (r) {
-    return ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review'].indexOf(r.status) !== -1;
+    return ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review'].indexOf(r.status) !== -1
+      && crMatchesSearch(r) && crMatchesDate(r);
   });
   if (!open.length) { sec.style.display = 'none'; return; }
   sec.style.display = '';
