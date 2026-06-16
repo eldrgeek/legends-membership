@@ -61,6 +61,41 @@ window.SomaGuideConfig = {
   /* Bill POSTs each turn + decision trace here; reviewed in admin-bill-log.html. */
   telemetry: { logUrl: '/.netlify/functions/log-bill' },
 
+  /* ── Admin gate + admin-only Do actions ─────────────────────────────── */
+  /* Members have no safe write targets on this (mostly static) site, so they get
+   * no autonomous actions. Admins (Greg/Mike) do — gated by requiresAdmin below. */
+  isAdmin: function () {
+    try {
+      var s = (window.SomaAuth && SomaAuth.session) ? SomaAuth.session : null;
+      var admins = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+      return !!(s && s.user && admins.indexOf((s.user.email || '').toLowerCase()) !== -1);
+    } catch (e) { return false; }
+  },
+  actions: [
+    {
+      /* Admin files a site-change request via the change-log form. Filing a request
+       * is reversible (risk:low); the change itself still goes through the
+       * approval → preview → publish gate. Works on the Site Change Log page. */
+      id: 'file-change-request',
+      label: 'file a change request',
+      requiresAdmin: true,
+      keywords: ['file a change request', 'request a change', 'put in a request', 'log a change request', 'request that'],
+      risk: 'low',
+      params: [
+        { name: 'title',   label: 'Short title', placeholder: 'e.g. Add a sponsors section to the homepage' },
+        { name: 'details', label: 'What should change?', placeholder: 'Describe the change…' }
+      ],
+      steps: [
+        { op: 'click', target: '#add-request-btn' },
+        { op: 'fill',  target: '#req-title',   param: 'title' },
+        { op: 'fill',  target: '#req-details', param: 'details' },
+        { op: 'click', target: '#req-submit-btn' }
+      ],
+      confirmText: 'File a change request — “{title}”?',
+      doneText: 'Filed — it’s in the change-log queue for review.'
+    }
+  ],
+
   /* ── Identity (account-keyed SOMA profile) ──────────────────────────── */
   /* Anonymous visitors fall back to per-browser localStorage. Logged-in members
    * get a cross-app profile (public.soma_profiles) so Bill recognizes them,
