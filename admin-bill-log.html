@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bill — Conversation Log</title>
+  <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <style>
+    .wrap { max-width: 920px; margin: 0 auto; padding: 28px 20px 80px; }
+    h1 { font-family: 'Playfair Display', Georgia, serif; color: var(--navy, #0d1b2a); margin: 0 0 4px; }
+    .sub { color: #5f5e5a; margin: 0 0 20px; font-size: 0.9rem; }
+    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; }
+    .btn { background: var(--navy, #102036); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .session { border: 1px solid #e3ddc9; border-radius: 10px; margin-bottom: 14px; overflow: hidden; background: #fff; }
+    .session-head { background: #f7f3e8; padding: 10px 14px; cursor: pointer; display: flex; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+    .session-head .sid { font-family: monospace; font-size: 0.78rem; color: #8a6d1a; }
+    .session-head .meta { font-size: 0.78rem; color: #5f5e5a; }
+    .turns { padding: 6px 14px 12px; display: none; }
+    .session.open .turns { display: block; }
+    .turn { padding: 7px 0; border-bottom: 1px solid #f0ece0; font-size: 0.86rem; }
+    .turn:last-child { border-bottom: none; }
+    .ev { display: inline-block; min-width: 132px; font-family: monospace; font-size: 0.74rem; color: #5f5e5a; }
+    .turn.user .body { font-weight: 600; }
+    .turn.decision .body { color: #185fa5; }
+    .turn.decision .flag-bad { color: #a32d2d; font-weight: 600; }
+    .turn.action_run .body, .turn.action_routed_for_approval .body { color: #1f8b4c; font-weight: 600; }
+    .kv { font-family: monospace; font-size: 0.78rem; }
+    .empty-state, .loading-state { color: #8a8a8a; padding: 24px 0; text-align: center; }
+    .setup { background: #fff7e6; border: 1px solid #e6cf8a; border-radius: 8px; padding: 14px; font-size: 0.85rem; }
+    pre { white-space: pre-wrap; background: #f6f4ec; padding: 10px; border-radius: 6px; font-size: 0.74rem; overflow-x: auto; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div id="not-logged-in" style="display:none;">
+    <h1>Bill — Conversation Log</h1>
+    <p>Please sign in to view conversation diagnostics.</p>
+    <button class="btn" onclick="window.location.href='/login.html?redirect=/admin-bill-log.html'">Sign In</button>
+  </div>
+  <div id="access-denied" style="display:none;">
+    <h1>Access Restricted</h1>
+    <p>This page is restricted to site administrators.</p>
+  </div>
+
+  <div id="main-panel" style="display:none;">
+    <a href="admin.html" class="back-link">&#8592; Back to Admin</a>
+    <h1>Bill — Conversation Log</h1>
+    <p class="sub">Every turn and Bill's decision trace (matched action, extracted params, chosen rung). Use it to diagnose when Bill veers off.</p>
+    <div class="toolbar">
+      <button class="btn" onclick="loadLog()">↻ Reload</button>
+      <span id="count" class="meta" style="font-size:0.82rem; color:#5f5e5a;"></span>
+    </div>
+    <div id="log-list"><p class="loading-state">Loading…</p></div>
+  </div>
+</div>
+
+<script>
+var _session = null;
+var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+function isAdmin(user, role) { return (role === 'admin') || (user && ADMIN_EMAILS.indexOf(user.email) !== -1); }
+
+function supaRest(path) {
+  var cfg = window.SOMA_AUTH_CONFIG;
+  return fetch(cfg.url + path, {
+    headers: {
+      apikey: cfg.anonKey,
+      Authorization: 'Bearer ' + (_session ? _session.access_token : cfg.anonKey)
+    }
+  });
+}
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;' }[c]; }); }
+function fmt(ts) { try { return new Date(ts).toLocaleString(); } catch (e) { return ts; } }
+
+function renderTurn(t) {
+  var d = t.data || {};
+  var cls = 'turn ' + (t.event || '');
+  var body = '';
+  if (t.event === 'user_message') body = '“' + esc(d.text) + '”';
+  else if (t.event === 'agent_message') body = esc(d.text);
+  else if (t.event === 'decision') {
+    var ep = d.extractedParams ? JSON.stringify(d.extractedParams) : '—';
+    body = 'matched action: <span class="kv">' + esc(d.matchedAction || 'none') + '</span> · ' +
+           'classified: <span class="kv">' + esc(d.classified) + '</span> · ' +
+           'params: <span class="kv">' + esc(ep) + '</span>';
+  }
+  else if (t.event === 'rung') body = 'rung → <span class="kv">' + esc(d.rung) + '</span>' + (d.action ? ' (' + esc(d.action) + ')' : '') + (d.walkthrough ? ' (' + esc(d.walkthrough) + ')' : '');
+  else if (t.event === 'action_run') body = 'RAN ' + esc(d.action) + ' ' + esc(JSON.stringify(d.params || {}));
+  else if (t.event === 'action_routed_for_approval') body = 'ROUTED FOR APPROVAL ' + esc(d.action);
+  else body = esc(JSON.stringify(d));
+  return '<div class="' + cls + '"><span class="ev">' + esc(t.event) + '</span><span class="body">' + body + '</span></div>';
+}
+
+function renderSessions(rows) {
+  var byId = {};
+  rows.forEach(function (r) { (byId[r.session_id] = byId[r.session_id] || []).push(r); });
+  var sessions = Object.keys(byId).map(function (sid) {
+    var turns = byId[sid].slice().sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+    return { sid: sid, turns: turns, start: turns[0].created_at, anon: turns[0].anon_id, page: turns[0].page };
+  }).sort(function (a, b) { return new Date(b.start) - new Date(a.start); });
+
+  document.getElementById('count').textContent = sessions.length + ' sessions · ' + rows.length + ' turns';
+  var list = document.getElementById('log-list');
+  if (!sessions.length) { list.innerHTML = '<p class="empty-state">No conversations recorded yet.</p>'; return; }
+
+  list.innerHTML = sessions.map(function (s, i) {
+    var pagePath = '';
+    try { pagePath = new URL(s.page).pathname; } catch (e) { pagePath = s.page || ''; }
+    return '<div class="session' + (i === 0 ? ' open' : '') + '">' +
+      '<div class="session-head" onclick="this.parentNode.classList.toggle(\'open\')">' +
+        '<span class="sid">' + esc(s.sid) + '</span>' +
+        '<span class="meta">' + fmt(s.start) + '</span>' +
+        '<span class="meta">' + esc(pagePath) + '</span>' +
+        '<span class="meta">anon ' + esc(s.anon || '?') + '</span>' +
+        '<span class="meta">' + s.turns.length + ' turns</span>' +
+      '</div>' +
+      '<div class="turns">' + s.turns.map(renderTurn).join('') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function loadLog() {
+  var list = document.getElementById('log-list');
+  list.innerHTML = '<p class="loading-state">Loading…</p>';
+  supaRest('/rest/v1/bill_transcripts?select=*&order=created_at.desc&limit=1000')
+    .then(function (res) {
+      if (res.status === 404 || res.status === 400) {
+        list.innerHTML = '<div class="setup"><strong>Table not set up yet.</strong> Run the SQL from <code>netlify/functions/log-bill.js</code> in the Supabase SQL editor to create <code>bill_transcripts</code>, then reload.</div>';
+        return null;
+      }
+      return res.json();
+    })
+    .then(function (rows) { if (Array.isArray(rows)) renderSessions(rows); })
+    .catch(function () { list.innerHTML = '<p class="empty-state">Could not load the log.</p>'; });
+}
+
+SomaAuth.onAuthStateChange(function (eventName, session) {
+  var user = session ? session.user : null;
+  if (eventName === 'SIGNED_OUT') { window.location.replace('/login.html?redirect=/admin-bill-log.html'); return; }
+  if (eventName === 'TOKEN_REFRESHED' && session) { _session = session; return; }
+  if (eventName !== 'INITIAL_SESSION' && eventName !== 'SIGNED_IN') return;
+  _session = session;
+  document.documentElement.style.visibility = 'visible';
+  if (!user) { document.getElementById('not-logged-in').style.display = ''; return; }
+  SomaAuth.getRole(user).then(function (role) {
+    if (!isAdmin(user, role)) { document.getElementById('access-denied').style.display = ''; return; }
+    document.getElementById('main-panel').style.display = '';
+    loadLog();
+  });
+});
+SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+document.documentElement.style.visibility = 'hidden';
+</script>
+</body>
+</html>

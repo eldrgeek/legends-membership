@@ -57,6 +57,10 @@ window.SomaGuideConfig = {
   /* server-side to this Netlify function. Greg reviews in admin.html.      */
   feedbackUrl: '/.netlify/functions/submit-feedback',
 
+  /* ── Conversation recording (diagnostics) ───────────────────────────── */
+  /* Bill POSTs each turn + decision trace here; reviewed in admin-bill-log.html. */
+  telemetry: { logUrl: '/.netlify/functions/log-bill' },
+
   /* ── Domain scope guard (Capability 2) ──────────────────────────────── */
   /* Off-topic pattern list — matched client-side before inference.         */
   /* contextNote is prepended to knowledge sent to the inference endpoint   */
