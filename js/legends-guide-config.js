@@ -61,6 +61,53 @@ window.SomaGuideConfig = {
   /* Bill POSTs each turn + decision trace here; reviewed in admin-bill-log.html. */
   telemetry: { logUrl: '/.netlify/functions/log-bill' },
 
+  /* ── Identity (account-keyed SOMA profile) ──────────────────────────── */
+  /* Anonymous visitors fall back to per-browser localStorage. Logged-in members
+   * get a cross-app profile (public.soma_profiles) so Bill recognizes them,
+   * skips the intro, and decays chips by what they've already been shown. */
+  identity: {
+    appId: 'legends',
+    getProfile: function () {
+      try {
+        var s = (window.SomaAuth && SomaAuth.session) ? SomaAuth.session : null;
+        if (!s || !s.user) return Promise.resolve(null);
+        var c = window.SOMA_AUTH_CONFIG;
+        return fetch(c.url + '/rest/v1/soma_profiles?select=*&user_id=eq.' + s.user.id, {
+          headers: { apikey: c.anonKey, Authorization: 'Bearer ' + s.access_token }
+        }).then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (rows) { return (rows && rows[0]) || null; })
+          .catch(function () { return null; });
+      } catch (e) { return Promise.resolve(null); }
+    },
+    recordSeen: function (id) {
+      try {
+        var s = (window.SomaAuth && SomaAuth.session) ? SomaAuth.session : null;
+        if (!s || !s.user) return Promise.resolve();
+        var c = window.SOMA_AUTH_CONFIG;
+        var base = c.url + '/rest/v1/soma_profiles';
+        var H = { apikey: c.anonKey, Authorization: 'Bearer ' + s.access_token, 'Content-Type': 'application/json' };
+        return fetch(base + '?select=guide_seen,bill_familiarity&user_id=eq.' + s.user.id, { headers: H })
+          .then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (rows) {
+            var cur = rows[0] || { guide_seen: {}, bill_familiarity: 0 };
+            var gs = cur.guide_seen || {};
+            gs.legends = gs.legends || [];
+            if (gs.legends.indexOf(id) === -1) gs.legends.push(id);
+            var row = {
+              user_id: s.user.id, guide_seen: gs,
+              bill_familiarity: (cur.bill_familiarity || 0) + 1,
+              updated_at: new Date().toISOString()
+            };
+            return fetch(base + '?on_conflict=user_id', {
+              method: 'POST',
+              headers: Object.assign({ Prefer: 'resolution=merge-duplicates,return=minimal' }, H),
+              body: JSON.stringify(row)
+            });
+          }).catch(function () {});
+      } catch (e) { return Promise.resolve(); }
+    }
+  },
+
   /* ── Domain scope guard (Capability 2) ──────────────────────────────── */
   /* Off-topic pattern list — matched client-side before inference.         */
   /* contextNote is prepended to knowledge sent to the inference endpoint   */
