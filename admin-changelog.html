@@ -345,6 +345,13 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
       <iframe id="preview-frame" title="Page preview" src="about:blank"></iframe>
     </div>
 
+    <!-- Unified change-request queue (Bill + email) -->
+    <div id="change-requests-section" style="display:none;">
+      <div class="section-heading">Change Requests</div>
+      <div class="gold-line"></div>
+      <div id="change-requests-list"></div>
+    </div>
+
     <div class="section-heading">Change History</div>
     <div class="gold-line"></div>
 
@@ -1085,6 +1092,99 @@ function renderNewRequests() {
   if (sec) sec.style.display = 'none';
 }
 
+// ── Change-request queue (Bill + email; the daemon vets + routes) ──────────────
+var _changeRequests = [];
+
+function loadChangeRequests() {
+  return supaRest('/rest/v1/change_requests?select=*&order=created_at.desc&limit=200')
+    .then(function (res) { return (res.status === 404 || res.status === 400) ? [] : res.json(); })
+    .then(function (rows) { _changeRequests = Array.isArray(rows) ? rows : []; })
+    .catch(function () { _changeRequests = []; });
+}
+
+function crAge(ts) {
+  var ms = Date.now() - new Date(ts).getTime();
+  var m = Math.round(ms / 60000);
+  if (m < 60) return m + 'm';
+  var h = Math.round(m / 60); if (h < 48) return h + 'h';
+  return Math.round(h / 24) + 'd';
+}
+
+// status → buttons (the new vocabulary: Approve / Review work / Cancel / Revert)
+function crButtons(r) {
+  var s = r.status, id = r.id;
+  if (s === 'new' || s === 'awaiting-approval')
+    return '<button class="btn-accept" onclick="crSet(\'' + id + '\',\'approved\')">&#10003; Approve</button>' +
+           '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
+  if (s === 'approved' || s === 'in-progress')
+    return '<span class="cr-status">building…</span><button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
+  if (s === 'awaiting-review')
+    return '<button class="btn-accept" onclick="crReview(\'' + id + '\')">Review work</button>' +
+           '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'revert-requested\')">Revert change</button>';
+  return '';
+}
+
+function crCard(r) {
+  var vet = r.vet || {};
+  var sess = (r.context && r.context.session) || '';
+  var pagePath = ''; try { pagePath = new URL(r.page).pathname; } catch (e) { pagePath = r.page || ''; }
+  var who = (r.requester_name || r.requester_email || 'someone') + (r.requester_role ? ' · ' + r.requester_role : '');
+  return '<div class="cl-item cr-item" id="req-' + r.id + '" data-status="' + r.status + '">' +
+    '<div class="cl-item-header">' +
+      '<div class="cl-date">' + crAge(r.created_at) + ' ago</div>' +
+      '<div class="cl-title">' + escHtml(r.title || r.description) + '</div>' +
+      '<span class="badge badge-awaiting">' + escHtml(r.status) + '</span>' +
+    '</div>' +
+    '<div class="cl-summary">' + escHtml(r.description) + '</div>' +
+    '<div class="cl-page-line">From: ' + escHtml(who) +
+      (pagePath ? ' · on <a class="cl-page-link" href="javascript:void(0)" onclick="openPreview(\'' + pagePath.replace(/^\//, '') + '\',\'req-' + r.id + '\')">' + escHtml(pagePath) + '</a>' : '') +
+      (sess ? ' · <a class="cl-page-link" href="/admin-bill-log.html" title="View the intake conversation">transcript</a>' : '') +
+    '</div>' +
+    (vet.reason ? '<div class="cl-page-line">Vet: ' + escHtml(vet.reason) + ' (' + (vet.reversible ? 'reversible' : 'IRREVERSIBLE') + ', risk ' + escHtml(vet.risk || '?') + ')</div>' : '') +
+    '<div class="cl-approve-actions">' + crButtons(r) + '</div>' +
+  '</div>';
+}
+
+function renderChangeRequests() {
+  var sec = document.getElementById('change-requests-section');
+  var list = document.getElementById('change-requests-list');
+  if (!sec || !list) return;
+  var open = _changeRequests.filter(function (r) {
+    return ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review'].indexOf(r.status) !== -1;
+  });
+  if (!open.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  list.innerHTML = open.map(crCard).join('');
+  // deep-link: scroll + highlight the item referenced by the URL hash
+  if (location.hash && /^#req-/.test(location.hash)) {
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) { el.classList.add('previewing'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  }
+}
+
+function crSet(id, status) {
+  if (status === 'cancelled' && !confirm('Cancel this change request?')) return;
+  supaRest('/rest/v1/change_requests?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ status: status, updated_at: new Date().toISOString() })
+  }).then(function (res) {
+    if (res.ok || res.status === 204) {
+      var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
+      if (r) r.status = status;
+      renderChangeRequests();
+    } else { alert('Could not update (server ' + res.status + ').'); }
+  }).catch(function () { alert('Could not update (network error).'); });
+}
+
+// Review work → opens the affected page preview (full review-with-Bill flow is Phase 3).
+function crReview(id) {
+  var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
+  if (!r) return;
+  var pagePath = ''; try { pagePath = new URL(r.page).pathname.replace(/^\//, ''); } catch (e) {}
+  if (pagePath) openPreview(pagePath, 'req-' + id);
+}
+
 // ── Interaction handlers ──────────────────────────────────────────────────────
 
 function toggleNoteForm(id) {
@@ -1224,13 +1324,14 @@ SomaAuth.onAuthStateChange(function(event, session) {
     document.getElementById('main-panel').style.display = '';
     document.documentElement.style.visibility = 'visible';
 
-    Promise.all([loadNotes(), loadNewRequests(user.email)])
+    Promise.all([loadNotes(), loadNewRequests(user.email), loadChangeRequests()])
       .then(function() {
         if (!_dbAvailable) {
           document.getElementById('req-setup-note').style.display = '';
         }
         renderChangelog();
         renderNewRequests();
+        renderChangeRequests();
       });
   });
 });
