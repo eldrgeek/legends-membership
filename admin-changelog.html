@@ -587,6 +587,15 @@ var CHANGELOG = [
     summary: 'Added a search box to this Site Change Log that filters entries by title, summary, requester, or date as you type. Works alongside the existing status tabs and date-range filter.',
     status: 'completed',
     page: 'admin-changelog.html'
+  },
+  {
+    id: 'cl-026',
+    date: '2026-06-16',
+    requester: 'Greg',
+    title: 'Add membership program PDFs to Membership Offerings page',
+    summary: 'Greg emailed on June 15 asking to add PDF attachments (8 files) to the Membership Offerings page, with the member offerings PDF listed first. The blank page bug he referenced in the forwarded June 14 email was the missing SomaAuth.init() call — that was already fixed in a prior commit. The new PDFs could not be added in this pass because email attachments are not accessible via the dispatch channel. Additionally, a clarifying note was added to the two existing SharePoint PDF links explaining that they require a Legends of Basketball Microsoft 365 account, which is the likely cause of the blank page some users see when clicking those links. To complete this request: share the PDF files via the repo (commit them to /downloads/) or provide direct download links.',
+    status: 'deferred',
+    page: 'membership-offerings.html'
   }
 ];
 
