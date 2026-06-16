@@ -61,6 +61,11 @@ window.SomaGuideConfig = {
   /* Bill POSTs each turn + decision trace here; reviewed in admin-bill-log.html. */
   telemetry: { logUrl: '/.netlify/functions/log-bill' },
 
+  /* ── Intake queue ────────────────────────────────────────────────────── */
+  /* Bill's structured bug/change requests land in change_requests (one queue,
+   * processed by the daemon). */
+  intakeUrl: '/.netlify/functions/submit-intake',
+
   /* ── Admin gate + admin-only Do actions ─────────────────────────────── */
   /* Members have no safe write targets on this (mostly static) site, so they get
    * no autonomous actions. Admins (Greg/Mike) do — gated by requiresAdmin below. */
