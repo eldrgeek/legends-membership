@@ -280,7 +280,7 @@ window.SomaGuideConfig = {
               demo: 'hover',
               narration:
                 '[[arrow .members-grid 2s]] Here\'s the member grid — cards for each legend with career highlights ' +
-                '[[highlight]] and contact info. Click any card to open a full profile.',
+                '[[highlight]] and contact info.',
               instruction: 'Click any member card to open their full profile.'
             },
             {
@@ -300,7 +300,7 @@ window.SomaGuideConfig = {
               demo: 'hover',
               narration:
                 '[[arrow .profile-hero 1500ms]] Each member profile has a full bio, career highlights, and contact ' +
-                '[[highlight]] information. Use the breadcrumb at the top to return to the full Committee list.',
+                '[[highlight]] information.',
               instruction: 'Click the "Committee" breadcrumb link to return to the member list.'
             }
           ]
@@ -482,7 +482,7 @@ window.SomaGuideConfig = {
           narration:
             '[[arrow .nav-dropdown:has(> .nav-dropdown-toggle[href="resources.html"]) 2s]] ' +
             'Feature requests live under the Resources section. ' +
-            '[[highlight .nav-dropdown-toggle[href="resources.html"]]] Click Resources to open the dropdown. [[click]]',
+            '[[highlight .nav-dropdown-toggle[href="resources.html"]]] [[click]]',
           instruction: 'Click "Resources ▾" in the navigation to open the dropdown menu.'
         },
         {
