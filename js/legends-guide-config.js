@@ -52,6 +52,15 @@ window.SomaGuideConfig = {
         'Thanks — I help the Legends team turn requests into action. ' +
         'Let me grab a few details so the right person can pick this up.'
       /* voiceAgentId: '…'  // optional: a distinct voice for the specialist */
+    },
+    /* Reviewer teammate (own voice) who walks you through completed work when you
+     * click "Review work" in the Change Log, then converses about whether it's right. */
+    review: {
+      name: 'Quinn · Review',
+      avatar: '🔎',
+      greeting:
+        'I review completed work. Let me show you what we changed and make sure it’s right.',
+      voiceAgentId: 'agent_7501kvb3j188eyq90ssgfe827qw0'
     }
   },
 
