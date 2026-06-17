@@ -142,6 +142,7 @@
     .pp-refine { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; }
     .pp-open { color: var(--gold); font-size: 0.78rem; text-decoration: none; }
     .pp-close { background: none; border: none; color: #fff; font-size: 1.3rem; line-height: 1; }
+    .pp-session-note { font-size: 0.72rem; color: rgba(255,255,255,0.5); white-space: nowrap; }
     .page-preview iframe { width: 100%; height: 65vh; border: none; display: block; background: #fff; }
 
     /* New request form */
@@ -344,6 +345,7 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
         <button type="button" class="pp-accept" id="preview-accept" style="display:none;">&#10003; Accept</button>
         <button type="button" class="pp-refine" id="preview-refine">Needs refinement</button>
         <a class="pp-open" id="preview-open-tab" href="#" target="_blank" rel="noopener">Open in new tab &#8599;</a>
+        <span class="pp-session-note" id="pp-session-note" style="display:none;">Quinn is active &mdash; stay on this page</span>
         <button type="button" class="pp-close" onclick="closePreview()" aria-label="Close preview">&times;</button>
       </div>
       <iframe id="preview-frame" title="Page preview" src="about:blank"></iframe>
@@ -790,8 +792,14 @@ function openPreview(page, id) {
 }
 function closePreview() {
   _previewId = null;
+  _reviewActive = false;
+  _clearReviewSession();
+  var sessionNote = document.getElementById('pp-session-note');
+  if (sessionNote) sessionNote.style.display = 'none';
   document.getElementById('page-preview').style.display = 'none';
-  document.getElementById('preview-frame').src = 'about:blank';
+  var frame = document.getElementById('preview-frame');
+  frame.removeAttribute('srcdoc');
+  frame.src = 'about:blank';
   document.querySelectorAll('.cl-item.previewing').forEach(function (e) { e.classList.remove('previewing'); });
 }
 
@@ -1116,6 +1124,31 @@ function renderNewRequests() {
   if (sec) sec.style.display = 'none';
 }
 
+// ── Review session state (beforeunload guard + sessionStorage restore) ────────
+var _reviewActive = false;
+var _REVIEW_SS_KEY = 'legends-review-pending';
+
+function _saveReviewToSession(r) {
+  try {
+    sessionStorage.setItem(_REVIEW_SS_KEY, JSON.stringify({
+      id: r.id, title: r.title, description: r.description,
+      page: r.page || null, status: r.status, commit_sha: r.commit_sha || null,
+      time: Date.now()
+    }));
+  } catch (e) {}
+}
+
+function _clearReviewSession() {
+  try { sessionStorage.removeItem(_REVIEW_SS_KEY); } catch (e) {}
+}
+
+window.addEventListener('beforeunload', function (e) {
+  if (_reviewActive) {
+    e.preventDefault();
+    e.returnValue = 'You’re in a review session with Quinn. Leave and end it?';
+  }
+});
+
 // ── Change-request queue (Bill + email; the daemon vets + routes) ──────────────
 var _changeRequests = [];
 
@@ -1276,26 +1309,62 @@ function crReview(id) {
 
   var raw = (r.page || '').trim();
 
+  // Mark review active now — covers all paths below (external URL, no-page, same-origin).
+  _reviewActive = true;
+  _saveReviewToSession(r);
+  var sessionNote = document.getElementById('pp-session-note');
+  if (sessionNote) sessionNote.style.display = '';
+
   // External absolute URL (e.g. a breaking-change preview deploy on another origin) —
   // can't be iframed under X-Frame-Options, so open it in a new tab.
   if (/^https?:\/\//i.test(raw) && raw.indexOf(location.host) === -1) {
     window.open(raw, '_blank', 'noopener');
     return;
   }
-  // No page recorded: show the commit diff if we have one, else say so.
+  // No page recorded: show a descriptive summary card in the preview panel so
+  // Quinn still has something to reference while narrating the change.
+  var frame = document.getElementById('preview-frame');
   if (!raw) {
-    if (r.commit_sha) { window.open(REPO_COMMIT_BASE + r.commit_sha, '_blank', 'noopener'); return; }
-    alert('This item has no specific page or commit to preview.');
-    return;
+    var esc2 = function (s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    var commitHref = r.commit_sha ? (REPO_COMMIT_BASE + r.commit_sha) : null;
+    frame.removeAttribute('srcdoc');
+    frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+      + '<style>*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;'
+      + 'padding:40px 32px;max-width:640px;margin:0 auto;color:#1a2235;line-height:1.6;background:#fff;}'
+      + 'h2{font-family:Georgia,"Times New Roman",serif;color:#1a2235;margin:0 0 8px;font-size:1.25rem;}'
+      + '.meta{font-size:0.8rem;color:#6b7280;margin-bottom:20px;}'
+      + 'p{color:#374151;line-height:1.75;margin:0 0 16px;white-space:pre-wrap;}'
+      + '.note{background:#fffdf5;border:1px solid #e6cf8a;border-radius:8px;padding:12px 16px;'
+      + 'font-size:0.82rem;color:#8a6d1a;margin-top:24px;}'
+      + 'a{color:#1a2235;font-weight:600;}a:hover{text-decoration:underline;}'
+      + '</style></head><body>'
+      + '<h2>' + esc2(r.title || 'Change Review') + '</h2>'
+      + '<div class="meta">'
+      + (r.requester_name || r.requester_email || '')
+      + (r.created_at ? ' &middot; ' + new Date(r.created_at).toLocaleDateString() : '')
+      + '</div>'
+      + (r.description ? '<p>' + esc2(r.description) + '</p>' : '')
+      + (commitHref ? '<p><a href="' + esc2(commitHref) + '" target="_blank">View commit diff on GitHub &rarr;</a></p>' : '')
+      + '<div class="note">No specific page was recorded for this change.'
+      + (commitHref ? ' Click the link above to see exactly what was modified.' : ' Ask Quinn for more details about what shipped.')
+      + '</div>'
+      + '</body></html>';
+    document.getElementById('preview-title').textContent = r.title || r.description || 'Change Review';
+    document.getElementById('preview-page').textContent = r.commit_sha ? ('commit ' + r.commit_sha.slice(0, 8)) : 'no specific page';
+    var openLink = document.getElementById('preview-open-tab');
+    if (commitHref) { openLink.href = commitHref; openLink.style.display = ''; }
+    else { openLink.style.display = 'none'; }
+  } else {
+    // Normalize to a same-origin path: strip any origin, then the leading slash.
+    var path = raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
+    var href = '/' + path;
+    frame.removeAttribute('srcdoc');
+    frame.src = href;
+    document.getElementById('preview-title').textContent = r.title || r.description || href;
+    document.getElementById('preview-page').textContent = href;
+    document.getElementById('preview-open-tab').href = href;
+    document.getElementById('preview-open-tab').style.display = '';
   }
-  // Normalize to a same-origin path: strip any origin, then the leading slash.
-  var path = raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
-  var href = '/' + path;
-
-  document.getElementById('preview-title').textContent = r.title || r.description || href;
-  document.getElementById('preview-page').textContent = href;
-  document.getElementById('preview-open-tab').href = href;
-  document.getElementById('preview-frame').src = href;
 
   var acc = document.getElementById('preview-accept');
   if (r.status === 'awaiting-review') {
@@ -1462,6 +1531,22 @@ SomaAuth.onAuthStateChange(function(event, session) {
         renderChangelog();
         renderNewRequests();
         renderChangeRequests();
+
+        // Restore a review session interrupted by navigation (sessionStorage survives
+        // same-tab navigations; we resume within 10 minutes of interruption).
+        try {
+          var saved = sessionStorage.getItem(_REVIEW_SS_KEY);
+          if (saved) {
+            var pr = JSON.parse(saved);
+            if (Date.now() - (pr.time || 0) < 600000) {
+              var match = _changeRequests.filter(function (x) { return x.id === pr.id; })[0];
+              if (match) {
+                setTimeout(function () { crReview(pr.id); }, 400);
+              }
+            }
+            _clearReviewSession();
+          }
+        } catch (e) {}
       });
   });
 });
