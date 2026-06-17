@@ -115,6 +115,9 @@
     .btn-refine { background: none; color: var(--navy); border: 1px solid var(--border); border-radius: 7px;
       padding: 8px 16px; font-size: 0.83rem; font-weight: 600; cursor: pointer; font-family: inherit; }
     .btn-refine:hover { border-color: var(--gold); }
+    .cr-status { display: inline-flex; align-items: center; font-size: 0.8rem; font-weight: 600;
+      color: var(--navy); opacity: 0.7; padding: 8px 4px; }
+    .cr-status--stale { color: #a05a00; opacity: 1; }
     .badge-awaiting { background: #fff3d6; color: #8a6d1a; border: 1px solid #e6cf8a; }
     .badge-accepted { background: #e3f4ea; color: #1f8b4c; border: 1px solid #b7e0c6; }
 
@@ -1112,18 +1115,35 @@ function crAge(ts) {
   return Math.round(h / 24) + 'd';
 }
 
-// status → buttons (the new vocabulary: Approve / Review work / Cancel / Revert)
+// status → buttons (the new vocabulary: Approve / Review work / Accept / Cancel / Revert)
 function crButtons(r) {
   var s = r.status, id = r.id;
+  var revertBtn = r.commit_sha
+    ? '<button class="btn-refine" onclick="crRevert(\'' + id + '\')">Revert change</button>' : '';
   if (s === 'new' || s === 'awaiting-approval')
     return '<button class="btn-accept" onclick="crSet(\'' + id + '\',\'approved\')">&#10003; Approve</button>' +
            '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
   if (s === 'approved' || s === 'in-progress')
-    return '<span class="cr-status">building…</span><button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
-  if (s === 'awaiting-review' || s === 'accepted')
+    return crRunning(r) + '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
+  if (s === 'awaiting-review')
     return '<button class="btn-accept" onclick="crReview(\'' + id + '\')">Review work</button>' +
-           (r.commit_sha ? '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'revert-requested\')">Revert change</button>' : '');
+           '<button class="btn-accept" onclick="crSet(\'' + id + '\',\'accepted\')">&#10003; Accept</button>' +
+           revertBtn;
+  if (s === 'accepted')
+    return '<button class="btn-accept" onclick="crReview(\'' + id + '\')">Review work</button>' + revertBtn;
   return '';
+}
+
+// active-task health: how long an approved/in-progress task has been running,
+// flagged stale past 30 min (a build that's still running then likely needs a look).
+function crRunning(r) {
+  var since = r.updated_at || r.created_at;
+  var min = Math.round((Date.now() - new Date(since).getTime()) / 60000);
+  var label = r.status === 'approved' ? 'queued' : 'building';
+  var age = min < 60 ? min + 'm' : Math.round(min / 60) + 'h';
+  var stale = min >= 30 ? ' cr-status--stale' : '';
+  return '<span class="cr-status' + stale + '">' + label + '… ' + age +
+         (min >= 30 ? ' ⚠' : '') + '</span>';
 }
 
 function crCard(r) {
@@ -1178,6 +1198,39 @@ function crSet(id, status) {
       renderChangeRequests();
     } else { alert('Could not update (server ' + res.status + ').'); }
   }).catch(function () { alert('Could not update (network error).'); });
+}
+
+// Revert change → file a NEW change request to undo a shipped change. It carries
+// the commit SHA; the daemon vets it (reverting a known commit is reversible →
+// owner auto-approves) and dispatches a git-revert + redeploy build. The original
+// item stays as-is; the revert shows up as its own queue item you can track.
+function crRevert(id) {
+  var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
+  if (!r) return;
+  var sha = r.commit_sha;
+  if (!sha) { alert('No commit recorded for this change — nothing to revert.'); return; }
+  if (!confirm('File a request to revert “' + (r.title || r.description) + '”?\n\n' +
+               'This undoes commit ' + sha.slice(0, 8) + ' and redeploys.')) return;
+  var who = (_session && _session.user) ? _session.user : {};
+  var payload = {
+    source: 'revert',
+    type: 'change',
+    requester_email: who.email || 'mw@mike-wolf.com',
+    requester_name: (who.user_metadata && who.user_metadata.full_name) || who.email || 'Admin',
+    title: 'Revert: ' + (r.title || r.description),
+    description: 'Revert commit ' + sha + ' ("' + (r.title || r.description) +
+                '"). Run `git revert ' + sha + '` (or revert just that change), commit, and let the site redeploy. This undoes a previously shipped change.',
+    page: r.page || null,
+    context: { revert_of: id, commit_sha: sha }
+  };
+  fetch('/.netlify/functions/submit-intake', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function (res) { return res.json().catch(function () { return {}; }).then(function (j) { return { ok: res.ok, j: j }; }); })
+    .then(function (o) {
+      if (o.ok) { alert('Revert request filed — it’s in the queue now.'); loadChangeRequests().then(renderChangeRequests); }
+      else { alert('Could not file the revert (server ' + (o.j && o.j.error || '?') + ').'); }
+    }).catch(function () { alert('Could not file the revert (network error).'); });
 }
 
 // Review work → opens the affected page preview (full review-with-Bill flow is Phase 3).
