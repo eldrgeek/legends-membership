@@ -606,6 +606,24 @@ var CHANGELOG = [
     summary: 'Greg emailed on June 15 asking to add PDF attachments (8 files) to the Membership Offerings page, with the member offerings PDF listed first. The blank page bug he referenced in the forwarded June 14 email was the missing SomaAuth.init() call — that was already fixed in a prior commit. The new PDFs could not be added in this pass because email attachments are not accessible via the dispatch channel. Additionally, a clarifying note was added to the two existing SharePoint PDF links explaining that they require a Legends of Basketball Microsoft 365 account, which is the likely cause of the blank page some users see when clicking those links. To complete this request: share the PDF files via the repo (commit them to /downloads/) or provide direct download links.',
     status: 'deferred',
     page: 'membership-offerings.html'
+  },
+  {
+    id: 'cl-027',
+    date: '2026-06-17',
+    requester: 'Greg',
+    title: 'Add NBRPA Transition Platform Blueprint to Legends Life page',
+    summary: 'Greg emailed on June 17 requesting the "NBRPA Transition Platform Blueprint (Purvis Short)" PDF be added to the Transitions & Legends Life Subcommittee page. A Resources & Documents section was added to transition-services.html with a card for this document. The PDF file itself could not be embedded — email attachments are not accessible via the dispatch channel. To complete: commit the PDF to /downloads/nbrpa-transition-platform-blueprint.pdf and update the link in the document card on transition-services.html.',
+    status: 'deferred',
+    page: 'transition-services.html'
+  },
+  {
+    id: 'cl-028',
+    date: '2026-06-17',
+    requester: 'Greg',
+    title: 'Site changes review — June 17 master list',
+    summary: 'Greg emailed a master list ("Site change is requested but not completed") with a .docx attachment reviewing all outstanding requests. Based on review of the email thread and current site code, all previously requested changes (contact directory, nav home page button, assessment on Legends Life page, Scholarship America content, Membership Offerings page, workforce delegation removal) are confirmed complete. The only remaining open items are PDF file uploads: Scholarship America PDF (cl-026) and NBRPA Transition Blueprint (cl-027), both deferred pending accessible file delivery.',
+    status: 'completed',
+    page: 'admin-changelog.html'
   }
 ];
 
