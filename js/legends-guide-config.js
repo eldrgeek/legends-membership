@@ -40,6 +40,21 @@ window.SomaGuideConfig = {
       'anything by typing in the text chat.'
   },
 
+  /* ── Specialist personas (handoff costumes) ──────────────────────────── */
+  /* When a member files a bug/change, Bill hands off to a domain specialist —
+   * a different name + avatar (and voice agent, if voice mode) — who collects a
+   * context-rich report. Reuses Bill's voice agent unless a separate one is set. */
+  personas: {
+    intake: {
+      name: 'Dana · Member Services',
+      avatar: '🎫',
+      greeting:
+        'Thanks — I help the Legends team turn requests into action. ' +
+        'Let me grab a few details so the right person can pick this up.'
+      /* voiceAgentId: '…'  // optional: a distinct voice for the specialist */
+    }
+  },
+
   /* ── Voice agent (ElevenLabs) ────────────────────────────────────────── */
   voiceAgentId: 'agent_2401ks53q6t8e2drt1h7va3f2c52',
 
