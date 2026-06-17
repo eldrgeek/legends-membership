@@ -50,8 +50,8 @@ window.SomaGuideConfig = {
       avatar: '🎫',
       greeting:
         'Thanks — I help the Legends team turn requests into action. ' +
-        'Let me grab a few details so the right person can pick this up.'
-      /* voiceAgentId: '…'  // optional: a distinct voice for the specialist */
+        'Let me grab a few details so the right person can pick this up.',
+      voiceAgentId: 'agent_7601kvbcdj4mecwagv960x87fwhc'
     },
     /* Reviewer teammate (own voice) who walks you through completed work when you
      * click "Review work" in the Change Log, then converses about whether it's right. */
