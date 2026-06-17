@@ -31,10 +31,11 @@ window.SomaGuideConfig = {
     id: 'legends-bill',
     avatar: '🏀',
     greeting:
-      'Hi! I\'m Bill, your AI guide to the Legends of Basketball membership site. ' +
-      'I can walk you through the site, answer questions, or connect you with resources. ' +
-      'What would you like to do?',
-    shortGreeting: 'Welcome back! How can I help you today?',
+      'Hi, I\'m Bill. Greg Foster and a team of people and AIs — including me — manage this site. ' +
+      'I can show you around, answer your questions, take bug reports or feature requests, and pass ' +
+      'messages to Greg when he\'s not around. Call me in anytime, and feel free to interrupt me while ' +
+      'I\'m talking. Have I met you?',
+    shortGreeting: 'Good to see you again!',
     walkthroughDone:
       'Great — you\'ve seen the essentials! Explore on your own, or ask me ' +
       'anything by typing in the text chat.'
