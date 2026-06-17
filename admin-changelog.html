@@ -120,6 +120,7 @@
       color: var(--navy); opacity: 0.7; padding: 8px 4px; }
     .cr-status--stale { color: #a05a00; opacity: 1; }
     .badge-awaiting { background: #fff3d6; color: #8a6d1a; border: 1px solid #e6cf8a; }
+    .badge-blocked { background: #fef2f2; color: #9b1c1c; border: 1px solid #f1b0b0; }
     .badge-accepted { background: #e3f4ea; color: #1f8b4c; border: 1px solid #b7e0c6; }
 
     /* Clickable title / page link */
@@ -1100,7 +1101,7 @@ function crMatchesDate(r) {
 // card format), so legacy items and new ones share one model and one look.
 function renderChangelog() {
   var list = document.getElementById('changelog-list');
-  var OPEN = ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review'];
+  var OPEN = ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review', 'blocked'];
 
   document.getElementById('stat-total').textContent = _changeRequests.length;
   document.getElementById('stat-awaiting').textContent =
@@ -1181,6 +1182,11 @@ function crButtons(r) {
     return '<button class="btn-accept" onclick="crReview(\'' + id + '\')">Review work</button>' +
            '<button class="btn-accept" onclick="crSet(\'' + id + '\',\'accepted\')">&#10003; Accept</button>' +
            revertBtn;
+  // Blocked: the worker couldn't complete it (e.g. missing/unreadable attachment).
+  // No work to accept — let the admin see why, then cancel or re-file.
+  if (s === 'blocked')
+    return '<button class="btn-accept" onclick="crReview(\'' + id + '\')">See why</button>' +
+           '<button class="btn-refine" onclick="crSet(\'' + id + '\',\'cancelled\')">Cancel</button>';
   if (s === 'accepted')
     return '<button class="btn-accept" onclick="crReview(\'' + id + '\')">Review work</button>' + revertBtn;
   return '';
@@ -1207,7 +1213,7 @@ function crCard(r) {
     '<div class="cl-item-header">' +
       '<div class="cl-date">' + crAge(r.created_at) + ' ago</div>' +
       '<div class="cl-title">' + escHtml(r.title || r.description) + '</div>' +
-      '<span class="badge badge-awaiting">' + escHtml(r.status) + '</span>' +
+      '<span class="badge ' + (r.status === 'blocked' ? 'badge-blocked' : 'badge-awaiting') + '">' + escHtml(r.status) + '</span>' +
     '</div>' +
     '<div class="cl-summary">' + escHtml(r.description) + '</div>' +
     '<div class="cl-page-line">From: ' + escHtml(who) +
@@ -1224,7 +1230,7 @@ function renderChangeRequests() {
   var list = document.getElementById('change-requests-list');
   if (!sec || !list) return;
   var open = _changeRequests.filter(function (r) {
-    return ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review'].indexOf(r.status) !== -1
+    return ['new', 'awaiting-approval', 'approved', 'in-progress', 'awaiting-review', 'blocked'].indexOf(r.status) !== -1
       && crMatchesSearch(r) && crMatchesDate(r);
   });
   if (!open.length) { sec.style.display = 'none'; return; }
@@ -1295,19 +1301,31 @@ function crReview(id) {
   var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
   if (!r) return;
 
-  // Hand the walkthrough to the reviewer teammate (Quinn — own voice): they narrate
-  // what shipped and converse about whether it's right. The page preview below shows
-  // it on screen. Falls back gracefully if the widget isn't loaded.
+  var raw = (r.page || '').trim();
+
+  // Did any actual work ship? A change shipped iff it has a target page OR a commit.
+  // The daemon flips an item to 'awaiting-review' when the worker reports back —
+  // even when the worker was BLOCKED (e.g. an attachment it couldn't read), in which
+  // case no commit was produced and no page recorded. Treat that as "nothing applied
+  // yet" so the reviewer sees why instead of an empty preview. (#3/#5)
+  var blockedReason = (r.context && (r.context.blocked || r.context.blocked_reason)) || '';
+  var noWorkShipped = !raw && !r.commit_sha;
+  var isBlocked = r.status === 'blocked' || (r.status === 'awaiting-review' && noWorkShipped);
+
+  // Hand the walkthrough to the reviewer teammate (Quinn — own voice). Tell Quinn the
+  // truth about state so it summarizes correctly rather than claiming work shipped.
   if (window.somaGuide && typeof window.somaGuide.reviewChange === 'function') {
     try {
       window.somaGuide.reviewChange({
-        title: r.title, description: r.description,
-        page: r.page, summary: r.description || r.title
+        title: r.title,
+        description: r.description,
+        page: isBlocked ? '' : r.page,
+        summary: isBlocked
+          ? ('This request hasn’t been completed yet' + (blockedReason ? ' — ' + blockedReason : '') + '. Nothing was applied to the site.')
+          : (r.description || r.title)
       });
     } catch (e) {}
   }
-
-  var raw = (r.page || '').trim();
 
   // Mark review active now — covers all paths below (external URL, no-page, same-origin).
   _reviewActive = true;
@@ -1317,7 +1335,7 @@ function crReview(id) {
 
   // External absolute URL (e.g. a breaking-change preview deploy on another origin) —
   // can't be iframed under X-Frame-Options, so open it in a new tab.
-  if (/^https?:\/\//i.test(raw) && raw.indexOf(location.host) === -1) {
+  if (!isBlocked && /^https?:\/\//i.test(raw) && raw.indexOf(location.host) === -1) {
     window.open(raw, '_blank', 'noopener');
     return;
   }
@@ -1336,6 +1354,9 @@ function crReview(id) {
       + 'p{color:#374151;line-height:1.75;margin:0 0 16px;white-space:pre-wrap;}'
       + '.note{background:#fffdf5;border:1px solid #e6cf8a;border-radius:8px;padding:12px 16px;'
       + 'font-size:0.82rem;color:#8a6d1a;margin-top:24px;}'
+      + '.warn{background:#fef2f2;border:1px solid #f1b0b0;border-radius:8px;padding:12px 16px;'
+      + 'font-size:0.88rem;color:#9b1c1c;margin:0 0 20px;font-weight:600;}'
+      + '.label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:#9ca3af;margin:18px 0 4px;}'
       + 'a{color:#1a2235;font-weight:600;}a:hover{text-decoration:underline;}'
       + '</style></head><body>'
       + '<h2>' + esc2(r.title || 'Change Review') + '</h2>'
@@ -1343,14 +1364,23 @@ function crReview(id) {
       + (r.requester_name || r.requester_email || '')
       + (r.created_at ? ' &middot; ' + new Date(r.created_at).toLocaleDateString() : '')
       + '</div>'
-      + (r.description ? '<p>' + esc2(r.description) + '</p>' : '')
-      + (commitHref ? '<p><a href="' + esc2(commitHref) + '" target="_blank">View commit diff on GitHub &rarr;</a></p>' : '')
-      + '<div class="note">No specific page was recorded for this change.'
-      + (commitHref ? ' Click the link above to see exactly what was modified.' : ' Ask Quinn for more details about what shipped.')
-      + '</div>'
+      + (isBlocked
+          ? '<div class="warn">⚠ No change has been applied to the site for this request yet.'
+            + (blockedReason ? ' ' + esc2(blockedReason) : ' The automated worker may have been blocked (for example, an email attachment it couldn’t read).')
+            + '</div>'
+            + '<div class="label">Original request</div>'
+            + (r.description ? '<p>' + esc2(r.description) + '</p>' : '<p>(no description)</p>')
+            + '<div class="note">Nothing to sign off on yet. Reply to '
+            + esc2(r.requester_email || 'the requester')
+            + ' for the missing material, or re-file the request once it’s available.</div>'
+          : (r.description ? '<p>' + esc2(r.description) + '</p>' : '')
+            + (commitHref ? '<p><a href="' + esc2(commitHref) + '" target="_blank">View commit diff on GitHub &rarr;</a></p>' : '')
+            + '<div class="note">No specific page was recorded for this change.'
+            + (commitHref ? ' Click the link above to see exactly what was modified.' : ' Ask Quinn for more details about what shipped.')
+            + '</div>')
       + '</body></html>';
-    document.getElementById('preview-title').textContent = r.title || r.description || 'Change Review';
-    document.getElementById('preview-page').textContent = r.commit_sha ? ('commit ' + r.commit_sha.slice(0, 8)) : 'no specific page';
+    document.getElementById('preview-title').textContent = (isBlocked ? '⚠ Not applied yet — ' : '') + (r.title || r.description || 'Change Review');
+    document.getElementById('preview-page').textContent = r.commit_sha ? ('commit ' + r.commit_sha.slice(0, 8)) : (isBlocked ? 'no change applied' : 'no specific page');
     var openLink = document.getElementById('preview-open-tab');
     if (commitHref) { openLink.href = commitHref; openLink.style.display = ''; }
     else { openLink.style.display = 'none'; }
@@ -1367,11 +1397,12 @@ function crReview(id) {
   }
 
   var acc = document.getElementById('preview-accept');
-  if (r.status === 'awaiting-review') {
+  if (r.status === 'awaiting-review' && !isBlocked) {
     acc.style.display = '';
     acc.innerHTML = '&#10003; Accept';
     acc.onclick = function () { crSet(id, 'accepted'); closePreview(); };
   } else {
+    // Nothing was applied (blocked / no work) — don't offer a sign-off.
     acc.style.display = 'none';
   }
   document.getElementById('preview-refine').onclick = function () { closePreview(); };
@@ -1562,5 +1593,6 @@ document.documentElement.style.visibility = 'hidden';
 <script src="js/legends-guide-config.js"></script>
 <script type="module" src="https://soma-guide.netlify.app/soma-guide.js"></script>
 
+<script src="/js/admin-review-nav.js" defer></script>
 </body>
 </html>
