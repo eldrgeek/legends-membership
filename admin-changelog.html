@@ -1251,12 +1251,54 @@ function crRevert(id) {
     }).catch(function () { alert('Could not file the revert (network error).'); });
 }
 
-// Review work → opens the affected page preview (full review-with-Bill flow is Phase 3).
+// Review work → open the affected page in the inline preview so you can see what
+// shipped. Handles every page format the queue stores: relative paths ("/members"),
+// same-origin absolute URLs, external preview-deploy URLs (new tab), and null pages
+// (fall back to the commit diff on GitHub). For awaiting-review items the preview
+// also surfaces an Accept (sign-off) button.
+var REPO_COMMIT_BASE = 'https://github.com/eldrgeek/legends-membership/commit/';
 function crReview(id) {
   var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
   if (!r) return;
-  var pagePath = ''; try { pagePath = new URL(r.page).pathname.replace(/^\//, ''); } catch (e) {}
-  if (pagePath) openPreview(pagePath, 'req-' + id);
+  var raw = (r.page || '').trim();
+
+  // External absolute URL (e.g. a breaking-change preview deploy on another origin) —
+  // can't be iframed under X-Frame-Options, so open it in a new tab.
+  if (/^https?:\/\//i.test(raw) && raw.indexOf(location.host) === -1) {
+    window.open(raw, '_blank', 'noopener');
+    return;
+  }
+  // No page recorded: show the commit diff if we have one, else say so.
+  if (!raw) {
+    if (r.commit_sha) { window.open(REPO_COMMIT_BASE + r.commit_sha, '_blank', 'noopener'); return; }
+    alert('This item has no specific page or commit to preview.');
+    return;
+  }
+  // Normalize to a same-origin path: strip any origin, then the leading slash.
+  var path = raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
+  var href = '/' + path;
+
+  document.getElementById('preview-title').textContent = r.title || r.description || href;
+  document.getElementById('preview-page').textContent = href;
+  document.getElementById('preview-open-tab').href = href;
+  document.getElementById('preview-frame').src = href;
+
+  var acc = document.getElementById('preview-accept');
+  if (r.status === 'awaiting-review') {
+    acc.style.display = '';
+    acc.innerHTML = '&#10003; Accept';
+    acc.onclick = function () { crSet(id, 'accepted'); closePreview(); };
+  } else {
+    acc.style.display = 'none';
+  }
+  document.getElementById('preview-refine').onclick = function () { closePreview(); };
+
+  _previewId = id;
+  document.getElementById('page-preview').style.display = '';
+  document.querySelectorAll('.cl-item.previewing, .cr-item.previewing').forEach(function (e) { e.classList.remove('previewing'); });
+  var el = document.getElementById('req-' + id);
+  if (el) el.classList.add('previewing');
+  document.getElementById('page-preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Interaction handlers ──────────────────────────────────────────────────────
