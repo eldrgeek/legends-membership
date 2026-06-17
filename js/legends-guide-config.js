@@ -30,11 +30,14 @@ window.SomaGuideConfig = {
     name: 'Bill',
     id: 'legends-bill',
     avatar: '🏀',
-    greeting:
-      'Hi, I\'m Bill. Greg Foster and a team of people and AIs — including me — manage this site. ' +
-      'I can show you around, answer your questions, take bug reports or feature requests, and pass ' +
-      'messages to Greg when he\'s not around. Call me in anytime, and feel free to interrupt me while ' +
-      'I\'m talking. Have I met you?',
+    /* First-contact opener (no name yet). The full role intro comes AFTER the
+     * person gives a name (see roleIntro). */
+    greeting: 'I\'m Bill. Have we met before?',
+    /* Delivered once Bill has a name — his role on the team. */
+    roleIntro:
+      'I help run this site for Greg Foster and the team — I can show you around, ' +
+      'answer questions, take bug reports or feature requests, and pass messages to Greg ' +
+      'when he\'s not around. Call me in anytime, and feel free to interrupt me while I\'m talking.',
     shortGreeting: 'Good to see you again!',
     walkthroughDone:
       'Great — you\'ve seen the essentials! Explore on your own, or ask me ' +
