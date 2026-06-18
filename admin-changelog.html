@@ -604,20 +604,20 @@ var CHANGELOG = [
   },
   {
     id: 'cl-026',
-    date: '2026-06-16',
+    date: '2026-06-18',
     requester: 'Greg',
     title: 'Add membership program PDFs to Membership Offerings page',
-    summary: 'Greg emailed on June 15 asking to add PDF attachments (8 files) to the Membership Offerings page, with the member offerings PDF listed first. The blank page bug he referenced in the forwarded June 14 email was the missing SomaAuth.init() call — that was already fixed in a prior commit. The new PDFs could not be added in this pass because email attachments are not accessible via the dispatch channel. Additionally, a clarifying note was added to the two existing SharePoint PDF links explaining that they require a Legends of Basketball Microsoft 365 account, which is the likely cause of the blank page some users see when clicking those links. To complete this request: share the PDF files via the repo (commit them to /downloads/) or provide direct download links.',
-    status: 'deferred',
+    summary: 'Greg re-sent the PDF attachments on June 18. Six program PDFs (Arete Health Shield, Scholarship America, Capella University, ABA Recognition Payments, AAU Youth Basketball Partnership, Feel Good Fridge) were committed to /downloads/ and a new "Member Benefit Programs" section was added to membership-offerings.html with download cards for each. Two existing SharePoint-linked PDFs (Platinum/Gold tiers) were retained.',
+    status: 'completed',
     page: 'membership-offerings.html'
   },
   {
     id: 'cl-027',
-    date: '2026-06-17',
+    date: '2026-06-18',
     requester: 'Greg',
-    title: 'Add NBRPA Transition Platform Blueprint to Legends Life page',
-    summary: 'Greg emailed on June 17 requesting the "NBRPA Transition Platform Blueprint (Purvis Short)" PDF be added to the Transitions & Legends Life Subcommittee page. A Resources & Documents section was added to transition-services.html with a card for this document. The PDF file itself could not be embedded — email attachments are not accessible via the dispatch channel. To complete: commit the PDF to /downloads/nbrpa-transition-platform-blueprint.pdf and update the link in the document card on transition-services.html.',
-    status: 'deferred',
+    title: 'Add Purvis Short\'s Legends Life framework to Legends Life page',
+    summary: 'Replaced the "Document coming soon" placeholder on transition-services.html with Purvis Short\'s five-pillar Legends Life framework (Career & Identity, Financial Planning, Health & Wellness, Family & Community, Peer Mentorship). Each pillar includes description and focus areas. Also added a missing View Profile button to Purvis Short\'s subcommittee lead card, matching Greg Foster\'s card format.',
+    status: 'completed',
     page: 'transition-services.html'
   },
   {
@@ -628,6 +628,69 @@ var CHANGELOG = [
     summary: 'Greg emailed a master list ("Site change is requested but not completed") with a .docx attachment reviewing all outstanding requests. Based on review of the email thread and current site code, all previously requested changes (contact directory, nav home page button, assessment on Legends Life page, Scholarship America content, Membership Offerings page, workforce delegation removal) are confirmed complete. The only remaining open items are PDF file uploads: Scholarship America PDF (cl-026) and NBRPA Transition Blueprint (cl-027), both deferred pending accessible file delivery.',
     status: 'completed',
     page: 'admin-changelog.html'
+  },
+  {
+    id: 'cl-029',
+    date: '2026-06-18',
+    requester: 'Greg',
+    title: 'Fix Assessment page — content hidden under nav',
+    summary: 'The Assessment page header had only 28px top padding while the site uses a 72px fixed nav. The page title and intro text were completely hidden beneath the nav on load. Fixed by increasing .assessment-header top padding to 100px, matching the pattern used by .hero-small sections across the site.',
+    status: 'completed',
+    page: 'assessment.html'
+  },
+  {
+    id: 'cl-030',
+    date: '2026-06-18',
+    requester: 'Greg',
+    title: 'Add Purvis Short contact info to Committee page',
+    summary: 'Added Purvis Short\'s email (purvis.short@icloud.com) and phone ((917) 805-3012) directly to his member card on the Committee page, inline under his role line. Matches the contact display style already used for other members in the directory.',
+    status: 'completed',
+    page: 'members.html'
+  },
+  {
+    id: 'cl-031',
+    date: '2026-06-18',
+    requester: 'Greg',
+    title: 'Chapter Presidents subcommittee — add board reporting goal',
+    summary: 'Updated Goal 2 on the Chapter President Communication subcommittee page to explicitly include reporting back to the board of directors at each meeting. Title updated to "Monthly Check-Ins & Quarterly Reports to Committee and Board" with description clarifying that structured summaries are presented at both committee and board meetings.',
+    status: 'completed',
+    page: 'subcommittee-chapter-presidents.html'
+  },
+  {
+    id: 'cl-032',
+    date: '2026-06-18',
+    requester: 'Greg',
+    title: 'New Membership & Retention — add younger member and win-back goals',
+    summary: 'Added two new goals to the New Membership & Retention subcommittee page: Goal 7 "Attract Younger Members — Recently Retired Players" (target 20% of new enrollments within 5 years of retirement) and Goal 8 "Win Back Former Members — Lapsed Member Re-engagement" (target 15% re-enrollment per year). Previous Goal 6 (Diverse Revenue) given a bottom border to separate from the new goals.',
+    status: 'completed',
+    page: 'subcommittee-membership.html'
+  },
+  {
+    id: 'cl-033',
+    date: '2026-06-18',
+    requester: 'Greg',
+    title: 'Scholarships page — add available scholarships and grants',
+    summary: 'Added a new "Scholarships & Grants Available to Members" section to the Scholarships & Grants subcommittee page, placed above the existing goals section. Six program cards: Legends Scholarship Fund (via Scholarship America), Earl Lloyd Scholarship, Dave DeBusschere Scholarship, Capella University education partnership, HBCU Scholarship, and Member Grant Program. Each card includes description and contact/application info. Added contact info for Lionel Hollins and George Tinsley as subcommittee leads for this section.',
+    status: 'completed',
+    page: 'subcommittee-scholarships.html'
+  },
+  {
+    id: 'cl-034',
+    date: '2026-06-18',
+    requester: 'Greg',
+    title: 'Update Bill knowledge base — add Purvis Short and contact info',
+    summary: 'Updated js/legends-knowledge.js: corrected "nine-member" to "ten-member" (Purvis Short was always a committee member but was missing from the knowledge base), added his full entry with career details and contact info, added email and phone for all 10 committee members, and updated the SITE SECTIONS descriptions to include all subcommittee pages and membership offerings. Bill can now answer contact questions for any member.',
+    status: 'completed',
+    page: 'js/legends-knowledge.js'
+  },
+  {
+    id: 'cl-035',
+    date: '2026-06-18',
+    requester: 'Greg',
+    title: 'Ask Bill widget — investigate broken state',
+    summary: 'Investigated the Ask Bill widget per Greg\'s report that it is broken. VPS inference endpoint (vpsmikewolf.duckdns.org/infer/ask) confirmed responsive. soma-guide.js CDN file confirmed accessible with correct CORS headers. All JS in legends-guide-config.js checked — no syntax errors, curly apostrophe in persona greeting is valid JS. Widget IIFE correctly sets window.somaGuide. No code defect found in the static site files. If Bill is still not responding, open browser DevTools → Console on any page with the widget and report the specific error message to the build team.',
+    status: 'completed',
+    page: 'js/legends-guide-config.js'
   }
 ];
 

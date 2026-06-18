@@ -12,7 +12,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/js/soma-auth-config.js"></script>
   <script src="/js/soma-auth.js"></script>
-  <!-- <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> -->
   <style>
     .login-page {
       min-height: 100vh;
@@ -62,7 +61,7 @@
       font-size: 0.9rem;
       color: var(--text-medium);
       line-height: 1.65;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
     }
     .login-input {
       width: 100%;
@@ -96,6 +95,13 @@
     }
     .login-btn:hover { background: var(--navy-mid); }
     .login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .login-btn.secondary {
+      background: transparent;
+      color: var(--navy);
+      border: 1.5px solid var(--border);
+      margin-top: 10px;
+    }
+    .login-btn.secondary:hover { background: #f8fafc; }
     .login-msg {
       margin-top: 20px;
       padding: 12px 16px;
@@ -106,6 +112,7 @@
     }
     .login-msg.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
     .login-msg.error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .login-msg.info    { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
     .login-footer-note {
       font-size: 0.78rem;
       color: var(--text-light);
@@ -113,6 +120,46 @@
       line-height: 1.5;
     }
     .login-footer-note a { color: var(--navy); }
+
+    /* OAuth provider buttons */
+    .oauth-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+    .oauth-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 12px 16px;
+      border-radius: 6px; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600;
+      transition: filter 0.15s; border: 1.5px solid transparent;
+    }
+    .oauth-btn:hover { filter: brightness(0.96); }
+    .oauth-btn svg, .oauth-btn img { width: 18px; height: 18px; flex: 0 0 18px; }
+
+    /* "or" divider */
+    .auth-divider {
+      display: flex; align-items: center; text-align: center;
+      color: var(--text-light); font-size: 0.74rem; letter-spacing: 0.08em;
+      text-transform: uppercase; margin: 20px 0;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .auth-divider:not(:empty)::before { margin-right: 12px; }
+    .auth-divider:not(:empty)::after  { margin-left: 12px; }
+
+    /* method tabs (Email / Phone) */
+    .method-tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+    .method-tab {
+      flex: 1; padding: 9px 8px; border: 1.5px solid var(--border); background: #fff;
+      border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: 0.8rem; font-weight: 600; color: var(--text-medium);
+      text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.15s;
+    }
+    .method-tab.active { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+
+    .link-row { margin-top: 8px; font-size: 0.82rem; }
+    .link-row a { color: var(--navy); cursor: pointer; text-decoration: none; font-weight: 600; }
+    .link-row a:hover { text-decoration: underline; }
+    .hidden { display: none !important; }
+
     @media (max-width: 480px) {
       .login-card { padding: 36px 24px; }
     }
@@ -125,12 +172,57 @@
     <div class="login-logo">Legends of Basketball</div>
     <div class="login-sub">Membership Services Committee</div>
     <div class="login-gold-line"></div>
-    <h1 class="login-title">Committee Access</h1>
-    <p class="login-desc">
-      Enter your committee email address. We'll send you a magic link — click it to sign in instantly, no password needed.
-    </p>
-    <input type="email" id="login-email" class="login-input" placeholder="your@email.com" autocomplete="email" />
-    <button class="login-btn" id="login-btn">Send Sign-In Link</button>
+    <h1 class="login-title" id="card-title">Committee Access</h1>
+    <p class="login-desc" id="card-desc">Choose how you'd like to sign in.</p>
+
+    <!-- ════════════ Password-recovery panel (shown after reset link) ════════════ -->
+    <div id="recovery-panel" class="hidden">
+      <input type="password" id="recovery-pw" class="login-input" placeholder="New password (min 8 chars)" autocomplete="new-password" />
+      <input type="password" id="recovery-pw2" class="login-input" placeholder="Confirm new password" autocomplete="new-password" />
+      <button class="login-btn" id="recovery-btn">Set New Password</button>
+    </div>
+
+    <!-- ════════════════════════════ Main auth panel ═══════════════════════════ -->
+    <div id="auth-panel">
+      <!-- OAuth buttons (rendered from config) -->
+      <div class="oauth-list" id="oauth-list"></div>
+      <div class="auth-divider" id="oauth-divider"></div>
+
+      <!-- Email / Phone tabs (shown only when more than one is available) -->
+      <div class="method-tabs hidden" id="method-tabs">
+        <button class="method-tab active" id="tab-email" data-pane="email">Email</button>
+        <button class="method-tab" id="tab-phone" data-pane="phone">Phone</button>
+      </div>
+
+      <!-- ───────────── Email pane ───────────── -->
+      <div id="email-pane">
+        <input type="email" id="login-email" class="login-input" placeholder="your@email.com" autocomplete="email" />
+
+        <!-- password fields (only when password method enabled) -->
+        <div id="password-row" class="hidden">
+          <input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" />
+        </div>
+
+        <!-- primary buttons get rendered/wired in JS depending on mode -->
+        <button class="login-btn hidden" id="pw-signin-btn">Sign In</button>
+        <button class="login-btn hidden" id="pw-signup-btn">Create Account</button>
+        <button class="login-btn hidden" id="magic-btn">Email Me a Sign-In Link</button>
+
+        <div class="link-row" id="email-links"></div>
+      </div>
+
+      <!-- ───────────── Phone pane ───────────── -->
+      <div id="phone-pane" class="hidden">
+        <input type="tel" id="login-phone" class="login-input" placeholder="+1 555 123 4567" autocomplete="tel" />
+        <button class="login-btn" id="phone-send-btn">Send Code</button>
+        <div id="phone-verify-row" class="hidden">
+          <input type="text" id="login-code" class="login-input" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" style="margin-top:14px;" />
+          <button class="login-btn" id="phone-verify-btn">Verify &amp; Sign In</button>
+          <div class="link-row"><a id="phone-resend">Resend code</a></div>
+        </div>
+      </div>
+    </div>
+
     <div id="login-msg" class="login-msg"></div>
     <p class="login-footer-note">
       Don't have an account? Contact <a href="mailto:gfos44@gmail.com">Greg Foster</a> to receive an invitation.
@@ -139,75 +231,331 @@
 </div>
 
 <script>
+  // ───────────────────────── helpers ─────────────────────────
   var params = new URLSearchParams(window.location.search);
+  var msgEl = document.getElementById('login-msg');
 
-  // Show confirmed banner if redirected from confirmation flow
-  if (params.get('confirmed') === '1') {
-    var banner = document.createElement('div');
-    banner.style.cssText = 'background:#16a34a;color:#fff;padding:12px 16px;border-radius:8px;margin-bottom:20px;font-size:0.88rem;font-weight:600;text-align:center;';
-    banner.textContent = 'Email confirmed! Enter your email below to sign in.';
-    var card = document.querySelector('.login-card');
-    var btn = document.getElementById('login-btn');
-    card.insertBefore(banner, btn);
+  function showMsg(text, kind) {
+    msgEl.textContent = text;
+    msgEl.className = 'login-msg ' + (kind || 'info');
+    msgEl.style.display = 'block';
   }
+  function hideMsg() { msgEl.style.display = 'none'; }
+  function busy(btn, label) { if (!btn) return; btn._label = btn.textContent; btn.disabled = true; btn.textContent = label || 'Working…'; }
+  function unbusy(btn) { if (!btn) return; btn.disabled = false; if (btn._label) btn.textContent = btn._label; }
+  function validEmail(e) { return e && e.indexOf('@') > 0 && e.indexOf('.') > 0; }
 
+  // Safe redirect target (must be a local path).
   var redirectTo = '/members.html';
   try {
     var r = params.get('redirect');
-    if (r && r.startsWith('/') && !r.startsWith('//')) redirectTo = r;
-  } catch(e) {}
+    if (r && r.charAt(0) === '/' && r.charAt(1) !== '/') redirectTo = r;
+  } catch (e) {}
+  var origin = window.location.origin || 'https://legends-membership.netlify.app';
 
-  // If already signed in (e.g., magic link lands here), redirect immediately.
-  // Also handles Supabase processing the magic link token from the URL hash.
-  SomaAuth.onAuthStateChange(function(event, session) {
+  // Confirmed-email banner.
+  if (params.get('confirmed') === '1') {
+    showMsg('Email confirmed! Sign in below.', 'success');
+  }
+
+  var methods = SomaAuth.getMethods();
+
+  // ───────────────────────── Google brand SVG ─────────────────────────
+  function googleSvg() {
+    return '<svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">' +
+      '<path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>' +
+      '<path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.34A9 9 0 0 0 9 18z"/>' +
+      '<path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.94H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.06l3.01-2.34z"/>' +
+      '<path fill="#EA4335" d="M9 3.58c1.32 0 2.5.46 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.94l3.01 2.34C4.68 5.16 6.66 3.58 9 3.58z"/>' +
+      '</svg>';
+  }
+
+  // ───────────────────────── render OAuth buttons ─────────────────────────
+  (function renderOAuth() {
+    var list = document.getElementById('oauth-list');
+    var divider = document.getElementById('oauth-divider');
+    if (!methods.oauth.length) { list.classList.add('hidden'); divider.classList.add('hidden'); return; }
+
+    var hasOtherMethods = methods.magicLink || methods.password || methods.phone || methods.emailOtp;
+    divider.textContent = hasOtherMethods ? 'or' : '';
+
+    methods.oauth.forEach(function (provider) {
+      var meta = SomaAuth.providerMeta(provider);
+      var btn = document.createElement('button');
+      btn.className = 'oauth-btn';
+      btn.style.background = meta.color;
+      btn.style.color = meta.text;
+      btn.style.borderColor = meta.border;
+      var icon = (provider === 'google') ? googleSvg() : '';
+      btn.innerHTML = icon + '<span>Continue with ' + meta.label + '</span>';
+      btn.addEventListener('click', function () {
+        hideMsg();
+        busy(btn, 'Redirecting…');
+        SomaAuth.signInWithOAuth(provider, { redirectTo: origin + redirectTo })
+          .then(function (res) {
+            if (res && res.error) { unbusy(btn); showMsg(res.error.message || 'Sign-in failed.', 'error'); }
+            // success → browser is redirecting to provider; nothing else to do.
+          })
+          .catch(function (err) { unbusy(btn); showMsg(err.message || 'Unable to start sign-in.', 'error'); });
+      });
+      list.appendChild(btn);
+    });
+  })();
+
+  // ───────────────────────── method tabs (email / phone) ─────────────────────────
+  (function setupTabs() {
+    var tabs = document.getElementById('method-tabs');
+    var emailPane = document.getElementById('email-pane');
+    var phonePane = document.getElementById('phone-pane');
+    var emailAvailable = methods.magicLink || methods.password || methods.emailOtp;
+
+    if (!methods.phone) { phonePane.classList.add('hidden'); return; }
+    if (!emailAvailable) {
+      // phone only
+      emailPane.classList.add('hidden');
+      phonePane.classList.remove('hidden');
+      return;
+    }
+    // both → show tabs
+    tabs.classList.remove('hidden');
+    tabs.addEventListener('click', function (e) {
+      var t = e.target.closest('.method-tab');
+      if (!t) return;
+      hideMsg();
+      document.getElementById('tab-email').classList.toggle('active', t.dataset.pane === 'email');
+      document.getElementById('tab-phone').classList.toggle('active', t.dataset.pane === 'phone');
+      emailPane.classList.toggle('hidden', t.dataset.pane !== 'email');
+      phonePane.classList.toggle('hidden', t.dataset.pane !== 'phone');
+    });
+  })();
+
+  // ───────────────────────── email pane wiring ─────────────────────────
+  (function setupEmail() {
+    var emailInput = document.getElementById('login-email');
+    var pwRow = document.getElementById('password-row');
+    var pwInput = document.getElementById('login-password');
+    var signinBtn = document.getElementById('pw-signin-btn');
+    var signupBtn = document.getElementById('pw-signup-btn');
+    var magicBtn = document.getElementById('magic-btn');
+    var links = document.getElementById('email-links');
+
+    var signupMode = false;
+
+    function setLinks() {
+      links.innerHTML = '';
+      if (methods.password) {
+        var toggle = document.createElement('a');
+        toggle.textContent = signupMode ? 'Have an account? Sign in' : 'Create an account';
+        toggle.addEventListener('click', function () { signupMode = !signupMode; applyMode(); hideMsg(); });
+        links.appendChild(toggle);
+
+        if (!signupMode) {
+          links.appendChild(document.createTextNode('  ·  '));
+          var reset = document.createElement('a');
+          reset.textContent = 'Forgot password?';
+          reset.addEventListener('click', doReset);
+          links.appendChild(reset);
+        }
+      }
+    }
+
+    function applyMode() {
+      if (methods.password) {
+        pwRow.classList.remove('hidden');
+        signinBtn.classList.toggle('hidden', signupMode);
+        signupBtn.classList.toggle('hidden', !signupMode);
+        // magic link sits below as a secondary option (sign-in mode only)
+        magicBtn.classList.toggle('hidden', !(methods.magicLink && !signupMode));
+        magicBtn.className = 'login-btn secondary' + ((methods.magicLink && !signupMode) ? '' : ' hidden');
+        pwInput.setAttribute('autocomplete', signupMode ? 'new-password' : 'current-password');
+      } else {
+        // magic-link / email-OTP only
+        pwRow.classList.add('hidden');
+        signinBtn.classList.add('hidden');
+        signupBtn.classList.add('hidden');
+        magicBtn.classList.toggle('hidden', !(methods.magicLink || methods.emailOtp));
+        magicBtn.className = 'login-btn' + ((methods.magicLink || methods.emailOtp) ? '' : ' hidden');
+      }
+      setLinks();
+    }
+
+    // password sign-in
+    signinBtn.addEventListener('click', function () {
+      hideMsg();
+      var email = emailInput.value.trim(), pw = pwInput.value;
+      if (!validEmail(email)) return showMsg('Please enter a valid email address.', 'error');
+      if (!pw) return showMsg('Please enter your password.', 'error');
+      busy(signinBtn, 'Signing in…');
+      SomaAuth.signInWithPassword(email, pw)
+        .then(function (res) {
+          if (res.error) { unbusy(signinBtn); showMsg(res.error.message || 'Incorrect email or password.', 'error'); }
+          // success → onAuthStateChange redirects.
+        })
+        .catch(function (err) { unbusy(signinBtn); showMsg(err.message || 'Sign-in failed.', 'error'); });
+    });
+
+    // password sign-up
+    signupBtn.addEventListener('click', function () {
+      hideMsg();
+      var email = emailInput.value.trim(), pw = pwInput.value;
+      if (!validEmail(email)) return showMsg('Please enter a valid email address.', 'error');
+      if (!pw || pw.length < 8) return showMsg('Password must be at least 8 characters.', 'error');
+      busy(signupBtn, 'Creating account…');
+      SomaAuth.signUp(email, pw, { emailRedirectTo: origin + '/login.html?confirmed=1' })
+        .then(function (res) {
+          unbusy(signupBtn);
+          if (res.error) return showMsg(res.error.message || 'Could not create account.', 'error');
+          if (res.data && res.data.session) {
+            showMsg('Account created! Signing you in…', 'success'); // confirmations off
+          } else {
+            showMsg('Account created. Check your email to confirm, then sign in.', 'success');
+          }
+        })
+        .catch(function (err) { unbusy(signupBtn); showMsg(err.message || 'Could not create account.', 'error'); });
+    });
+
+    // magic link / email OTP
+    magicBtn.addEventListener('click', function () {
+      hideMsg();
+      var email = emailInput.value.trim();
+      if (!validEmail(email)) return showMsg('Please enter a valid email address.', 'error');
+      busy(magicBtn, 'Sending…');
+      SomaAuth.signInWithOtp(email, { emailRedirectTo: origin + redirectTo })
+        .then(function (res) {
+          unbusy(magicBtn);
+          if (res.error) return showMsg(res.error.message || 'Could not send link.', 'error');
+          showMsg('Check your email — a sign-in link is on its way!', 'success');
+          emailInput.value = '';
+        })
+        .catch(function (err) { unbusy(magicBtn); showMsg(err.message || 'Unable to reach auth server.', 'error'); });
+    });
+
+    function doReset() {
+      hideMsg();
+      var email = emailInput.value.trim();
+      if (!validEmail(email)) return showMsg('Enter your email above, then tap “Forgot password?” again.', 'error');
+      SomaAuth.resetPasswordForEmail(email, origin + '/login.html?recovery=1')
+        .then(function (res) {
+          if (res.error) return showMsg(res.error.message || 'Could not send reset email.', 'error');
+          showMsg('Password-reset email sent. Check your inbox.', 'success');
+        })
+        .catch(function (err) { showMsg(err.message || 'Could not send reset email.', 'error'); });
+    }
+
+    // Enter key submits the most prominent action.
+    [emailInput, pwInput].forEach(function (el) {
+      el.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        if (!signinBtn.classList.contains('hidden')) signinBtn.click();
+        else if (!signupBtn.classList.contains('hidden')) signupBtn.click();
+        else if (!magicBtn.classList.contains('hidden')) magicBtn.click();
+      });
+    });
+
+    applyMode();
+  })();
+
+  // ───────────────────────── phone pane wiring ─────────────────────────
+  (function setupPhone() {
+    if (!methods.phone) return;
+    var phoneInput = document.getElementById('login-phone');
+    var sendBtn = document.getElementById('phone-send-btn');
+    var verifyRow = document.getElementById('phone-verify-row');
+    var codeInput = document.getElementById('login-code');
+    var verifyBtn = document.getElementById('phone-verify-btn');
+    var resend = document.getElementById('phone-resend');
+
+    function normalizePhone(v) {
+      v = (v || '').replace(/[^\d+]/g, '');
+      if (v && v.charAt(0) !== '+') v = '+' + v; // assume already includes country code
+      return v;
+    }
+
+    function send() {
+      hideMsg();
+      var phone = normalizePhone(phoneInput.value);
+      if (phone.replace(/\D/g, '').length < 10) return showMsg('Enter your full phone number including country code (e.g. +1…).', 'error');
+      busy(sendBtn, 'Sending…');
+      SomaAuth.signInWithPhone(phone)
+        .then(function (res) {
+          unbusy(sendBtn);
+          if (res.error) return showMsg(res.error.message || 'Could not send code.', 'error');
+          verifyRow.classList.remove('hidden');
+          showMsg('We texted a 6-digit code to ' + phone + '.', 'success');
+          codeInput.focus();
+        })
+        .catch(function (err) { unbusy(sendBtn); showMsg(err.message || 'Could not send code.', 'error'); });
+    }
+
+    function verify() {
+      hideMsg();
+      var phone = normalizePhone(phoneInput.value);
+      var code = (codeInput.value || '').trim();
+      if (code.length < 4) return showMsg('Enter the code from the text message.', 'error');
+      busy(verifyBtn, 'Verifying…');
+      SomaAuth.verifyPhoneOtp(phone, code)
+        .then(function (res) {
+          if (res.error) { unbusy(verifyBtn); return showMsg(res.error.message || 'Incorrect or expired code.', 'error'); }
+          // success → onAuthStateChange redirects.
+        })
+        .catch(function (err) { unbusy(verifyBtn); showMsg(err.message || 'Verification failed.', 'error'); });
+    }
+
+    sendBtn.addEventListener('click', send);
+    verifyBtn.addEventListener('click', verify);
+    resend.addEventListener('click', send);
+    phoneInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+    codeInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') verify(); });
+  })();
+
+  // ───────────────────────── password-recovery flow ─────────────────────────
+  (function setupRecovery() {
+    var panel = document.getElementById('recovery-panel');
+    var authPanel = document.getElementById('auth-panel');
+    var pw = document.getElementById('recovery-pw');
+    var pw2 = document.getElementById('recovery-pw2');
+    var btn = document.getElementById('recovery-btn');
+
+    function enterRecovery() {
+      document.getElementById('card-title').textContent = 'Set a New Password';
+      document.getElementById('card-desc').textContent = 'Choose a new password for your account.';
+      authPanel.classList.add('hidden');
+      panel.classList.remove('hidden');
+    }
+    // Supabase fires PASSWORD_RECOVERY when the user lands from a reset link.
+    SomaAuth.onAuthStateChange(function (event) {
+      if (event === 'PASSWORD_RECOVERY') enterRecovery();
+    });
+    if (params.get('recovery') === '1') enterRecovery();
+
+    btn.addEventListener('click', function () {
+      hideMsg();
+      if (pw.value.length < 8) return showMsg('Password must be at least 8 characters.', 'error');
+      if (pw.value !== pw2.value) return showMsg('Passwords do not match.', 'error');
+      busy(btn, 'Saving…');
+      SomaAuth.updateUser({ password: pw.value })
+        .then(function (res) {
+          unbusy(btn);
+          if (res.error) return showMsg(res.error.message || 'Could not update password.', 'error');
+          showMsg('Password updated! Signing you in…', 'success');
+          setTimeout(function () { window.location.replace(redirectTo); }, 900);
+        })
+        .catch(function (err) { unbusy(btn); showMsg(err.message || 'Could not update password.', 'error'); });
+    });
+  })();
+
+  // ───────────────────────── session redirect ─────────────────────────
+  // If a session already exists (or a magic-link / OAuth redirect just landed),
+  // bounce to the destination — UNLESS we're in the password-recovery flow.
+  SomaAuth.onAuthStateChange(function (event, session) {
+    if (event === 'PASSWORD_RECOVERY') return;
+    if (params.get('recovery') === '1') return;
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
       window.location.replace(redirectTo);
     }
   });
+
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
-
-  // Magic-link form submit
-  document.getElementById('login-btn').addEventListener('click', function() {
-    var email = document.getElementById('login-email').value.trim();
-    var msg = document.getElementById('login-msg');
-    var btn = document.getElementById('login-btn');
-    if (!email || !email.includes('@')) {
-      msg.textContent = 'Please enter a valid email address.';
-      msg.className = 'login-msg error';
-      msg.style.display = 'block';
-      return;
-    }
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-    msg.style.display = 'none';
-    var origin = window.location.origin || 'https://legends-membership.netlify.app';
-    SomaAuth.signInWithOtp(email, { emailRedirectTo: origin + redirectTo })
-      .then(function(result) {
-        btn.disabled = false;
-        btn.textContent = 'Send Sign-In Link';
-        if (result.error) {
-          msg.textContent = result.error.message || 'Sign-in failed. Please try again.';
-          msg.className = 'login-msg error';
-        } else {
-          msg.textContent = 'Check your email — a sign-in link is on its way!';
-          msg.className = 'login-msg success';
-          document.getElementById('login-email').value = '';
-        }
-        msg.style.display = 'block';
-      })
-      .catch(function(err) {
-        btn.disabled = false;
-        btn.textContent = 'Send Sign-In Link';
-        msg.textContent = err.message || 'Unable to reach auth server. Please try again later.';
-        msg.className = 'login-msg error';
-        msg.style.display = 'block';
-      });
-  });
-
-  // Allow pressing Enter in the email field
-  document.getElementById('login-email').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('login-btn').click();
-  });
 </script>
 
 </body>
