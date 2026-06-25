@@ -9,6 +9,9 @@ npm test                 # layers 2–4 (no network, no browser; ~8s)
 npm run verify:deploy    # layer 5 — live drift check (network; ~5s)
 ```
 
+Production deploys from GitHub through Netlify continuous deployment. Local
+fixes are not live until they are committed and pushed to `origin/master`.
+
 ## Layer 1 — SOMA engine behavior (lives in soma-platform)
 
 The soma-guide engine is shared across SOMA sites and tests itself:

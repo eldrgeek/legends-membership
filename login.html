@@ -19,17 +19,18 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 100%);
+      background: var(--off-white);
       padding: 40px 24px;
     }
     .login-card {
       background: var(--white);
-      border-radius: 16px;
-      padding: 48px 40px;
-      max-width: 440px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 40px;
+      max-width: 520px;
       width: 100%;
-      box-shadow: var(--shadow-lg);
-      text-align: center;
+      box-shadow: var(--shadow);
+      text-align: left;
     }
     .login-logo {
       font-family: 'Playfair Display', serif;
@@ -49,7 +50,7 @@
       width: 48px;
       height: 3px;
       background: var(--gold);
-      margin: 0 auto 32px;
+      margin: 0 0 32px;
     }
     .login-title {
       font-family: 'Playfair Display', serif;
@@ -158,6 +159,61 @@
     .link-row { margin-top: 8px; font-size: 0.82rem; }
     .link-row a { color: var(--navy); cursor: pointer; text-decoration: none; font-weight: 600; }
     .link-row a:hover { text-decoration: underline; }
+    .auth-mode-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .auth-mode {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text-dark);
+      cursor: pointer;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .auth-mode:hover,
+    .auth-mode.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.14);
+    }
+    .auth-mode strong {
+      display: block;
+      color: var(--navy);
+      font-size: 0.94rem;
+      margin-bottom: 2px;
+    }
+    .auth-mode span {
+      display: block;
+      color: var(--text-medium);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+    .auth-mode::after {
+      content: '>';
+      color: var(--gold-dark);
+      font-size: 1.05rem;
+      line-height: 1;
+    }
+    .auth-hint {
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--text-medium);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: -2px 0 14px;
+    }
     .hidden { display: none !important; }
 
     @media (max-width: 480px) {
@@ -173,7 +229,7 @@
     <div class="login-sub">Membership Services Committee</div>
     <div class="login-gold-line"></div>
     <h1 class="login-title" id="card-title">Committee Access</h1>
-    <p class="login-desc" id="card-desc">Choose how you'd like to sign in.</p>
+    <p class="login-desc" id="card-desc">Use the quickest path for what you need today.</p>
 
     <!-- ════════════ Password-recovery panel (shown after reset link) ════════════ -->
     <div id="recovery-panel" class="hidden">
@@ -196,12 +252,25 @@
 
       <!-- ───────────── Email pane ───────────── -->
       <div id="email-pane">
+        <div class="auth-mode-list" id="auth-mode-list">
+          <button type="button" class="auth-mode active" data-auth-mode="link">
+            <span><strong>Email me a secure link</strong><span>No password needed. Best for most committee members.</span></span>
+          </button>
+          <button type="button" class="auth-mode" data-auth-mode="password">
+            <span><strong>Sign in with a password</strong><span>Use this only if you already set a password.</span></span>
+          </button>
+          <button type="button" class="auth-mode" data-auth-mode="signup">
+            <span><strong>Create new access</strong><span>Send a setup link to your email.</span></span>
+          </button>
+        </div>
         <input type="email" id="login-email" class="login-input" placeholder="your@email.com" autocomplete="email" />
 
         <!-- password fields (only when password method enabled) -->
         <div id="password-row" class="hidden">
           <input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" />
+          <input type="password" id="login-password-confirm" class="login-input hidden" placeholder="Confirm password" autocomplete="new-password" />
         </div>
+        <div class="auth-hint hidden" id="auth-hint"></div>
 
         <!-- primary buttons get rendered/wired in JS depending on mode -->
         <button class="login-btn hidden" id="pw-signin-btn">Sign In</button>
@@ -225,7 +294,7 @@
 
     <div id="login-msg" class="login-msg"></div>
     <p class="login-footer-note">
-      Don't have an account? Contact <a href="mailto:gfos44@gmail.com">Greg Foster</a> to receive an invitation.
+      Need help? Contact <a href="mailto:gfos44@gmail.com">Greg Foster</a>.
     </p>
   </div>
 </div>
@@ -334,50 +403,64 @@
     var emailInput = document.getElementById('login-email');
     var pwRow = document.getElementById('password-row');
     var pwInput = document.getElementById('login-password');
+    var pwConfirmInput = document.getElementById('login-password-confirm');
     var signinBtn = document.getElementById('pw-signin-btn');
     var signupBtn = document.getElementById('pw-signup-btn');
     var magicBtn = document.getElementById('magic-btn');
     var links = document.getElementById('email-links');
+    var modeList = document.getElementById('auth-mode-list');
+    var hint = document.getElementById('auth-hint');
 
-    var signupMode = false;
+    var authMode = (methods.magicLink || methods.emailOtp) ? 'link' : 'password';
 
     function setLinks() {
       links.innerHTML = '';
-      if (methods.password) {
-        var toggle = document.createElement('a');
-        toggle.textContent = signupMode ? 'Have an account? Sign in' : 'Create an account';
-        toggle.addEventListener('click', function () { signupMode = !signupMode; applyMode(); hideMsg(); });
-        links.appendChild(toggle);
-
-        if (!signupMode) {
-          links.appendChild(document.createTextNode('  ·  '));
-          var reset = document.createElement('a');
-          reset.textContent = 'Forgot password?';
-          reset.addEventListener('click', doReset);
-          links.appendChild(reset);
-        }
+      if (methods.password && authMode === 'password') {
+        var reset = document.createElement('a');
+        reset.textContent = 'Forgot password?';
+        reset.addEventListener('click', doReset);
+        links.appendChild(reset);
       }
     }
 
     function applyMode() {
-      if (methods.password) {
-        pwRow.classList.remove('hidden');
-        signinBtn.classList.toggle('hidden', signupMode);
-        signupBtn.classList.toggle('hidden', !signupMode);
-        // magic link sits below as a secondary option (sign-in mode only)
-        magicBtn.classList.toggle('hidden', !(methods.magicLink && !signupMode));
-        magicBtn.className = 'login-btn secondary' + ((methods.magicLink && !signupMode) ? '' : ' hidden');
-        pwInput.setAttribute('autocomplete', signupMode ? 'new-password' : 'current-password');
-      } else {
-        // magic-link / email-OTP only
-        pwRow.classList.add('hidden');
-        signinBtn.classList.add('hidden');
-        signupBtn.classList.add('hidden');
-        magicBtn.classList.toggle('hidden', !(methods.magicLink || methods.emailOtp));
-        magicBtn.className = 'login-btn' + ((methods.magicLink || methods.emailOtp) ? '' : ' hidden');
+      var linkAvailable = methods.magicLink || methods.emailOtp;
+      if (authMode === 'link' && !linkAvailable) authMode = methods.password ? 'password' : 'signup';
+      if (authMode === 'password' && !methods.password) authMode = linkAvailable ? 'link' : 'signup';
+      if (authMode === 'signup' && !methods.password && !linkAvailable) authMode = 'link';
+
+      var modeButtons = modeList.querySelectorAll('[data-auth-mode]');
+      for (var i = 0; i < modeButtons.length; i++) {
+        var mode = modeButtons[i].getAttribute('data-auth-mode');
+        var available = (mode === 'link' && linkAvailable) ||
+          (mode === 'password' && methods.password) ||
+          (mode === 'signup' && (methods.password || linkAvailable));
+        modeButtons[i].classList.toggle('hidden', !available);
+        modeButtons[i].classList.toggle('active', mode === authMode);
       }
+
+      var passwordSignup = methods.password && authMode === 'signup' && !linkAvailable;
+      pwRow.classList.toggle('hidden', !(methods.password && (authMode === 'password' || passwordSignup)));
+      pwConfirmInput.classList.toggle('hidden', !passwordSignup);
+      signinBtn.classList.toggle('hidden', !(methods.password && authMode === 'password'));
+      signupBtn.classList.toggle('hidden', authMode !== 'signup');
+      magicBtn.classList.toggle('hidden', !(linkAvailable && authMode === 'link'));
+      magicBtn.className = 'login-btn' + ((linkAvailable && authMode === 'link') ? '' : ' hidden');
+      pwInput.setAttribute('autocomplete', authMode === 'signup' ? 'new-password' : 'current-password');
+      hint.classList.toggle('hidden', authMode !== 'signup');
+      hint.textContent = linkAvailable
+        ? 'We will email a secure setup link. After you open it, you can come back later and set a password if you need one.'
+        : 'Create a password account. If email confirmation is enabled, Supabase will send a confirmation email.';
       setLinks();
     }
+
+    modeList.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-auth-mode]');
+      if (!btn) return;
+      authMode = btn.getAttribute('data-auth-mode');
+      applyMode();
+      hideMsg();
+    });
 
     // password sign-in
     signinBtn.addEventListener('click', function () {
@@ -399,16 +482,26 @@
       hideMsg();
       var email = emailInput.value.trim(), pw = pwInput.value;
       if (!validEmail(email)) return showMsg('Please enter a valid email address.', 'error');
-      if (!pw || pw.length < 8) return showMsg('Password must be at least 8 characters.', 'error');
       busy(signupBtn, 'Creating account…');
-      SomaAuth.signUp(email, pw, { emailRedirectTo: origin + '/login.html?confirmed=1' })
+      var signupPromise;
+      if (methods.magicLink || methods.emailOtp) {
+        signupPromise = SomaAuth.signInWithOtp(email, {
+          emailRedirectTo: origin + redirectTo,
+          shouldCreateUser: true
+        });
+      } else {
+        if (!pw || pw.length < 8) { unbusy(signupBtn); return showMsg('Password must be at least 8 characters.', 'error'); }
+        if (pw !== pwConfirmInput.value) { unbusy(signupBtn); return showMsg('Passwords do not match.', 'error'); }
+        signupPromise = SomaAuth.signUp(email, pw, { emailRedirectTo: origin + '/login.html?confirmed=1' });
+      }
+      signupPromise
         .then(function (res) {
           unbusy(signupBtn);
           if (res.error) return showMsg(res.error.message || 'Could not create account.', 'error');
           if (res.data && res.data.session) {
             showMsg('Account created! Signing you in…', 'success'); // confirmations off
           } else {
-            showMsg('Account created. Check your email to confirm, then sign in.', 'success');
+            showMsg('Check your email - your secure account setup link is on its way.', 'success');
           }
         })
         .catch(function (err) { unbusy(signupBtn); showMsg(err.message || 'Could not create account.', 'error'); });
@@ -434,6 +527,7 @@
       hideMsg();
       var email = emailInput.value.trim();
       if (!validEmail(email)) return showMsg('Enter your email above, then tap “Forgot password?” again.', 'error');
+      showMsg('Sending password-reset email...', 'info');
       SomaAuth.resetPasswordForEmail(email, origin + '/login.html?recovery=1')
         .then(function (res) {
           if (res.error) return showMsg(res.error.message || 'Could not send reset email.', 'error');
