@@ -260,7 +260,7 @@
             <span><strong>Sign in with a password</strong><span>Use this only if you already set a password.</span></span>
           </button>
           <button type="button" class="auth-mode" data-auth-mode="signup">
-            <span><strong>Create new access</strong><span>Send a setup link to your email.</span></span>
+            <span><strong>Create new access</strong><span>Choose a password, then confirm your email.</span></span>
           </button>
         </div>
         <input type="email" id="login-email" class="login-input" placeholder="your@email.com" autocomplete="email" />
@@ -439,7 +439,7 @@
         modeButtons[i].classList.toggle('active', mode === authMode);
       }
 
-      var passwordSignup = methods.password && authMode === 'signup' && !linkAvailable;
+      var passwordSignup = methods.password && authMode === 'signup';
       pwRow.classList.toggle('hidden', !(methods.password && (authMode === 'password' || passwordSignup)));
       pwConfirmInput.classList.toggle('hidden', !passwordSignup);
       signinBtn.classList.toggle('hidden', !(methods.password && authMode === 'password'));
@@ -449,7 +449,7 @@
       pwInput.setAttribute('autocomplete', authMode === 'signup' ? 'new-password' : 'current-password');
       hint.classList.toggle('hidden', authMode !== 'signup');
       hint.textContent = linkAvailable
-        ? 'We will email a secure setup link. After you open it, you can come back later and set a password if you need one.'
+        ? 'Choose a password now. Supabase will email a confirmation link before the account can be used.'
         : 'Create a password account. If email confirmation is enabled, Supabase will send a confirmation email.';
       setLinks();
     }
@@ -482,26 +482,18 @@
       hideMsg();
       var email = emailInput.value.trim(), pw = pwInput.value;
       if (!validEmail(email)) return showMsg('Please enter a valid email address.', 'error');
+      if (!methods.password) return showMsg('Password signup is not enabled for this site.', 'error');
+      if (!pw || pw.length < 8) return showMsg('Password must be at least 8 characters.', 'error');
+      if (pw !== pwConfirmInput.value) return showMsg('Passwords do not match.', 'error');
       busy(signupBtn, 'Creating account…');
-      var signupPromise;
-      if (methods.magicLink || methods.emailOtp) {
-        signupPromise = SomaAuth.signInWithOtp(email, {
-          emailRedirectTo: origin + redirectTo,
-          shouldCreateUser: true
-        });
-      } else {
-        if (!pw || pw.length < 8) { unbusy(signupBtn); return showMsg('Password must be at least 8 characters.', 'error'); }
-        if (pw !== pwConfirmInput.value) { unbusy(signupBtn); return showMsg('Passwords do not match.', 'error'); }
-        signupPromise = SomaAuth.signUp(email, pw, { emailRedirectTo: origin + '/login.html?confirmed=1' });
-      }
-      signupPromise
+      SomaAuth.signUp(email, pw, { emailRedirectTo: origin + '/login.html?confirmed=1' })
         .then(function (res) {
           unbusy(signupBtn);
           if (res.error) return showMsg(res.error.message || 'Could not create account.', 'error');
           if (res.data && res.data.session) {
             showMsg('Account created! Signing you in…', 'success'); // confirmations off
           } else {
-            showMsg('Check your email - your secure account setup link is on its way.', 'success');
+            showMsg('Account created. Check your email to confirm it, then sign in with your password.', 'success');
           }
         })
         .catch(function (err) { unbusy(signupBtn); showMsg(err.message || 'Could not create account.', 'error'); });

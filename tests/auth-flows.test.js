@@ -113,25 +113,46 @@ describe('login.html auth flows', () => {
     dom.window.close();
   });
 
-  test('create new access sends an email setup link and creates a user when needed', async () => {
+  test('create new access asks for repeated password and sends confirmation email', async () => {
+    const { dom, calls } = await loadLogin();
+    const doc = dom.window.document;
+
+    click(doc, '[data-auth-mode="signup"]');
+    assert.equal(doc.getElementById('password-row').classList.contains('hidden'), false);
+    assert.equal(doc.getElementById('login-password-confirm').classList.contains('hidden'), false);
+
+    doc.getElementById('login-email').value = 'new.member@example.com';
+    doc.getElementById('login-password').value = 'long-enough';
+    doc.getElementById('login-password-confirm').value = 'long-enough';
+    click(doc, '#pw-signup-btn');
+    await tick();
+
+    assert.deepEqual(byFn(calls, 'signUp'), [{
+      fn: 'signUp',
+      email: 'new.member@example.com',
+      password: 'long-enough',
+      opts: {
+        emailRedirectTo: 'https://legends-membership.netlify.app/login.html?confirmed=1',
+      },
+    }]);
+    assert.equal(byFn(calls, 'signInWithOtp').length, 0);
+    assert.match(doc.getElementById('login-msg').textContent, /confirm it/i);
+    dom.window.close();
+  });
+
+  test('create new access requires repeated password to match', async () => {
     const { dom, calls } = await loadLogin();
     const doc = dom.window.document;
 
     click(doc, '[data-auth-mode="signup"]');
     doc.getElementById('login-email').value = 'new.member@example.com';
+    doc.getElementById('login-password').value = 'long-enough';
+    doc.getElementById('login-password-confirm').value = 'different';
     click(doc, '#pw-signup-btn');
     await tick();
 
-    assert.deepEqual(byFn(calls, 'signInWithOtp'), [{
-      fn: 'signInWithOtp',
-      email: 'new.member@example.com',
-      opts: {
-        emailRedirectTo: 'https://legends-membership.netlify.app/members.html',
-        shouldCreateUser: true,
-      },
-    }]);
     assert.equal(byFn(calls, 'signUp').length, 0);
-    assert.match(doc.getElementById('login-msg').textContent, /setup link/i);
+    assert.match(doc.getElementById('login-msg').textContent, /passwords do not match/i);
     dom.window.close();
   });
 
@@ -175,7 +196,7 @@ describe('login.html auth flows', () => {
     dom.window.close();
   });
 
-  test('password-only configuration still uses Supabase password signup', async () => {
+  test('password-only configuration also uses Supabase password signup', async () => {
     const { dom, calls } = await loadLogin({
       methods: { magicLink: false, emailOtp: false, password: true },
     });
