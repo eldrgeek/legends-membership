@@ -18,6 +18,6 @@ window.SOMA_AUTH_CONFIG = {
     emailOtp:  false,                // 6-digit emailed code (needs {{ .Token }} template)
     password:  true,                 // classic email + password (sign-up + reset)
     phone:     false,                // SMS one-time code — re-enable AFTER an SMS provider is configured in Supabase
-    oauth:     []                    // add 'google' (then 'apple','facebook','azure', etc.) AFTER each is set up in Supabase
+    oauth:     ['google']            // add more providers ('apple','facebook','azure', etc.) AFTER each is set up in Supabase
   }
 };

@@ -8,6 +8,7 @@ const { JSDOM } = require('jsdom');
 
 const ROOT = path.join(__dirname, '..');
 const LOGIN_HTML = fs.readFileSync(path.join(ROOT, 'login.html'), 'utf8');
+const AUTH_CONFIG_JS = fs.readFileSync(path.join(ROOT, 'js/soma-auth-config.js'), 'utf8');
 
 function tick() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -94,6 +95,18 @@ function byFn(calls, fn) {
 }
 
 describe('login.html auth flows', () => {
+  test('site auth config enables Google OAuth', () => {
+    const dom = new JSDOM('', {
+      runScripts: 'dangerously',
+      beforeParse(window) {
+        window.eval(AUTH_CONFIG_JS);
+      },
+    });
+
+    assert.deepEqual(JSON.parse(JSON.stringify(dom.window.SOMA_AUTH_CONFIG.methods.oauth)), ['google']);
+    dom.window.close();
+  });
+
   test('default secure-link flow sends the existing magic login email', async () => {
     const { dom, calls } = await loadLogin();
     const doc = dom.window.document;
@@ -110,6 +123,28 @@ describe('login.html auth flows', () => {
       },
     }]);
     assert.match(doc.getElementById('login-msg').textContent, /sign-in link/i);
+    dom.window.close();
+  });
+
+  test('Google sign-in button starts Supabase OAuth with members redirect', async () => {
+    const { dom, calls } = await loadLogin({
+      methods: { oauth: ['google'] },
+    });
+    const doc = dom.window.document;
+
+    const googleBtn = Array.from(doc.querySelectorAll('.oauth-btn'))
+      .find((btn) => /continue with google/i.test(btn.textContent));
+    assert.ok(googleBtn, 'Expected Continue with Google button');
+    googleBtn.click();
+    await tick();
+
+    assert.deepEqual(byFn(calls, 'signInWithOAuth'), [{
+      fn: 'signInWithOAuth',
+      provider: 'google',
+      opts: {
+        redirectTo: 'https://legends-membership.netlify.app/members.html',
+      },
+    }]);
     dom.window.close();
   });
 
