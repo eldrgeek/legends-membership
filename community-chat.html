@@ -8,9 +8,23 @@
   <link rel="apple-touch-icon" href="/favicon-192.png">
   <title>Community Chat | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@chatscope/chat-ui-kit-styles@1/dist/default/styles.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/js/soma-auth-config.js"></script>
   <script src="/js/soma-auth.js"></script>
+  <!-- Build-free ESM: bare specifiers below are resolved to esm.sh by this map.
+       external=react,react-dom keeps a single React instance for chatscope. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react-dom": "https://esm.sh/react-dom@18.3.1?external=react",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?external=react",
+      "htm": "https://esm.sh/htm@3.1.1",
+      "@chatscope/chat-ui-kit-react": "https://esm.sh/@chatscope/chat-ui-kit-react@2?external=react,react-dom"
+    }
+  }
+  </script>
 </head>
 <body>
 <nav>
@@ -42,24 +56,15 @@
     <div class="section-label">Member Space</div>
     <h2 class="section-title">Chat Room</h2>
     <div class="gold-line"></div>
-    <p class="section-lead">A signed-in conversation room for registered Legends users.</p>
-    <div class="community-shell chat-shell">
-      <div id="chat-status" class="community-status">Connecting...</div>
-      <div id="chat-messages" class="chat-messages" aria-live="polite">
-        <div class="empty-state">Loading messages...</div>
-      </div>
-      <form id="chat-form" class="chat-form">
-        <label for="chat-body">Message</label>
-        <div class="chat-compose">
-          <textarea id="chat-body" name="body" rows="3" maxlength="2000" placeholder="Write a message to the community"></textarea>
-          <button id="chat-send" class="btn btn-navy" type="submit">Send</button>
-        </div>
-      </form>
+    <p class="section-lead">A signed-in conversation space for registered Legends users — multiple rooms, presence, and typing indicators.</p>
+    <div id="chat-app" class="community-shell chat-shell">
+      <div class="community-status">Loading…</div>
     </div>
   </div>
 </section>
-<script src="/js/soma-community-chat.js"></script>
 <script>
+  // Nav-only auth bootstrap. The chat UI is a React island that subscribes to
+  // SomaAuth independently (js/legends-chat-app.js).
   SomaAuth.onAuthStateChange(function(event, session) {
     var user = session ? session.user : null;
     var authNav = document.getElementById('auth-nav');
@@ -73,12 +78,10 @@
       if (authNav) authNav.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
     }
-    if (window.SomaCommunityChat && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
-      window.SomaCommunityChat.initWithSession(session);
-    }
   });
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
 </script>
+<script type="module" src="/js/legends-chat-app.js"></script>
 <script src="js/nav-dropdown.js"></script>
 <script src="/js/community-nav.js" defer></script>
 </body>

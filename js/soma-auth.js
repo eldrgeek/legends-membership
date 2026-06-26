@@ -87,6 +87,169 @@
     };
   }
 
+  // ───────────────────────── Tab-aware identity storage ─────────────────────
+  // Problem: Supabase persists the session in localStorage, which is shared by
+  // every tab of the origin. Logging in as a different identity in one tab
+  // clobbers the others. This adapter implements the desired model:
+  //
+  //   • A new tab seeds its working copy (sessionStorage) from localStorage.
+  //   • Reads prefer sessionStorage (this tab's identity), then localStorage.
+  //   • Writes ALWAYS update sessionStorage (this tab).
+  //   • Writes ALSO persist to localStorage ONLY when there is no identity
+  //     conflict — i.e. this is the only live tab, or every other live tab
+  //     holds the SAME identity. When two tabs hold DIFFERENT identities,
+  //     writes are confined to sessionStorage and localStorage is left frozen.
+  //
+  // Tabs announce their current identity in a small localStorage registry with
+  // a heartbeat; stale entries time out so a closed tab stops counting.
+  //
+  // `env` is injectable for testing; in the browser it defaults to window.
+  function createTabAwareStorage(env) {
+    env = env || global;
+    var LS = env.localStorage;
+    var SS = env.sessionStorage;
+    if (!LS || !SS) return null; // no split storage available → use default
+
+    var TAB_ID_KEY = 'soma-tab-id';
+    var REGISTRY_KEY = 'soma-auth-tabs';
+    var HEARTBEAT_MS = 4000;
+    var TAB_TTL_MS = 12000;
+    var Clock = env.Date || Date;
+
+    function rnd() {
+      return (env.crypto && env.crypto.randomUUID)
+        ? env.crypto.randomUUID()
+        : String(Clock.now()) + '-' + Math.random().toString(16).slice(2);
+    }
+
+    var tabId = null;
+    try { tabId = SS.getItem(TAB_ID_KEY); } catch (e) {}
+    if (!tabId) { tabId = rnd(); try { SS.setItem(TAB_ID_KEY, tabId); } catch (e) {} }
+
+    var myIdentity = null; // current user id in THIS tab, or null when logged out
+    var seeded = {};       // key → seeded-from-localStorage-once flag
+
+    // The primary session token key looks like `sb-<ref>-auth-token` and may be
+    // chunked (`...-auth-token.0`). We must NOT treat the PKCE code-verifier
+    // key (`...-auth-token-code-verifier`) as the identity token.
+    function isAuthTokenKey(key) {
+      return /-auth-token(\.\d+)?$/.test(key);
+    }
+
+    function extractIdentity(value) {
+      if (!value) return null;
+      try {
+        var o = JSON.parse(value);
+        if (o && o.user && o.user.id) return o.user.id;
+        if (o && o.currentSession && o.currentSession.user && o.currentSession.user.id) {
+          return o.currentSession.user.id;
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function readRegistry() {
+      try { return JSON.parse(LS.getItem(REGISTRY_KEY)) || {}; } catch (e) { return {}; }
+    }
+    function writeRegistry(r) {
+      try { LS.setItem(REGISTRY_KEY, JSON.stringify(r)); } catch (e) {}
+    }
+    function prune(r) {
+      var now = Clock.now();
+      var out = {};
+      for (var k in r) {
+        if (r.hasOwnProperty(k) && r[k] && (now - r[k].ts) < TAB_TTL_MS) out[k] = r[k];
+      }
+      return out;
+    }
+    function touch() {
+      var r = prune(readRegistry());
+      r[tabId] = { identity: myIdentity, ts: Clock.now() };
+      writeRegistry(r);
+    }
+    function setMyIdentity(id) { myIdentity = id || null; touch(); }
+
+    // True when another LIVE tab holds a non-null identity different from ours.
+    function hasConflict() {
+      var r = prune(readRegistry());
+      for (var k in r) {
+        if (k === tabId) continue;
+        if (r[k] && r[k].identity && r[k].identity !== myIdentity) return true;
+      }
+      return false;
+    }
+
+    function seedKey(key) {
+      if (seeded[key]) return;
+      seeded[key] = true;
+      try {
+        if (SS.getItem(key) == null) {
+          var lv = LS.getItem(key);
+          if (lv != null) SS.setItem(key, lv);
+        }
+      } catch (e) {}
+      if (isAuthTokenKey(key) && myIdentity == null) {
+        var cur = null;
+        try { cur = SS.getItem(key); } catch (e) {}
+        if (cur != null) setMyIdentity(extractIdentity(cur));
+      }
+    }
+
+    // Heartbeat + cleanup + cross-tab token-refresh propagation.
+    touch();
+    try { env.setInterval(touch, HEARTBEAT_MS); } catch (e) {}
+    try {
+      env.addEventListener('beforeunload', function () {
+        var r = prune(readRegistry());
+        delete r[tabId];
+        writeRegistry(r);
+      });
+    } catch (e) {}
+    try {
+      env.addEventListener('storage', function (e) {
+        if (!e || e.key == null || !isAuthTokenKey(e.key)) return;
+        if (e.newValue == null) return;
+        var incoming = extractIdentity(e.newValue);
+        // Adopt a refreshed token only when it belongs to OUR identity, or when
+        // this tab is logged out and there is no conflict (lets a fresh tab pick
+        // up the primary identity another tab just established).
+        if (incoming && myIdentity && incoming === myIdentity) {
+          try { SS.setItem(e.key, e.newValue); } catch (_) {}
+        } else if (myIdentity == null && !hasConflict()) {
+          try { SS.setItem(e.key, e.newValue); } catch (_) {}
+          setMyIdentity(incoming);
+        }
+      });
+    } catch (e) {}
+
+    return {
+      getItem: function (key) {
+        seedKey(key);
+        var v = null;
+        try { v = SS.getItem(key); } catch (e) {}
+        if (v != null) return v;
+        try { return LS.getItem(key); } catch (e) { return null; }
+      },
+      setItem: function (key, value) {
+        try { SS.setItem(key, value); } catch (e) {}
+        if (isAuthTokenKey(key)) setMyIdentity(extractIdentity(value));
+        if (!hasConflict()) {
+          try { LS.setItem(key, value); } catch (e) {}
+        }
+      },
+      removeItem: function (key) {
+        try { SS.removeItem(key); } catch (e) {}
+        if (isAuthTokenKey(key)) setMyIdentity(null);
+        if (!hasConflict()) {
+          try { LS.removeItem(key); } catch (e) {}
+        }
+      }
+    };
+  }
+
+  // Exposed for unit testing (env-injectable) and advanced callers.
+  global.SomaTabIdentity = { createTabAwareStorage: createTabAwareStorage };
+
   var SomaAuth = {
     /**
      * Initialize the Supabase client. Call once per page after registering
@@ -111,16 +274,23 @@
         return SomaAuth;
       }
 
-      _client = lib.createClient(url, anonKey, {
-        auth: {
-          // OAuth + magic links land back on the page with the session in the
-          // URL; detectSessionInUrl (default true) consumes it automatically.
-          detectSessionInUrl: true,
-          persistSession: true,
-          autoRefreshToken: true,
-          flowType: 'pkce'
-        }
-      });
+      // Tab-aware storage: keeps each tab's identity isolated (see
+      // createTabAwareStorage above). Falls back to Supabase's default
+      // (localStorage) if split storage isn't available.
+      var tabStorage = null;
+      try { tabStorage = createTabAwareStorage(global); } catch (e) { tabStorage = null; }
+
+      var authOptions = {
+        // OAuth + magic links land back on the page with the session in the
+        // URL; detectSessionInUrl (default true) consumes it automatically.
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+        flowType: 'pkce'
+      };
+      if (tabStorage) authOptions.storage = tabStorage;
+
+      _client = lib.createClient(url, anonKey, { auth: authOptions });
       // Supabase v2: onAuthStateChange fires INITIAL_SESSION on next tick with
       // the persisted session (or null). All _handlers receive every event.
       _client.auth.onAuthStateChange(dispatch);
