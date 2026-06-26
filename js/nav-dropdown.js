@@ -3,9 +3,10 @@
     return window.innerWidth <= 700;
   }
 
-  function init() {
-    var dropdown = document.querySelector('.nav-dropdown');
-    var toggle = document.querySelector('.nav-dropdown-toggle');
+  function initOne(dropdown) {
+    if (!dropdown || dropdown._navDropdownReady) return;
+    dropdown._navDropdownReady = true;
+    var toggle = dropdown.querySelector('.nav-dropdown-toggle');
     if (!toggle || !dropdown) return;
 
     // Mobile: click-to-toggle (desktop uses CSS :hover)
@@ -48,6 +49,13 @@
       });
     }
   }
+
+  function init() {
+    var dropdowns = document.querySelectorAll('.nav-dropdown');
+    for (var i = 0; i < dropdowns.length; i++) initOne(dropdowns[i]);
+  }
+
+  window.LegendsNavDropdown = { init: init, initOne: initOne };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

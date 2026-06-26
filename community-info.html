@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="/favicon-192.png">
+  <title>Community Information | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+      <span class="brand-home">Home Page</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li class="nav-dropdown">
+        <a href="members.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Committee &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="members.html" role="menuitem">Committee Members</a></li>
+          <li style="padding: 4px 16px 2px; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.3); cursor: default; pointer-events: none;">Subcommittees</li>
+          <li><a href="subcommittee-chapter-presidents.html" role="menuitem">Chapter President Communication</a></li>
+          <li><a href="subcommittee-membership.html" role="menuitem">New Membership &amp; Retention</a></li>
+          <li><a href="subcommittee-scholarships.html" role="menuitem">Scholarships &amp; Grants</a></li>
+          <li><a href="transition-services.html" role="menuitem">Legends Life</a></li>
+        </ul>
+      </li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Resources</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
+          <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
+        </ul>
+      </li>
+      <li><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="ask-bill-nav"><a href="https://bill-talk.netlify.app" onclick="if(window.somaGuide){event.preventDefault(); window.somaGuide.open();}">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Sign in or sign up</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="hero hero-small">
+  <div class="hero-eyebrow">Community</div>
+  <h1>Community <span>Information</span></h1>
+  <p>Member updates, shared context, and community links for signed-in Legends users.</p>
+</div>
+
+<section>
+  <div class="section-inner">
+    <div class="section-label">Member Area</div>
+    <h2 class="section-title">Community Home</h2>
+    <div class="gold-line"></div>
+    <p class="section-lead">This area is visible after sign-in. Registered users can see community information; committee and admin status can be layered on top of the same account.</p>
+    <div class="cards-grid">
+      <div class="info-card">
+        <h3>Information</h3>
+        <p>Shared announcements and links for registered users.</p>
+      </div>
+      <div class="info-card">
+        <h3>Chat</h3>
+        <p>A real-time community chat surface is ready to be built behind this menu.</p>
+      </div>
+      <div class="info-card">
+        <h3>Video Meet</h3>
+        <p>LiveKit on the VPS is the likely foundation for member video rooms.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
+  <div class="footer-copy">© 2025 Legends of Basketball — Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script src="js/legends-knowledge.js"></script>
+<script src="js/legends-guide-config.js"></script>
+<script type="module" src="https://soma-guide.netlify.app/soma-guide.js"></script>
+<script>
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  SomaAuth.onAuthStateChange(function(event, session) {
+    var user = session ? session.user : null;
+    var authNav = document.getElementById('auth-nav');
+    var loginNav = document.getElementById('login-nav');
+    var name = document.getElementById('auth-name');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (authNav) authNav.style.display = 'flex';
+      if (loginNav) loginNav.style.display = 'none';
+      if (name) name.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf((user.email || '').toLowerCase()) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var footerAdmin = document.getElementById('footer-admin-link');
+        if (footerAdmin) footerAdmin.style.display = admin ? 'block' : 'none';
+      });
+    } else {
+      if (authNav) authNav.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+</script>
+<script src="js/nav-dropdown.js"></script>
+<script src="/js/community-nav.js" defer></script>
+<script src="/js/admin-review-nav.js" defer></script>
+</body>
+</html>
