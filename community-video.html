@@ -9,6 +9,7 @@
   <title>Community Video Meet | Legends of Basketball</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
   <script src="/js/soma-auth-config.js"></script>
   <script src="/js/soma-auth.js"></script>
 </head>
@@ -39,12 +40,25 @@
 </div>
 <section>
   <div class="section-inner">
-    <div class="section-label">Planning Surface</div>
+    <div class="section-label">Member Space</div>
     <h2 class="section-title">Video Room</h2>
     <div class="gold-line"></div>
-    <p class="section-lead">This page is the target for WebRTC video meetings. The VPS notes show LiveKit is already running at <code>wss://vpsmikewolf.duckdns.org</code>, so the next implementation step is a token endpoint plus LiveKit client UI.</p>
+    <p class="section-lead">A WebRTC meeting room for registered Legends users, powered by the existing LiveKit service on the VPS.</p>
+    <div class="community-shell video-shell">
+      <form id="video-form" class="video-form">
+        <label for="video-room-name">Room</label>
+        <input id="video-room-name" name="room" value="legends-community" autocomplete="off">
+        <button id="video-join" class="btn btn-navy" type="submit">Join</button>
+        <button id="video-leave" class="btn btn-outline-light" type="button" disabled>Leave</button>
+      </form>
+      <div id="video-status" class="community-status">Preparing room...</div>
+      <div id="video-grid" class="video-grid">
+        <div class="empty-state">Join the room to start video.</div>
+      </div>
+    </div>
   </div>
 </section>
+<script src="/js/community-video.js"></script>
 <script>
   SomaAuth.onAuthStateChange(function(event, session) {
     var user = session ? session.user : null;
@@ -58,6 +72,9 @@
     } else {
       if (authNav) authNav.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
+    }
+    if (window.LegendsCommunityVideo && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+      window.LegendsCommunityVideo.initWithSession(session);
     }
   });
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);

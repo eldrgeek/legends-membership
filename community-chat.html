@@ -39,12 +39,26 @@
 </div>
 <section>
   <div class="section-inner">
-    <div class="section-label">Planning Surface</div>
+    <div class="section-label">Member Space</div>
     <h2 class="section-title">Chat Room</h2>
     <div class="gold-line"></div>
-    <p class="section-lead">This page is the target for the Community chat experience. The recommended implementation path is a small Supabase Realtime chat built directly into this site, sharing the existing Supabase Auth session.</p>
+    <p class="section-lead">A signed-in conversation room for registered Legends users.</p>
+    <div class="community-shell chat-shell">
+      <div id="chat-status" class="community-status">Connecting...</div>
+      <div id="chat-messages" class="chat-messages" aria-live="polite">
+        <div class="empty-state">Loading messages...</div>
+      </div>
+      <form id="chat-form" class="chat-form">
+        <label for="chat-body">Message</label>
+        <div class="chat-compose">
+          <textarea id="chat-body" name="body" rows="3" maxlength="2000" placeholder="Write a message to the community"></textarea>
+          <button id="chat-send" class="btn btn-navy" type="submit">Send</button>
+        </div>
+      </form>
+    </div>
   </div>
 </section>
+<script src="/js/community-chat.js"></script>
 <script>
   SomaAuth.onAuthStateChange(function(event, session) {
     var user = session ? session.user : null;
@@ -58,6 +72,9 @@
     } else {
       if (authNav) authNav.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
+    }
+    if (window.LegendsCommunityChat && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+      window.LegendsCommunityChat.initWithSession(session);
     }
   });
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);

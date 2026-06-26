@@ -259,6 +259,10 @@
       return _client.auth.getSession();
     },
 
+    getClient: function () {
+      return _client;
+    },
+
     getUser: function () {
       if (!_client) return Promise.resolve({ data: { user: null }, error: null });
       return _client.auth.getUser();
