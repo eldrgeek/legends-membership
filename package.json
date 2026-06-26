@@ -6,6 +6,7 @@
     "test": "node --test tests/*.test.js",
     "test:costume": "node --test tests/bill-costume.test.js",
     "test:conversations": "node --test tests/bill-conversations.test.js",
+    "test:production-smoke": "node tests/live-production-smoke.js",
     "test:e2e": "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY node tools/regression-test.mjs",
     "verify:deploy": "node tools/verify-deploy.mjs"
   },

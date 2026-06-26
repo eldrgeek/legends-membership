@@ -151,11 +151,43 @@ nav {
 
 @media (max-width: 700px) {
   .nav-toggle { display: block; }
+  .nav-inner {
+    padding: 0 16px;
+    height: 64px;
+  }
+  .nav-brand {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(201,168,76,0.45);
+    border-radius: 8px;
+    background: rgba(201,168,76,0.08);
+  }
+  .nav-brand .brand-main,
+  .nav-brand .brand-sub,
+  .nav-brand .brand-home {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .nav-brand::before {
+    content: "";
+    width: 17px;
+    height: 15px;
+    display: block;
+    background: var(--gold);
+    clip-path: polygon(50% 0, 100% 42%, 86% 42%, 86% 100%, 60% 100%, 60% 66%, 40% 66%, 40% 100%, 14% 100%, 14% 42%, 0 42%);
+  }
   .nav-links {
     display: none;
     flex-direction: column;
     position: absolute;
-    top: 72px; left: 0; right: 0;
+    top: 64px; left: 0; right: 0;
     background: var(--navy);
     border-top: 1px solid rgba(192,192,192,0.25);
     padding: 12px 0 16px;
@@ -251,6 +283,14 @@ nav {
   padding: 100px 24px 48px;
 }
 .hero-small h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); }
+
+@media (max-width: 700px) {
+  .hero h1 {
+    font-size: 2rem;
+    line-height: 1.18;
+    overflow-wrap: normal;
+  }
+}
 
 /* ── SECTIONS ────────────────────────────────────────── */
 section { padding: 80px 24px; }
