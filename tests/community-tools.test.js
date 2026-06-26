@@ -15,6 +15,10 @@ const FUNCTION_PATH = path.join(ROOT, 'netlify/functions/livekit-token.js');
 const ORIGINAL_ENV = { ...process.env };
 const ORIGINAL_FETCH = global.fetch;
 
+function decodePayload(token) {
+  return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
+}
+
 function loadLiveKitFunction(env = {}) {
   process.env = { ...ORIGINAL_ENV, ...env };
   delete require.cache[require.resolve(FUNCTION_PATH)];
@@ -92,13 +96,52 @@ describe('Community chat and video wiring', () => {
     const result = await handler({
       httpMethod: 'POST',
       headers: { authorization: 'Bearer access-token' },
-      body: JSON.stringify({ room: 'Legends Community!' }),
+      body: JSON.stringify({ room: 'Legends Community!', connectionId: 'tab-one' }),
     });
 
     assert.equal(result.statusCode, 200);
     const body = JSON.parse(result.body);
+    const payload = decodePayload(body.token);
     assert.equal(body.url, 'wss://video.example.test');
     assert.equal(body.room, 'legends-community');
+    assert.equal(body.identity, 'user-123-tab-one');
+    assert.equal(payload.sub, 'user-123-tab-one');
+    assert.equal(payload.name, 'Member Example');
+    assert.equal(JSON.parse(payload.metadata).connectionId, 'tab-one');
     assert.equal(body.token.split('.').length, 3);
+  });
+
+  test('LiveKit token endpoint gives two tabs for the same user distinct participant identities', async () => {
+    global.fetch = async () => ({
+      ok: true,
+      json: async () => ({
+        id: 'user-123',
+        email: 'member@example.com',
+        user_metadata: { full_name: 'Member Example' },
+      }),
+    });
+    const handler = loadLiveKitFunction({
+      SUPABASE_SERVICE_ROLE_KEY: 'service-role',
+      LIVEKIT_API_KEY: 'api-key',
+      LIVEKIT_API_SECRET: 'api-secret',
+      LIVEKIT_URL: 'wss://video.example.test',
+    });
+
+    const first = await handler({
+      httpMethod: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: JSON.stringify({ room: 'Legends Community!', connectionId: 'first-tab' }),
+    });
+    const second = await handler({
+      httpMethod: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: JSON.stringify({ room: 'Legends Community!', connectionId: 'second-tab' }),
+    });
+
+    const firstBody = JSON.parse(first.body);
+    const secondBody = JSON.parse(second.body);
+    assert.notEqual(firstBody.identity, secondBody.identity);
+    assert.equal(decodePayload(firstBody.token).sub, 'user-123-first-tab');
+    assert.equal(decodePayload(secondBody.token).sub, 'user-123-second-tab');
   });
 });

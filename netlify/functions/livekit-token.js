@@ -46,6 +46,14 @@ function cleanRoomName(value) {
     .slice(0, 64) || 'legends-community';
 }
 
+function cleanConnectionId(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
+}
+
 async function getUser(accessToken) {
   const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: {
@@ -82,12 +90,15 @@ exports.handler = async function handler(event) {
   }
 
   const room = cleanRoomName(body.room);
+  const connectionId = cleanConnectionId(body.connectionId) || crypto.randomBytes(9).toString('base64url').toLowerCase();
   const now = Math.floor(Date.now() / 1000);
-  const identity = user.email || user.id;
+  const displayName = user.user_metadata && user.user_metadata.full_name ? user.user_metadata.full_name : (user.email || user.id);
+  const identity = `${user.id}-${connectionId}`;
   const token = signJwt({
     iss: LIVEKIT_API_KEY,
     sub: identity,
-    name: user.user_metadata && user.user_metadata.full_name ? user.user_metadata.full_name : identity,
+    name: displayName,
+    metadata: JSON.stringify({ userId: user.id, email: user.email || '', connectionId }),
     nbf: now - 10,
     exp: now + (60 * 60),
     video: {
@@ -99,5 +110,5 @@ exports.handler = async function handler(event) {
     },
   }, LIVEKIT_API_SECRET);
 
-  return json(200, { url: LIVEKIT_URL, token, room });
+  return json(200, { url: LIVEKIT_URL, token, room, identity, name: displayName });
 };

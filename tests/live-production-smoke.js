@@ -134,12 +134,20 @@ function connectSignal(url, token) {
     const session = await signIn(email, password);
     const message = await insertChat(session, 'production smoke test');
     const livekit = await getLiveKitToken(session);
-    await connectSignal(livekit.url, livekit.token);
+    const secondLivekit = await getLiveKitToken(session);
+    if (livekit.identity && secondLivekit.identity && livekit.identity === secondLivekit.identity) {
+      throw new Error('LiveKit returned the same participant identity for two joins from one signed-in user.');
+    }
+    await Promise.all([
+      connectSignal(livekit.url, livekit.token),
+      connectSignal(secondLivekit.url, secondLivekit.token),
+    ]);
     console.log(JSON.stringify({
       ok: true,
       user: session.user.email,
       chatMessageId: message.id,
       livekitRoom: livekit.room,
+      twoParticipantIdentities: Boolean(livekit.identity && secondLivekit.identity && livekit.identity !== secondLivekit.identity),
     }, null, 2));
   } finally {
     if (user && user.id) await deleteUser(user.id).catch(() => {});
