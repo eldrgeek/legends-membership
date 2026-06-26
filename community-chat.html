@@ -58,7 +58,7 @@
     </div>
   </div>
 </section>
-<script src="/js/community-chat.js"></script>
+<script src="/js/soma-community-chat.js"></script>
 <script>
   SomaAuth.onAuthStateChange(function(event, session) {
     var user = session ? session.user : null;
@@ -73,8 +73,8 @@
       if (authNav) authNav.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
     }
-    if (window.LegendsCommunityChat && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
-      window.LegendsCommunityChat.initWithSession(session);
+    if (window.SomaCommunityChat && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+      window.SomaCommunityChat.initWithSession(session);
     }
   });
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);

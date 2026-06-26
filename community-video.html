@@ -58,7 +58,7 @@
     </div>
   </div>
 </section>
-<script src="/js/community-video.js"></script>
+<script src="/js/soma-community-video.js"></script>
 <script>
   SomaAuth.onAuthStateChange(function(event, session) {
     var user = session ? session.user : null;
@@ -73,8 +73,8 @@
       if (authNav) authNav.style.display = 'none';
       if (loginNav) loginNav.style.display = '';
     }
-    if (window.LegendsCommunityVideo && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
-      window.LegendsCommunityVideo.initWithSession(session);
+    if (window.SomaCommunityVideo && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
+      window.SomaCommunityVideo.initWithSession(session);
     }
   });
   SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);

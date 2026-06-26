@@ -38,6 +38,16 @@
     if (leave) leave.disabled = !connected;
   }
 
+  function audioSink() {
+    var sink = byId('video-audio-sink');
+    if (sink) return sink;
+    sink = document.createElement('div');
+    sink.id = 'video-audio-sink';
+    sink.hidden = true;
+    document.body.appendChild(sink);
+    return sink;
+  }
+
   function participantLabel(participant) {
     if (!participant) return 'You';
     return participant.name || participant.identity || 'Member';
@@ -51,6 +61,12 @@
 
   function attachTrack(track, participant) {
     if (!track || !track.attach) return;
+    if (track.kind && track.kind !== 'video') {
+      var audio = track.attach();
+      audio.autoplay = true;
+      audioSink().appendChild(audio);
+      return;
+    }
     var grid = byId('video-grid');
     if (!grid) return;
     var id = tileId(track, participant);
@@ -73,6 +89,12 @@
 
   function detachTrack(track, participant) {
     if (!track) return;
+    if (track.kind && track.kind !== 'video') {
+      if (track.detach) {
+        track.detach().forEach(function (el) { el.remove(); });
+      }
+      return;
+    }
     var grid = byId('video-grid');
     if (!grid) return;
     var tile = grid.querySelector('[data-track-id="' + tileId(track, participant) + '"]');
@@ -174,7 +196,10 @@
     setStatus('Ready to join.', 'success');
   }
 
-  global.LegendsCommunityVideo = {
+  var api = {
     initWithSession: initWithSession
   };
+
+  global.SomaCommunityVideo = api;
+  global.LegendsCommunityVideo = api;
 })(window);

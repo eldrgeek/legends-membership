@@ -146,8 +146,11 @@
     }
   }
 
-  global.LegendsCommunityChat = {
+  var api = {
     initWithSession: initWithSession,
     _state: state
   };
+
+  global.SomaCommunityChat = api;
+  global.LegendsCommunityChat = api;
 })(window);

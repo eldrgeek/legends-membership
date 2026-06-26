@@ -8,6 +8,8 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const CHAT_HTML = fs.readFileSync(path.join(ROOT, 'community-chat.html'), 'utf8');
 const VIDEO_HTML = fs.readFileSync(path.join(ROOT, 'community-video.html'), 'utf8');
+const COMMUNITY_CHAT_JS = fs.readFileSync(path.join(ROOT, 'js/soma-community-chat.js'), 'utf8');
+const COMMUNITY_VIDEO_JS = fs.readFileSync(path.join(ROOT, 'js/soma-community-video.js'), 'utf8');
 const SOMA_AUTH_JS = fs.readFileSync(path.join(ROOT, 'js/soma-auth.js'), 'utf8');
 const MIGRATION_SQL = fs.readFileSync(path.join(ROOT, 'migrations/community_messages.sql'), 'utf8');
 const FUNCTION_PATH = path.join(ROOT, 'netlify/functions/livekit-token.js');
@@ -39,16 +41,26 @@ describe('Community chat and video wiring', () => {
   test('chat page is wired to the Supabase realtime chat client', () => {
     assert.match(CHAT_HTML, /id="chat-messages"/);
     assert.match(CHAT_HTML, /id="chat-form"/);
-    assert.match(CHAT_HTML, /\/js\/community-chat\.js/);
-    assert.match(CHAT_HTML, /LegendsCommunityChat\.initWithSession/);
+    assert.match(CHAT_HTML, /\/js\/soma-community-chat\.js/);
+    assert.match(CHAT_HTML, /SomaCommunityChat\.initWithSession/);
+    assert.match(COMMUNITY_CHAT_JS, /global\.SomaCommunityChat = api/);
+    assert.match(COMMUNITY_CHAT_JS, /global\.LegendsCommunityChat = api/);
   });
 
   test('video page is wired to LiveKit and the token-backed meeting UI', () => {
     assert.match(VIDEO_HTML, /livekit-client\/dist\/livekit-client\.umd\.min\.js/);
     assert.match(VIDEO_HTML, /id="video-room-name"/);
     assert.match(VIDEO_HTML, /id="video-grid"/);
-    assert.match(VIDEO_HTML, /\/js\/community-video\.js/);
-    assert.match(VIDEO_HTML, /LegendsCommunityVideo\.initWithSession/);
+    assert.match(VIDEO_HTML, /\/js\/soma-community-video\.js/);
+    assert.match(VIDEO_HTML, /SomaCommunityVideo\.initWithSession/);
+    assert.match(COMMUNITY_VIDEO_JS, /global\.SomaCommunityVideo = api/);
+    assert.match(COMMUNITY_VIDEO_JS, /global\.LegendsCommunityVideo = api/);
+  });
+
+  test('video renderer does not create visible participant tiles for audio-only tracks', () => {
+    assert.match(COMMUNITY_VIDEO_JS, /track\.kind && track\.kind !== 'video'/);
+    assert.match(COMMUNITY_VIDEO_JS, /video-audio-sink/);
+    assert.match(COMMUNITY_VIDEO_JS, /audioSink\(\)\.appendChild\(audio\)/);
   });
 
   test('SomaAuth exposes the shared Supabase client for authenticated community tools', () => {
