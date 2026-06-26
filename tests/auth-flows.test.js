@@ -153,6 +153,9 @@ describe('login.html auth flows', () => {
     const doc = dom.window.document;
 
     click(doc, '[data-auth-mode="signup"]');
+    assert.equal(doc.getElementById('auth-mode-list').classList.contains('mode-selected'), true);
+    assert.equal(doc.querySelector('[data-auth-mode="link"]').offsetParent, null);
+    assert.equal(doc.querySelector('[data-auth-mode="password"]').offsetParent, null);
     assert.equal(doc.getElementById('password-row').classList.contains('hidden'), false);
     assert.equal(doc.getElementById('login-password-confirm').classList.contains('hidden'), false);
 
@@ -172,6 +175,23 @@ describe('login.html auth flows', () => {
     }]);
     assert.equal(byFn(calls, 'signInWithOtp').length, 0);
     assert.match(doc.getElementById('login-msg').textContent, /confirm it/i);
+    dom.window.close();
+  });
+
+  test('chosen auth mode can return to the full choice list', async () => {
+    const { dom } = await loadLogin();
+    const doc = dom.window.document;
+
+    click(doc, '[data-auth-mode="signup"]');
+    assert.equal(doc.getElementById('mode-back-row').classList.contains('hidden'), false);
+    assert.equal(doc.getElementById('auth-mode-list').classList.contains('mode-selected'), true);
+
+    click(doc, '#mode-back');
+    assert.equal(doc.getElementById('mode-back-row').classList.contains('hidden'), true);
+    assert.equal(doc.getElementById('auth-mode-list').classList.contains('mode-selected'), false);
+    assert.equal(doc.querySelector('[data-auth-mode="link"]').classList.contains('hidden'), false);
+    assert.equal(doc.querySelector('[data-auth-mode="password"]').classList.contains('hidden'), false);
+    assert.equal(doc.querySelector('[data-auth-mode="signup"]').classList.contains('hidden'), false);
     dom.window.close();
   });
 

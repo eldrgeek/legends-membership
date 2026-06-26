@@ -204,6 +204,12 @@
       font-size: 1.05rem;
       line-height: 1;
     }
+    .auth-mode-list.mode-selected .auth-mode:not(.active) { display: none; }
+    .auth-mode-list.mode-selected .auth-mode.active {
+      cursor: default;
+      box-shadow: none;
+    }
+    .auth-mode-list.mode-selected .auth-mode.active::after { content: ''; }
     .auth-hint {
       font-size: 0.8rem;
       line-height: 1.5;
@@ -278,6 +284,7 @@
         <button class="login-btn hidden" id="magic-btn">Email Me a Sign-In Link</button>
 
         <div class="link-row" id="email-links"></div>
+        <div class="link-row hidden" id="mode-back-row"><a id="mode-back">Choose another way</a></div>
       </div>
 
       <!-- ───────────── Phone pane ───────────── -->
@@ -408,10 +415,13 @@
     var signupBtn = document.getElementById('pw-signup-btn');
     var magicBtn = document.getElementById('magic-btn');
     var links = document.getElementById('email-links');
+    var modeBackRow = document.getElementById('mode-back-row');
+    var modeBack = document.getElementById('mode-back');
     var modeList = document.getElementById('auth-mode-list');
     var hint = document.getElementById('auth-hint');
 
     var authMode = (methods.magicLink || methods.emailOtp) ? 'link' : 'password';
+    var modeChosen = false;
 
     function setLinks() {
       links.innerHTML = '';
@@ -438,6 +448,8 @@
         modeButtons[i].classList.toggle('hidden', !available);
         modeButtons[i].classList.toggle('active', mode === authMode);
       }
+      modeList.classList.toggle('mode-selected', modeChosen);
+      modeBackRow.classList.toggle('hidden', !modeChosen);
 
       var passwordSignup = methods.password && authMode === 'signup';
       pwRow.classList.toggle('hidden', !(methods.password && (authMode === 'password' || passwordSignup)));
@@ -458,6 +470,14 @@
       var btn = e.target.closest('[data-auth-mode]');
       if (!btn) return;
       authMode = btn.getAttribute('data-auth-mode');
+      modeChosen = true;
+      applyMode();
+      hideMsg();
+    });
+
+    modeBack.addEventListener('click', function () {
+      modeChosen = false;
+      authMode = (methods.magicLink || methods.emailOtp) ? 'link' : 'password';
       applyMode();
       hideMsg();
     });
