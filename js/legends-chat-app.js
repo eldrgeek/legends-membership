@@ -24,13 +24,28 @@ import {
 
 const html = htm.bind(React.createElement);
 
-const ROOMS = [
+// Fallback list, used only if the chat_rooms table read fails (e.g. the
+// migration hasn't been applied yet) so the chat still works. In that state
+// room creation is disabled (see createRoom). When the table is reachable,
+// rooms load from chat_rooms instead — these same three are seeded there.
+const DEFAULT_ROOMS = [
   { id: 'general', name: 'General' },
   { id: 'introductions', name: 'Introductions' },
   { id: 'events', name: 'Events' },
 ];
 
 const TYPING_TTL_MS = 3500;
+const ROOM_NAME_MAX = 40;
+
+// "New Mentorship" → "new-mentorship". Lowercase, non-alphanumerics → '-',
+// collapse runs of '-', trim leading/trailing '-'.
+function slugify(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
 function displayName(email, fallback) {
   if (!email) return fallback || 'Member';
@@ -53,6 +68,8 @@ function ChatApp() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [client, setClient] = useState(null);
 
+  const [rooms, setRooms] = useState(DEFAULT_ROOMS);
+  const [roomsFromTable, setRoomsFromTable] = useState(false); // true once chat_rooms loads OK
   const [activeRoom, setActiveRoom] = useState('general');
   const [messages, setMessages] = useState([]);
   const [onlineCount, setOnlineCount] = useState(0);
@@ -105,6 +122,51 @@ function ChatApp() {
     }, 1000);
     return () => clearInterval(t);
   }, []);
+
+  // ── Load the room list from chat_rooms + subscribe for new rooms LIVE ─────
+  // Separate from the per-room message channel below. On read failure we keep
+  // DEFAULT_ROOMS and leave roomsFromTable=false (room creation stays disabled).
+  useEffect(() => {
+    if (!client) return;
+    let cancelled = false;
+
+    const mergeRoom = (row) => {
+      if (!row || !row.id) return;
+      setRooms((prev) => (prev.some((r) => r.id === row.id)
+        ? prev
+        : prev.concat({ id: row.id, name: row.name || row.id })));
+    };
+
+    (async () => {
+      const result = await client
+        .from('chat_rooms')
+        .select('id,name,created_at')
+        .order('created_at', { ascending: true });
+      if (cancelled) return;
+      if (result.error || !result.data) {
+        // Migration not applied / table unreadable: keep the hardcoded fallback.
+        setRoomsFromTable(false);
+        return;
+      }
+      const loaded = result.data
+        .filter((r) => r && r.id)
+        .map((r) => ({ id: r.id, name: r.name || r.id }));
+      if (loaded.length) setRooms(loaded);
+      setRoomsFromTable(true);
+    })();
+
+    const roomsChannel = client.channel('community-rooms');
+    roomsChannel
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_rooms' },
+        (payload) => { if (!cancelled) mergeRoom(payload.new); })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      try { client.removeChannel(roomsChannel); } catch (e) {}
+    };
+  }, [client]);
 
   // ── Load + subscribe whenever the room (or client/session) changes ────────
   useEffect(() => {
@@ -185,6 +247,38 @@ function ChatApp() {
     if (error) setStatus(error.message || 'Message could not be sent.');
   }, [client, session, activeRoom]);
 
+  const createRoom = useCallback(async () => {
+    if (!client || !session || !session.user) return;
+    if (!roomsFromTable) {
+      setStatus('New rooms aren’t available yet. Please check back soon.');
+      return;
+    }
+    const raw = window.prompt('Name your new room:');
+    if (raw == null) return; // cancelled
+    const name = raw.trim();
+    if (!name) { setStatus('A room needs a name.'); return; }
+    if (name.length > ROOM_NAME_MAX) { setStatus('Keep room names under ' + ROOM_NAME_MAX + ' characters.'); return; }
+    const id = slugify(name);
+    if (!id) { setStatus('Please use letters or numbers in the room name.'); return; }
+
+    // If we already know the room locally, just switch to it.
+    if (rooms.some((r) => r.id === id)) { setActiveRoom(id); setStatus(''); return; }
+
+    setStatus('Creating room…');
+    const { error } = await client.from('chat_rooms').insert({
+      id, name, created_by: session.user.email,
+    });
+    // Duplicate id (someone created it first / conflict): treat as success and
+    // switch to the existing room rather than erroring.
+    if (error && !/duplicate|already exists|23505/i.test(error.message || error.code || '')) {
+      setStatus(error.message || 'Could not create the room.');
+      return;
+    }
+    setRooms((prev) => (prev.some((r) => r.id === id) ? prev : prev.concat({ id, name })));
+    setActiveRoom(id);
+    setStatus('');
+  }, [client, session, rooms, roomsFromTable]);
+
   const broadcastTyping = useCallback(() => {
     const ch = channelRef.current;
     if (!ch || !session || !session.user) return;
@@ -234,7 +328,7 @@ function ChatApp() {
   }
 
   const meId = session.user.id;
-  const roomName = (ROOMS.find((r) => r.id === activeRoom) || {}).name || activeRoom;
+  const roomName = (rooms.find((r) => r.id === activeRoom) || {}).name || activeRoom;
   const typingContent = typingNames.length
     ? (typingNames.length === 1 ? typingNames[0] + ' is typing' : typingNames.slice(0, 2).join(', ') + ' are typing')
     : '';
@@ -244,7 +338,7 @@ function ChatApp() {
       <${MainContainer} responsive=${true}>
         <${Sidebar} position="left" scrollable=${false}>
           <${ConversationList}>
-            ${ROOMS.map((r) => html`
+            ${rooms.map((r) => html`
               <${Conversation}
                 key=${r.id}
                 name=${r.name}
@@ -252,6 +346,19 @@ function ChatApp() {
                 onClick=${() => setActiveRoom(r.id)}
               />`)}
           <//>
+          <button
+            type="button"
+            class="cs-conversation new-room-btn"
+            onClick=${createRoom}
+            disabled=${!roomsFromTable}
+            title=${roomsFromTable ? 'Create a new room' : 'New rooms aren’t available yet'}
+            style=${{
+              display: 'block', width: '100%', textAlign: 'left',
+              background: 'none', border: 'none', cursor: roomsFromTable ? 'pointer' : 'not-allowed',
+              padding: '0.8em 1em', font: 'inherit', color: 'inherit',
+              opacity: roomsFromTable ? 1 : 0.5,
+            }}
+          >+ New room</button>
         <//>
         <${ChatContainer}>
           <${ConversationHeader}>
