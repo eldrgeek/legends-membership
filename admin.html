@@ -112,6 +112,7 @@
       display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
     }
     .role-badge.admin { background: var(--navy); color: var(--gold); }
+    .role-badge.committee { background: #c9a84c; color: var(--navy); }
     .role-badge.member { background: var(--border); color: var(--text-light); }
     .role-select {
       border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 0.82rem;
@@ -416,8 +417,20 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
   // Bootstrap fallback until roles seeded in Supabase profiles table
   var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
 
+  // Nested role model: admin ⊇ committee ⊇ member.
+  // The three assignable roles, ordered most→least privileged.
+  var ROLE_OPTIONS = ['admin', 'committee', 'member'];
+  var ROLE_LABELS = { admin: 'Admin', committee: 'Committee Member', member: 'Member' };
+  function roleLabel(role) { return ROLE_LABELS[role] || ROLE_LABELS.member; }
+
   function isAdmin(user, role) {
     return (role === 'admin') || (user && ADMIN_EMAILS.indexOf(user.email) !== -1);
+  }
+
+  // Committee privileges are nested: admins ARE committee members. True for
+  // role 'admin' OR 'committee', or for an allowlisted bootstrap admin email.
+  function isCommittee(user, role) {
+    return (role === 'committee') || isAdmin(user, role);
   }
 
   function updateAuthNav(user, role) {
@@ -512,7 +525,7 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
       var tdRole = document.createElement('td');
       var badge = document.createElement('span');
       badge.className = 'role-badge ' + (row.role || 'member');
-      badge.textContent = row.role || 'member';
+      badge.textContent = roleLabel(row.role || 'member');
       tdRole.appendChild(badge);
       tr.appendChild(tdRole);
 
@@ -520,10 +533,10 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
       var tdAction = document.createElement('td');
       var sel = document.createElement('select');
       sel.className = 'role-select';
-      ['admin', 'member'].forEach(function(r) {
+      ROLE_OPTIONS.forEach(function(r) {
         var opt = document.createElement('option');
         opt.value = r;
-        opt.textContent = r;
+        opt.textContent = roleLabel(r);
         if (r === (row.role || 'member')) opt.selected = true;
         sel.appendChild(opt);
       });
@@ -558,7 +571,7 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
           if (result.ok) {
             row.role = newRole;
             badge.className = 'role-badge ' + newRole;
-            badge.textContent = newRole;
+            badge.textContent = roleLabel(newRole);
             // Admins can't be deleted — keep the X in sync with the new role.
             delBtn.style.display = (newRole === 'admin') ? 'none' : '';
             statusSpan.textContent = '✓ saved';

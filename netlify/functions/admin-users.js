@@ -19,7 +19,7 @@
  *     → invites a new user via Supabase auth.admin.inviteUserByEmail
  *   { action: "list" }
  *     → returns all auth users (id, email, created_at, last_sign_in_at)
- *   { action: "setrole", userId: "<uuid>", role: "admin"|"member" }
+ *   { action: "setrole", userId: "<uuid>", role: "admin"|"committee"|"member" }
  *     → updates the profiles.role column for a user (server-side override)
  *   { action: "delete", userId: "<uuid>" }
  *     → deletes the auth user (and their profile row). Refuses self-deletion
@@ -171,7 +171,7 @@ exports.handler = async function (event) {
   if (action === 'setrole') {
     const { userId, role } = body;
     if (!userId || !role) return jsonResponse(400, { error: 'userId and role are required' });
-    if (!['admin', 'member'].includes(role)) return jsonResponse(400, { error: 'role must be "admin" or "member"' });
+    if (!['admin', 'committee', 'member'].includes(role)) return jsonResponse(400, { error: 'role must be "admin", "committee", or "member"' });
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
         method: 'PATCH',
