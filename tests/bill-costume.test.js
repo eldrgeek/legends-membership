@@ -21,6 +21,42 @@ const { ROOT, loadBillConfig, makeBillWindow } = require('./helpers/bill-harness
 
 const cfg = loadBillConfig();
 
+/* ── Narration cue parser (self-contained) ──────────────────────────────────
+ * The engine used to expose a static SomaGuide.parseNarration(); the current
+ * soma-guide engine no longer parses [[cue]] choreography (it only STRIPS the
+ * markup before TTS/display via _stripCues). The cue grammar is still the
+ * config's contract (see CHOREOGRAPHY.md), so this lint parses it here rather
+ * than depending on a removed engine method.
+ *
+ * Grammar (CHOREOGRAPHY.md): cues are [[verb selector? options?]] between words.
+ *  - verb     = first whitespace-delimited token (arrow|highlight|unhighlight|
+ *               click|open|close|scroll)
+ *  - selector = the remainder, with a trailing timing token (2s | 1500ms | slow
+ *               | fast) stripped off (used by `arrow`); may be empty ("last
+ *               element a cue touched").
+ * The cue-extraction regex mirrors the engine's _stripCues regex so we see
+ * exactly the spans the engine treats as cues, including selectors that
+ * themselves end in `]` (e.g. a[href="x"]).
+ */
+const CUE_RE = /\[\[(.*?)\]\](?!\])/g;
+const CUE_TIMING_RE = /\s+(?:\d+(?:\.\d+)?(?:s|ms)|slow|fast)$/i;
+function parseNarrationCues(narration) {
+  const cues = [];
+  const text = String(narration == null ? '' : narration);
+  let m;
+  CUE_RE.lastIndex = 0;
+  while ((m = CUE_RE.exec(text)) !== null) {
+    const body = m[1].trim();
+    if (!body) continue;
+    const sp = body.indexOf(' ');
+    const verb = (sp === -1 ? body : body.slice(0, sp)).toLowerCase();
+    let selector = sp === -1 ? '' : body.slice(sp + 1).trim();
+    selector = selector.replace(CUE_TIMING_RE, '').trim();
+    cues.push({ verb, selector });
+  }
+  return { cues };
+}
+
 /* ── Persona & required fields ──────────────────────────────────────────── */
 
 describe('Costume — required config fields', () => {
@@ -104,8 +140,14 @@ describe('Costume — keyword hygiene', () => {
   test('no walkthrough keyword shadows a feedback intent phrase', () => {
     const { makeGuide } = makeBillWindow();
     const g = makeGuide();
+    // Probes use phrasings the engine's _classifyFeedback actually recognizes
+    // (see soma-guide.js bugIntents / featureIntents). The point of this test is
+    // that no walkthrough keyword shadows these feedback intents — so the probes
+    // must be real feedback phrases. ("file an issue" is intentionally absent:
+    // the engine does not recognize it; "i want to report an issue" is its
+    // recognized equivalent.)
     const intentProbes = [
-      'report a bug', 'i found a bug', 'something is broken', 'file an issue',
+      'report a bug', 'i found a bug', 'something is broken', 'i want to report an issue',
       'feature request', 'i have a suggestion', 'it would be great if', 'submit an idea',
     ];
     for (const probe of intentProbes) {
@@ -165,8 +207,7 @@ describe('Costume — walkthrough selectors exist on their pages', () => {
       }
       if (/\[\[/.test(step.narration || '')) {
         test(`${wt.id} / "${label}": narration cues are valid and resolve on ${page}`, () => {
-          const { win } = makeBillWindow();
-          const parsed = win.SomaGuide.parseNarration(step.narration);
+          const parsed = parseNarrationCues(step.narration);
           const KNOWN = ['arrow', 'highlight', 'unhighlight', 'click', 'open', 'close', 'scroll'];
           const doc = domFor(page);
           for (const cue of parsed.cues) {
