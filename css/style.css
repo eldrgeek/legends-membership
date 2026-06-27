@@ -48,13 +48,21 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   height: 72px;
 }
 .nav-brand {
   display: flex;
   flex-direction: column;
   text-decoration: none;
+  /* Keep the brand at its natural size: when the nav links row gets long
+     (e.g. admin link + signed-in controls on the home page) the flex layout
+     must shrink the LINKS, never crush the brand text into an ugly wrap. */
+  flex-shrink: 0;
 }
+.nav-brand .brand-main,
+.nav-brand .brand-sub,
+.nav-brand .brand-home { white-space: nowrap; }
 .nav-brand .brand-main {
   font-family: 'Playfair Display', serif;
   font-size: 1rem;
@@ -81,8 +89,17 @@ nav {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
+  justify-content: flex-end;
   gap: 4px;
   list-style: none;
+  /* The brand never shrinks (see .nav-brand flex-shrink:0); this row takes the
+     remaining space and stays right-aligned. When the menu is long (admin link
+     + signed-in controls on the home page) the items keep their size and hug
+     the right edge instead of compressing the brand. Overflow stays visible so
+     the dropdown menus are never clipped. min-width:0 lets the row yield space
+     to the brand rather than the other way around. */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .nav-links span { white-space: nowrap; }
 .nav-links a {
