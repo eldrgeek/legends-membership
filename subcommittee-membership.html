@@ -176,182 +176,26 @@
         </div>
       </div>
 
-      <!-- Inline spreadsheet embed (rendered client-side from the .xlsx via SheetJS) -->
+      <!-- Inline Google Sheet embed (editable /edit URL; orchestrator may swap to /preview if Google blocks the frame) -->
       <div id="roster-embed" style="margin-top: 4px;">
         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px;">
-          <input id="roster-filter" type="text" placeholder="Filter members…" autocomplete="off"
-                 style="flex: 1; min-width: 180px; max-width: 320px; padding: 8px 12px; font-size: 0.85rem; color: rgba(255,255,255,0.92); background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.18); border-radius: 6px; outline: none;"
-                 disabled>
-          <span id="roster-count" style="font-size: 0.8rem; color: rgba(255,255,255,0.55); white-space: nowrap;">Loading roster…</span>
-        </div>
-        <div id="roster-table-wrap" style="max-height: 520px; overflow: auto; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; background: rgba(0,0,0,0.18);">
-          <table id="roster-table" style="border-collapse: collapse; width: 100%; font-size: 0.82rem; color: rgba(255,255,255,0.85);">
-            <thead></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div id="roster-status" style="font-size: 0.84rem; color: rgba(255,255,255,0.6); padding: 16px 4px;">Loading membership spreadsheet…</div>
-        <div style="margin-top: 16px;">
-          <a href="/downloads/Memberships_Platinum_Gold_Inc.xlsx" download class="btn btn-navy" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 8px 18px;">
-            ↓ Download spreadsheet
+          <a href="https://docs.google.com/spreadsheets/d/188ReoqdUyUxRvKn7rMqoxzGnbpHq5jzkEKFeTqmT9Uo/edit?usp=sharing"
+             target="_blank" rel="noopener" class="btn btn-navy"
+             style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; padding: 8px 18px;">
+            Open in Google Sheets ↗
           </a>
+        </div>
+        <div style="border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); background: #fff;">
+          <iframe
+            src="https://docs.google.com/spreadsheets/d/188ReoqdUyUxRvKn7rMqoxzGnbpHq5jzkEKFeTqmT9Uo/edit?usp=sharing&rm=minimal"
+            title="Membership Roster — Platinum &amp; Gold"
+            style="width: 100%; height: 640px; border: none; display: block; background: #fff;"
+            loading="lazy"></iframe>
         </div>
       </div>
     </div>
   </div>
 </section>
-
-<style>
-  #roster-table th, #roster-table td {
-    padding: 7px 12px;
-    text-align: left;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    white-space: nowrap;
-  }
-  #roster-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--navy, #060e18);
-    color: var(--gold-light, #e8c96e);
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-bottom: 2px solid var(--gold, #c9a84c);
-  }
-  #roster-table tbody tr:hover { background: rgba(255,255,255,0.05); }
-  #roster-table td.roster-num { text-align: right; font-variant-numeric: tabular-nums; }
-  #roster-filter:focus { border-color: var(--gold, #c9a84c); }
-</style>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-(function () {
-  var FILE = '/downloads/Memberships_Platinum_Gold_Inc.xlsx';
-  var SHEET = 'Results';
-  var status = document.getElementById('roster-status');
-  var wrap = document.getElementById('roster-table-wrap');
-  var table = document.getElementById('roster-table');
-  var filterInput = document.getElementById('roster-filter');
-  var countEl = document.getElementById('roster-count');
-
-  function showFallback(msg) {
-    if (wrap) wrap.style.display = 'none';
-    if (filterInput) filterInput.style.display = 'none';
-    if (countEl) countEl.style.display = 'none';
-    if (status) {
-      status.style.display = 'block';
-      status.textContent = msg || 'The membership roster could not be loaded here. Use the download link below to view the spreadsheet.';
-    }
-  }
-
-  function isDateCell(header) {
-    return /date/i.test(header);
-  }
-  function isAmountCell(header) {
-    return /amount/i.test(header);
-  }
-  function fmtDate(v) {
-    if (v instanceof Date && !isNaN(v)) {
-      return v.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-    return v == null ? '' : String(v);
-  }
-  function fmtAmount(v) {
-    var n = (typeof v === 'number') ? v : parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
-    if (isFinite(n) && String(v).trim() !== '') {
-      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    return v == null ? '' : String(v);
-  }
-
-  function render(headers, rows) {
-    var thead = table.querySelector('thead');
-    var tbody = table.querySelector('tbody');
-    var htr = document.createElement('tr');
-    headers.forEach(function (h) {
-      var th = document.createElement('th');
-      th.textContent = h;
-      htr.appendChild(th);
-    });
-    thead.appendChild(htr);
-
-    rows.forEach(function (row) {
-      var tr = document.createElement('tr');
-      var searchParts = [];
-      headers.forEach(function (h, i) {
-        var raw = row[i];
-        var td = document.createElement('td');
-        var text;
-        if (isDateCell(h)) text = fmtDate(raw);
-        else if (isAmountCell(h)) { text = fmtAmount(raw); td.className = 'roster-num'; }
-        else text = (raw == null ? '' : String(raw));
-        td.textContent = text;
-        searchParts.push(text);
-        tr.appendChild(td);
-      });
-      tr.setAttribute('data-search', searchParts.join(' ').toLowerCase());
-      tbody.appendChild(tr);
-    });
-
-    var total = rows.length;
-    function updateCount(shown) {
-      countEl.textContent = 'Showing ' + shown + ' of ' + total;
-    }
-    updateCount(total);
-
-    filterInput.disabled = false;
-    filterInput.addEventListener('input', function () {
-      var q = filterInput.value.trim().toLowerCase();
-      var shown = 0;
-      var trs = tbody.querySelectorAll('tr');
-      for (var i = 0; i < trs.length; i++) {
-        var match = !q || trs[i].getAttribute('data-search').indexOf(q) !== -1;
-        trs[i].style.display = match ? '' : 'none';
-        if (match) shown++;
-      }
-      updateCount(shown);
-    });
-
-    status.style.display = 'none';
-  }
-
-  function load() {
-    try {
-      if (typeof XLSX === 'undefined') { showFallback('Spreadsheet viewer is unavailable here. Use the download link below to open the file.'); return; }
-      fetch(FILE)
-        .then(function (r) {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.arrayBuffer();
-        })
-        .then(function (buf) {
-          var wb = XLSX.read(buf, { type: 'array', cellDates: true });
-          var ws = wb.Sheets[SHEET] || wb.Sheets[wb.SheetNames[0]];
-          if (!ws) throw new Error('No sheet found');
-          var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
-          if (!aoa.length) throw new Error('Empty sheet');
-          var headers = aoa[0].map(function (h) { return h == null ? '' : String(h); });
-          var rows = aoa.slice(1).filter(function (r) {
-            return r.some(function (c) { return c != null && String(c).trim() !== ''; });
-          });
-          render(headers, rows);
-        })
-        .catch(function () {
-          showFallback();
-        });
-    } catch (e) {
-      showFallback();
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', load);
-  } else {
-    load();
-  }
-})();
-</script>
 
 <footer>
   <div class="footer-brand">Legends of Basketball</div>
