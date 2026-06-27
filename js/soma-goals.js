@@ -814,17 +814,32 @@
       return inst;
     }
 
+    // Render at most once per real identity change. Supabase fires SIGNED_IN /
+    // INITIAL_SESSION (and TOKEN_REFRESHED) repeatedly for the SAME user — most
+    // visibly when this page is loaded inside the Change Log review preview iframe,
+    // where the parent and iframe share the auth client's storage and ping-pong
+    // events. Each event used to re-run start()→refresh() (three fetches + a full
+    // innerHTML re-render), so the goals widget flashed continuously and reviewers
+    // couldn't read the page. Dedup on user id so a redundant event is a no-op.
+    var _authKey;
     function go(session) {
-      if (!session || !session.user) { inst.start(null, null); return; }
-      Auth.getRole(session.user).then(function (role) {
+      var user = session && session.user;
+      var key = user ? user.id : 'anon';
+      if (key === _authKey) return; // same identity already applied — no re-render
+      _authKey = key;
+      if (!user) { inst.start(null, null); return; }
+      Auth.getRole(user).then(function (role) {
         inst.start(session, role);
       }).catch(function () { inst.start(session, null); });
     }
 
     try {
       Auth.onAuthStateChange(function (event, session) {
-        if (event === 'SIGNED_OUT') { inst.start(null, null); return; }
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') go(session);
+        if (event === 'SIGNED_OUT') { _authKey = undefined; inst.start(null, null); return; }
+        // A token refresh keeps the same user — don't re-render; just freshen the
+        // in-memory session so subsequent writes use the current access token.
+        if (event === 'TOKEN_REFRESHED') { if (session && inst.session) inst.session = session; return; }
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') go(session);
       });
     } catch (e) {}
 
