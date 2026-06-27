@@ -1107,10 +1107,21 @@ function applyQuinnGreeting() {
 }
 
 function crReview(id) {
+  // Never run inside an embedded preview iframe. If a change's page is itself a
+  // page that carries this changelog script, loading it into the preview iframe
+  // would re-run the review machinery and recursively re-open the review (and
+  // stack Quinn voice sessions). Reviews happen only in the top window.
+  if (window.self !== window.top) return;
   var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
   if (!r) return;
 
   var raw = (r.page || '').trim();
+  // A change whose page is THIS changelog page must not be loaded into its own
+  // preview iframe (that loops). Treat a self-referential page as "no page" so
+  // the descriptive summary card is shown instead.
+  var _selfPath = location.pathname.replace(/^\//, '').replace(/\.html$/, '');
+  var _rawPath = raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '').replace(/\.html$/, '');
+  if (_rawPath && (_rawPath === _selfPath || _rawPath === 'admin-changelog')) raw = '';
 
   // "Nothing was applied" is a real state ONLY when the worker explicitly reported it
   // couldn't do the work — i.e. status === 'blocked'. An 'awaiting-review' item that
@@ -1384,16 +1395,21 @@ SomaAuth.onAuthStateChange(function(event, session) {
         // Restore a review session interrupted by navigation (sessionStorage survives
         // same-tab navigations; we resume within 10 minutes of interruption).
         try {
-          var saved = sessionStorage.getItem(_REVIEW_SS_KEY);
-          if (saved) {
-            var pr = JSON.parse(saved);
-            if (Date.now() - (pr.time || 0) < 600000) {
-              var match = _changeRequests.filter(function (x) { return x.id === pr.id; })[0];
-              if (match) {
-                setTimeout(function () { crReview(pr.id); }, 400);
+          // Only the TOP window restores an interrupted review. Inside an embedded
+          // preview iframe (same-origin), reading the shared sessionStorage and
+          // re-calling crReview would recurse into nested iframes + stacked Quinns.
+          if (window.self === window.top) {
+            var saved = sessionStorage.getItem(_REVIEW_SS_KEY);
+            if (saved) {
+              var pr = JSON.parse(saved);
+              if (Date.now() - (pr.time || 0) < 600000) {
+                var match = _changeRequests.filter(function (x) { return x.id === pr.id; })[0];
+                if (match) {
+                  setTimeout(function () { crReview(pr.id); }, 400);
+                }
               }
+              _clearReviewSession();
             }
-            _clearReviewSession();
           }
         } catch (e) {}
       });
