@@ -44,12 +44,12 @@ nav {
 .nav-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 8px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  height: 72px;
+  min-height: 72px;
 }
 .nav-brand {
   display: flex;
@@ -88,16 +88,17 @@ nav {
 .nav-links {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 2px 4px;
   list-style: none;
   /* The brand never shrinks (see .nav-brand flex-shrink:0); this row takes the
      remaining space and stays right-aligned. When the menu is long (admin link
-     + signed-in controls on the home page) the items keep their size and hug
-     the right edge instead of compressing the brand. Overflow stays visible so
-     the dropdown menus are never clipped. min-width:0 lets the row yield space
-     to the brand rather than the other way around. */
+     + signed-in controls on the home page) the items wrap to a second line on
+     the right rather than overflowing leftward over the brand. (justify-content
+     flex-end means an over-long nowrap row spills off the LEFT edge into the
+     brand — wrapping prevents that ugliness.) min-width:0 lets the row yield
+     space to the brand rather than the other way around. */
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -105,12 +106,12 @@ nav {
 .nav-links a {
   color: rgba(255,255,255,0.82);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  padding: 8px 12px;
+  padding: 7px 9px;
   border-radius: 6px;
   transition: color 0.2s, background 0.2s;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 .nav-links a:hover, .nav-links a.active {
