@@ -1082,6 +1082,30 @@ function crRevert(id) {
 // (fall back to the commit diff on GitHub). For awaiting-review items the preview
 // also surfaces an Accept (sign-off) button.
 var REPO_COMMIT_BASE = 'https://github.com/eldrgeek/legends-membership/commit/';
+
+// Quinn introduce-once: full self-intro on the first review per browser, brief
+// greeting on every return — the same pattern Bill uses (localStorage-gated). We
+// rewrite the live persona's `greeting` (what the engine actually speaks) before the
+// handoff. Wrapped in try/catch so a blocked/absent localStorage never breaks review.
+var QUINN_INTRO_KEY = 'legends-quinn-introduced';
+function applyQuinnGreeting() {
+  try {
+    var review = (window.SomaGuideConfig && window.SomaGuideConfig.personas &&
+                  window.SomaGuideConfig.personas.review) || null;
+    if (!review) return;
+    // Preserve the authored full intro once, so we can always restore it.
+    if (review._fullGreeting == null) review._fullGreeting = review.greeting;
+    var introduced = false;
+    try { introduced = localStorage.getItem(QUINN_INTRO_KEY) === '1'; } catch (e) {}
+    if (introduced) {
+      review.greeting = review.shortGreeting || review._fullGreeting;
+    } else {
+      review.greeting = review._fullGreeting;
+      try { localStorage.setItem(QUINN_INTRO_KEY, '1'); } catch (e) {}
+    }
+  } catch (e) {}
+}
+
 function crReview(id) {
   var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
   if (!r) return;
@@ -1096,6 +1120,12 @@ function crReview(id) {
   var blockedReason = (r.context && (r.context.blocked || r.context.blocked_reason)) || '';
   var noWorkShipped = !raw && !r.commit_sha;
   var isBlocked = r.status === 'blocked' || (r.status === 'awaiting-review' && noWorkShipped);
+
+  // Introduce-once (Bill-style): Quinn introduces herself in full only on the first
+  // review per browser; on return she opens with the brief shortGreeting. We can't
+  // reach the hosted engine's introduce-once, so we mirror it here — pick the line and
+  // assign it to the live persona's greeting before the handoff so the engine speaks it.
+  applyQuinnGreeting();
 
   // Hand the walkthrough to the reviewer teammate (Quinn — own voice). Tell Quinn the
   // truth about state so it summarizes correctly rather than claiming work shipped.

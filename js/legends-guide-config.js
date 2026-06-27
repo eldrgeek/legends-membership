@@ -58,12 +58,20 @@ window.SomaGuideConfig = {
       voiceAgentId: 'agent_7601kvbcdj4mecwagv960x87fwhc'
     },
     /* Reviewer teammate (own voice) who walks you through completed work when you
-     * click "Review work" in the Change Log, then converses about whether it's right. */
+     * click "Review work" in the Change Log, then converses about whether it's right.
+     *
+     * Introduce-once: Quinn gives the full self-introduction (`greeting`) only on the
+     * FIRST review per browser; on return she opens with the brief `shortGreeting`.
+     * The admin-changelog page picks which line to use via a localStorage guard
+     * (`legends-quinn-introduced`) and assigns it to `greeting` before handing off,
+     * so the engine speaks whichever one fits — mirroring Bill's introduce-once. */
     review: {
       name: 'Quinn · Review',
       avatar: '🔎',
       greeting:
         'I review completed work. Let me show you what we changed and make sure it’s right.',
+      shortGreeting:
+        'Let me show you what we changed.',
       voiceAgentId: 'agent_7501kvb3j188eyq90ssgfe827qw0'
     }
   },
