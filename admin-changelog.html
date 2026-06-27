@@ -1112,14 +1112,17 @@ function crReview(id) {
 
   var raw = (r.page || '').trim();
 
-  // Did any actual work ship? A change shipped iff it has a target page OR a commit.
-  // The daemon flips an item to 'awaiting-review' when the worker reports back —
-  // even when the worker was BLOCKED (e.g. an attachment it couldn't read), in which
-  // case no commit was produced and no page recorded. Treat that as "nothing applied
-  // yet" so the reviewer sees why instead of an empty preview. (#3/#5)
+  // "Nothing was applied" is a real state ONLY when the worker explicitly reported it
+  // couldn't do the work — i.e. status === 'blocked'. An 'awaiting-review' item that
+  // simply lacks a recorded page or commit is NOT "nothing was done": the worker
+  // finished and flipped it to review but didn't record a location. Previously we
+  // conflated those two, so a completed review with no page surfaced a stark
+  // "Nothing was applied to the site" warning (and Quinn said as much) — which read as
+  // "nothing was done" on a task that was actually done. Gate the empty-state on the
+  // genuine blocked signal; let no-page reviews fall through to the graceful
+  // "no specific page recorded" card below, where Quinn summarizes from the description.
   var blockedReason = (r.context && (r.context.blocked || r.context.blocked_reason)) || '';
-  var noWorkShipped = !raw && !r.commit_sha;
-  var isBlocked = r.status === 'blocked' || (r.status === 'awaiting-review' && noWorkShipped);
+  var isBlocked = r.status === 'blocked';
 
   // Introduce-once (Bill-style): Quinn introduces herself in full only on the first
   // review per browser; on return she opens with the brief shortGreeting. We can't
@@ -1217,7 +1220,7 @@ function crReview(id) {
     acc.innerHTML = '&#10003; Accept';
     acc.onclick = function () { crSet(id, 'accepted'); closePreview(); };
   } else {
-    // Nothing was applied (blocked / no work) — don't offer a sign-off.
+    // Genuinely blocked (nothing applied) — don't offer a sign-off.
     acc.style.display = 'none';
   }
   document.getElementById('preview-refine').onclick = function () { closePreview(); };
