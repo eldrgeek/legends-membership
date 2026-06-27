@@ -121,9 +121,25 @@ function makeBillWindow(opts) {
 
 /**
  * Route classifier for scenario tests: send a message through a fresh Bill
- * and report which subsystem handled it.
- * Returns one of: 'tour:<id>' | 'feedback:bug' | 'feedback:feature'
- *                 | 'deflect' | 'inference' | 'conversation'
+ * and report which subsystem the CURRENT engine handed the message to.
+ *
+ * Engine behavior this mirrors (soma-guide v2026-0617x, Tell→Show ladder +
+ * intake handoff + always-inference text mode):
+ *   tour:<id>     — a walkthrough actually STARTED (mode === 'walkthrough')
+ *   offer:<id>    — the Tell→Show ladder OFFERED to run a walkthrough
+ *                   (".sg-offer" with ▶ Show me / Just tell me). A how-to
+ *                   question that matches a walkthrough offers; it no longer
+ *                   auto-launches (only an explicit "show me / walk me" does).
+ *   feedback:bug      — the bug intake form rendered (title "🐛 Report a problem")
+ *   feedback:feature  — the change/feature intake form rendered ("💡 Request a change")
+ *   deflect           — scope-guard redirect (the configured deflect message)
+ *   inference         — grounded answer from the knowledge endpoint. With
+ *                       cfg.inferenceUrl set, the engine routes ALL otherwise
+ *                       -unhandled text here (the text-mode ElevenLabs path is
+ *                       deliberately bypassed as unreliable), so plain chit-chat
+ *                       resolves to inference, not a live conversation.
+ *   conversation      — fell through to the ElevenLabs agent (only when no
+ *                       inferenceUrl is configured).
  */
 function routeOf(message) {
   const { win, makeGuide } = makeBillWindow();
@@ -134,10 +150,23 @@ function routeOf(message) {
 
   if (g.mode === 'walkthrough' && g.wt) return 'tour:' + g.wt.id;
 
+  // Tell→Show offer: the engine matched a walkthrough but waits for consent
+  // (▶ Show me / Just tell me). The matched walkthrough id is only captured in
+  // the button closure, so recover it the way the engine did — by re-matching.
+  const offer = win.document.querySelector('.sg-offer');
+  if (offer && offer.querySelector('.sg-offer-show')) {
+    const wt = g._matchWalkthrough(message);
+    return wt ? 'offer:' + wt.id : 'offer';
+  }
+
+  // Intake form (bug vs change/feature). The form title carries the kind:
+  // "🐛 Report a problem" for bugs, "💡 Request a change" for features.
   const form = win.document.querySelector('.sg-feedback-form');
   if (form) {
-    const title = form.querySelector('.sg-feedback-form-title').textContent;
-    return title.includes('Bug') ? 'feedback:bug' : 'feedback:feature';
+    const titleEl = form.querySelector('.sg-feedback-form-title');
+    const title = titleEl ? titleEl.textContent : '';
+    const isBug = title.includes('🐛') || /problem|bug/i.test(title);
+    return isBug ? 'feedback:bug' : 'feedback:feature';
   }
 
   const agentMsgs = win.document.querySelectorAll('.sg-msg--agent .sg-msg-text');
