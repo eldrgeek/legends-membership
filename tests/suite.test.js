@@ -524,20 +524,23 @@ describe('Ask Bill nav — always visible, opens widget', () => {
         `ask-bill-nav must not be hidden — widget is always accessible on ${page}`);
     });
 
-    test(`${page}: #ask-bill-nav opens widget (href="#", onclick somaGuide.open)`, () => {
+    test(`${page}: #ask-bill-nav opens widget (onclick somaGuide.open, preventDefault)`, () => {
       const dom = parsePage(page);
       const el = dom.window.document.getElementById('ask-bill-nav');
       assert.ok(el, `#ask-bill-nav must exist on ${page}`);
       const link = el.querySelector('a');
       assert.ok(link, `#ask-bill-nav must contain an <a> tag on ${page}`);
+      // The link carries an href as a graceful no-JS fallback (the live Bill page),
+      // but the intended behavior is the onclick handler: it must prevent the
+      // default navigation and open the in-page guide widget instead.
+      const onclick = link.getAttribute('onclick') || '';
       assert.ok(
-        link.getAttribute('href') === '#',
-        `#ask-bill-nav link must have href="#", not an external URL on ${page}`
+        onclick.includes('somaGuide') && onclick.includes('open'),
+        `#ask-bill-nav link must have onclick calling somaGuide.open() on ${page}`
       );
       assert.ok(
-        (link.getAttribute('onclick') || '').includes('somaGuide') &&
-        (link.getAttribute('onclick') || '').includes('open'),
-        `#ask-bill-nav link must have onclick calling somaGuide.open() on ${page}`
+        onclick.includes('preventDefault'),
+        `#ask-bill-nav onclick must preventDefault so the widget opens instead of navigating on ${page}`
       );
     });
   }
