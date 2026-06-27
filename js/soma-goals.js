@@ -795,7 +795,167 @@
     self.user = session ? session.user : null;
     self.role = role || null;
     self.committee = isCommittee(self.user, self.role);
-    return self.refresh();
+    return self.refresh().then(function () { self.maybeWireBillHint(); });
+  };
+
+  // ── "Bill hint" thought bubble (committee-only, non-intrusive) ───────────────
+  // A silent speech bubble that floats just above the "Ask Bill" guide FAB and
+  // surfaces only when a COMMITTEE member scrolls the goals section into view.
+  // Tapping it opens Bill's panel (so they can ask for help shaping a goal);
+  // tapping the × dismisses it for the session. First visit ever gets fuller
+  // copy; later visits get a short nudge. Everything is wrapped in try/catch and
+  // feature-detected (IntersectionObserver / sessionStorage / localStorage) so
+  // it never throws under jsdom or older browsers and never breaks the goals
+  // component or the host page. It does NOT touch the Bill narration/config.
+  GoalsInstance.BILL_HINT_SEEN_KEY = 'legends-goals-bill-hint-seen';
+  GoalsInstance.BILL_HINT_DISMISSED_KEY = 'legends-goals-bill-hint-dismissed';
+
+  GoalsInstance.prototype.maybeWireBillHint = function () {
+    var self = this;
+    try {
+      // Committee members only — never for plain members or anonymous visitors.
+      if (!self.committee) return;
+      // Wire once per instance.
+      if (self._billHintWired) return;
+      // Need a DOM + IntersectionObserver. jsdom / very old browsers lack IO.
+      if (typeof window === 'undefined' || typeof window.IntersectionObserver !== 'function') return;
+      if (!self.root) return;
+      // Already dismissed or tapped this session → don't observe at all.
+      if (self.billHintSuppressed()) return;
+      self._billHintWired = true;
+
+      var observer = new window.IntersectionObserver(function (entries) {
+        try {
+          for (var i = 0; i < entries.length; i++) {
+            if (entries[i].isIntersecting) {
+              observer.disconnect();
+              // Short delay so it surfaces after the member settles on the section.
+              self._billHintTimer = window.setTimeout(function () {
+                self.showBillHint();
+              }, 800);
+              break;
+            }
+          }
+        } catch (e) { /* never throw from the observer */ }
+      }, { threshold: 0.25 });
+      observer.observe(self.root);
+      self._billHintObserver = observer;
+    } catch (e) { /* feature is optional; never break the page */ }
+  };
+
+  // Has the member dismissed or already tapped the hint this session?
+  GoalsInstance.prototype.billHintSuppressed = function () {
+    try {
+      if (typeof window === 'undefined' || !window.sessionStorage) return false;
+      return window.sessionStorage.getItem(GoalsInstance.BILL_HINT_DISMISSED_KEY) === '1';
+    } catch (e) { return false; }
+  };
+
+  GoalsInstance.prototype.suppressBillHint = function () {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem(GoalsInstance.BILL_HINT_DISMISSED_KEY, '1');
+      }
+    } catch (e) { /* ignore */ }
+  };
+
+  // First time ever (flag unset) → fuller explainer; later visits → short nudge.
+  // Reading also SETS the seen flag so subsequent visits get the short copy.
+  GoalsInstance.prototype.billHintCopy = function () {
+    var firstTime = true;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        firstTime = window.localStorage.getItem(GoalsInstance.BILL_HINT_SEEN_KEY) !== '1';
+        if (firstTime) window.localStorage.setItem(GoalsInstance.BILL_HINT_SEEN_KEY, '1');
+      }
+    } catch (e) { firstTime = false; }
+    return firstTime
+      ? "New here — this is the goals board. I can explain how it works, and if you've got an idea, I'll help you shape it into a goal."
+      : 'Want help shaping a goal? Tap me.';
+  };
+
+  GoalsInstance.prototype.showBillHint = function () {
+    var self = this;
+    try {
+      if (self.billHintSuppressed()) return;
+      if (typeof document === 'undefined') return;
+      if (self._billHintEl) return; // already showing
+
+      var bubble = document.createElement('div');
+      bubble.className = 'sg-bill-hint';
+      bubble.setAttribute('role', 'note');
+
+      var body = document.createElement('button');
+      body.type = 'button';
+      body.className = 'sg-bill-hint-body';
+      body.textContent = self.billHintCopy();
+
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'sg-bill-hint-close';
+      close.setAttribute('aria-label', 'Dismiss');
+      close.innerHTML = '&times;';
+
+      bubble.appendChild(body);
+      bubble.appendChild(close);
+
+      // Position relative to the guide FAB if present; otherwise the CSS
+      // bottom-right fallback (.sg-bill-hint default) keeps it sensible.
+      var fab = document.querySelector('.sg-fab');
+      if (fab) {
+        try {
+          var r = fab.getBoundingClientRect();
+          if (r && r.width) {
+            bubble.classList.add('sg-bill-hint--anchored');
+            // Tail points down toward the FAB; sit just above and left of it.
+            bubble.style.right = Math.max(12, (window.innerWidth - r.right)) + 'px';
+            bubble.style.bottom = (window.innerHeight - r.top + 12) + 'px';
+          }
+        } catch (e) { /* fall back to CSS-default corner */ }
+      }
+
+      // Tap the body → open Bill, then hide + mark tapped (so it won't nag again).
+      body.addEventListener('click', function () {
+        try {
+          if (window.somaGuide && typeof window.somaGuide.open === 'function') {
+            window.somaGuide.open();
+            self.suppressBillHint();
+            self.hideBillHint();
+          }
+          // If the guide isn't ready yet, do nothing — leave the bubble up so a
+          // later tap can still open it once the widget has loaded.
+        } catch (e) { /* never throw */ }
+      });
+
+      // Tap the × → dismiss for the session.
+      close.addEventListener('click', function (e) {
+        try {
+          if (e && e.stopPropagation) e.stopPropagation();
+          self.suppressBillHint();
+          self.hideBillHint();
+        } catch (err) { /* ignore */ }
+      });
+
+      document.body.appendChild(bubble);
+      self._billHintEl = bubble;
+      // Trigger the entrance transition on the next frame.
+      var raf = window.requestAnimationFrame || function (fn) { return window.setTimeout(fn, 16); };
+      raf(function () { try { bubble.classList.add('is-in'); } catch (e) {} });
+    } catch (e) { /* never break the page */ }
+  };
+
+  GoalsInstance.prototype.hideBillHint = function () {
+    var self = this;
+    try {
+      if (self._billHintTimer) { window.clearTimeout(self._billHintTimer); self._billHintTimer = null; }
+      var el = self._billHintEl;
+      if (!el) return;
+      self._billHintEl = null;
+      el.classList.remove('is-in');
+      window.setTimeout(function () {
+        try { if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
+      }, 220);
+    } catch (e) { /* ignore */ }
   };
 
   // ── Public API ──────────────────────────────────────────────────────────────

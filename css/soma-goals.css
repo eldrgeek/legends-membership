@@ -304,3 +304,92 @@
 }
 
 .sg-consensus-empty { margin-top: 4px; }
+
+/* ── "Bill hint" thought bubble (committee-only) ─────────────────────────────
+ * A small speech bubble that floats just above the "Ask Bill" guide FAB. It is
+ * created/destroyed by js/soma-goals.js and appended to <body>. Fixed-position,
+ * bottom-right by default; when a .sg-fab is present the JS sets inline
+ * right/bottom to anchor it above that button (and adds --anchored). The FAB
+ * lives at a high z-index, so we sit just above it. */
+.sg-bill-hint {
+  position: fixed;
+  right: 24px;
+  bottom: 92px; /* default: clear of a bottom-right FAB when not anchored */
+  z-index: 2147483000; /* above the guide FAB and page content */
+  max-width: 270px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #d0d8e0);
+  border-left: 3px solid var(--gold, #c9a84c);
+  border-radius: 12px;
+  padding: 12px 12px 12px 14px;
+  box-shadow: var(--shadow, 0 4px 24px rgba(6, 14, 24, 0.16));
+  /* Entrance: start translated down + faded, transition to is-in. */
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: auto;
+}
+.sg-bill-hint.is-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Little tail/pointer toward the FAB (lower-right corner of the bubble). */
+.sg-bill-hint::after {
+  content: '';
+  position: absolute;
+  right: 22px;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: var(--white, #fff);
+  border-right: 1px solid var(--border, #d0d8e0);
+  border-bottom: 1px solid var(--border, #d0d8e0);
+  transform: rotate(45deg);
+}
+
+.sg-bill-hint-body {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--navy, #060e18);
+}
+.sg-bill-hint-body:hover { color: var(--gold-dark, #8a6d1c); }
+.sg-bill-hint-body:focus-visible { outline: 2px solid var(--gold, #c9a84c); outline-offset: 2px; }
+
+.sg-bill-hint-close {
+  flex: 0 0 auto;
+  border: none;
+  background: var(--gold-pale, #f5e9c5);
+  color: var(--navy, #060e18);
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+.sg-bill-hint-close:hover { background: var(--gold, #c9a84c); }
+.sg-bill-hint-close:focus-visible { outline: 2px solid var(--gold, #c9a84c); outline-offset: 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-bill-hint {
+    transition: opacity 0.001s linear;
+    transform: none;
+  }
+  .sg-bill-hint.is-in { transform: none; }
+}
