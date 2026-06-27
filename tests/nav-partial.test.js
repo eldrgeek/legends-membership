@@ -175,13 +175,19 @@ describe('Inlined nav preserves required selectors', () => {
     });
   }
 
-  test('Documents dropdown label is set (renamed from Resources)', () => {
+  test('Resources dropdown toggle, with Documents as its first item', () => {
     const doc = new JSDOM(read('resources.html')).window.document;
     const toggle = doc.querySelector('a[href="resources.html"].nav-dropdown-toggle');
-    assert.ok(toggle, 'Documents dropdown toggle must exist');
+    assert.ok(toggle, 'Resources dropdown toggle must exist');
     assert.ok(
-      toggle.textContent.includes('Documents'),
-      'Dropdown label must be "Documents" (renamed from "Resources")'
+      toggle.textContent.includes('Resources'),
+      'The dropdown TOGGLE label must be "Resources"'
+    );
+    const firstItem = doc.querySelector('a[href="resources.html"][role="menuitem"]');
+    assert.ok(firstItem, 'Documents menu item must exist');
+    assert.ok(
+      firstItem.textContent.includes('Documents'),
+      'The first dropdown ITEM must be "Documents"'
     );
   });
 });
