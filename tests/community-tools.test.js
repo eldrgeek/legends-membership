@@ -8,8 +8,11 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const CHAT_HTML = fs.readFileSync(path.join(ROOT, 'community-chat.html'), 'utf8');
 const VIDEO_HTML = fs.readFileSync(path.join(ROOT, 'community-video.html'), 'utf8');
-const COMMUNITY_CHAT_JS = fs.readFileSync(path.join(ROOT, 'js/soma-community-chat.js'), 'utf8');
-const COMMUNITY_VIDEO_JS = fs.readFileSync(path.join(ROOT, 'js/soma-community-video.js'), 'utf8');
+// The community pages mount React islands (chatscope chat / LiveKit video) via
+// importmap ESM modules. See community-chat.html / community-video.html and
+// commit a1f89647 "Community: tab-aware identity, LiveKit video UI, chatscope chat".
+const CHAT_APP_JS = fs.readFileSync(path.join(ROOT, 'js/legends-chat-app.js'), 'utf8');
+const VIDEO_APP_JS = fs.readFileSync(path.join(ROOT, 'js/legends-video-app.js'), 'utf8');
 const SOMA_AUTH_JS = fs.readFileSync(path.join(ROOT, 'js/soma-auth.js'), 'utf8');
 const MIGRATION_SQL = fs.readFileSync(path.join(ROOT, 'migrations/community_messages.sql'), 'utf8');
 const FUNCTION_PATH = path.join(ROOT, 'netlify/functions/livekit-token.js');
@@ -38,29 +41,35 @@ describe('Community chat and video wiring', () => {
     delete require.cache[require.resolve(FUNCTION_PATH)];
   });
 
-  test('chat page is wired to the Supabase realtime chat client', () => {
-    assert.match(CHAT_HTML, /id="chat-messages"/);
-    assert.match(CHAT_HTML, /id="chat-form"/);
-    assert.match(CHAT_HTML, /\/js\/soma-community-chat\.js/);
-    assert.match(CHAT_HTML, /SomaCommunityChat\.initWithSession/);
-    assert.match(COMMUNITY_CHAT_JS, /global\.SomaCommunityChat = api/);
-    assert.match(COMMUNITY_CHAT_JS, /global\.LegendsCommunityChat = api/);
+  test('chat page mounts the chatscope React island wired to Supabase realtime', () => {
+    // The page hosts a React island: a #chat-app mount point + the ESM module.
+    assert.match(CHAT_HTML, /id="chat-app"/);
+    assert.match(CHAT_HTML, /\/js\/legends-chat-app\.js/);
+    assert.match(CHAT_HTML, /type="importmap"/);
+    assert.match(CHAT_HTML, /@chatscope\/chat-ui-kit-react/);
+    // The island mounts and talks to the shared Supabase client + realtime table.
+    assert.match(CHAT_APP_JS, /document\.getElementById\('chat-app'\)/);
+    assert.match(CHAT_APP_JS, /community_messages/);
+    assert.match(CHAT_APP_JS, /Auth\.getClient/);
   });
 
-  test('video page is wired to LiveKit and the token-backed meeting UI', () => {
-    assert.match(VIDEO_HTML, /livekit-client\/dist\/livekit-client\.umd\.min\.js/);
-    assert.match(VIDEO_HTML, /id="video-room-name"/);
-    assert.match(VIDEO_HTML, /id="video-grid"/);
-    assert.match(VIDEO_HTML, /\/js\/soma-community-video\.js/);
-    assert.match(VIDEO_HTML, /SomaCommunityVideo\.initWithSession/);
-    assert.match(COMMUNITY_VIDEO_JS, /global\.SomaCommunityVideo = api/);
-    assert.match(COMMUNITY_VIDEO_JS, /global\.LegendsCommunityVideo = api/);
+  test('video page mounts the LiveKit React island wired to the token endpoint', () => {
+    // LiveKit's prebuilt conferencing UI, mounted as a React island.
+    assert.match(VIDEO_HTML, /id="video-app"/);
+    assert.match(VIDEO_HTML, /\/js\/legends-video-app\.js/);
+    assert.match(VIDEO_HTML, /@livekit\/components-react/);
+    // The island uses LiveKit's prebuilt UI and fetches the room-scoped token.
+    assert.match(VIDEO_APP_JS, /document\.getElementById\('video-app'\)/);
+    assert.match(VIDEO_APP_JS, /id="video-room-name"/);
+    assert.match(VIDEO_APP_JS, /\/\.netlify\/functions\/livekit-token/);
+    assert.match(VIDEO_APP_JS, /LiveKitRoom/);
   });
 
-  test('video renderer does not create visible participant tiles for audio-only tracks', () => {
-    assert.match(COMMUNITY_VIDEO_JS, /track\.kind && track\.kind !== 'video'/);
-    assert.match(COMMUNITY_VIDEO_JS, /video-audio-sink/);
-    assert.match(COMMUNITY_VIDEO_JS, /audioSink\(\)\.appendChild\(audio\)/);
+  test('video uses LiveKit prebuilt UI which renders audio without visible tiles', () => {
+    // Audio-only participants are handled by LiveKit's <RoomAudioRenderer/>,
+    // not by manually-built participant tiles.
+    assert.match(VIDEO_APP_JS, /VideoConference/);
+    assert.match(VIDEO_APP_JS, /RoomAudioRenderer/);
   });
 
   test('SomaAuth exposes the shared Supabase client for authenticated community tools', () => {
