@@ -146,23 +146,6 @@
     }
     .policy-note strong { color: var(--navy); }
     .policy-note code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.82em; }
-    .invite-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
-    .invite-email-input {
-      flex: 1; min-width: 220px; border: 1px solid var(--border); border-radius: 8px;
-      padding: 10px 14px; font-size: 0.9rem; font-family: inherit;
-    }
-    .invite-email-input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
-    .btn-invite {
-      background: var(--navy); color: var(--gold); border: none; border-radius: 8px;
-      padding: 10px 22px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
-      font-family: inherit; transition: opacity 0.15s; white-space: nowrap;
-    }
-    .btn-invite:hover { opacity: 0.85; }
-    .btn-invite:disabled { opacity: 0.4; cursor: default; }
-    .invite-feedback { margin-top: 12px; font-size: 0.88rem; padding: 10px 14px; border-radius: 8px; }
-    .invite-feedback.ok { background: #f0faf0; border: 1px solid #4caf50; color: #1a6b1a; }
-    .invite-feedback.err { background: #fff0f0; border: 1px solid #e74c3c; color: #9b2b2b; }
-    .invite-feedback.warn { background: var(--gold-pale, #fffdf5); border: 1px solid var(--gold); color: var(--text-dark); }
     .members-id { font-family: monospace; font-size: 0.75rem; color: var(--text-light); }
     /* Bill feedback tabs */
     .fb-tab {
@@ -264,19 +247,6 @@
         → <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/sql/new" target="_blank" rel="noopener">Open Supabase SQL Editor</a>
         and paste the contents of that file, then click Run.
       </div>
-    </div>
-
-    <!-- Section 2: Invite a Member (calls Netlify function) -->
-    <div class="admin-section">
-      <h2>Invite a Committee Member</h2>
-      <p class="section-sub">Send a magic-link invitation so a new member can access gated pages.</p>
-      <form id="invite-form">
-        <div class="invite-row">
-          <input type="email" id="invite-email" class="invite-email-input" placeholder="member@example.com" required autocomplete="email">
-          <button type="submit" id="invite-btn" class="btn-invite">Send Invite</button>
-        </div>
-      </form>
-      <div id="invite-feedback" style="display:none;" class="invite-feedback"></div>
     </div>
 
     <!-- Section 3: Recent Activity -->
@@ -1091,54 +1061,6 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
     table.appendChild(tbody);
     rowsEl.appendChild(table);
   }
-
-  // ── Invite form ────────────────────────────────────────────────────────────
-  document.getElementById('invite-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var email = document.getElementById('invite-email').value.trim();
-    var btn = document.getElementById('invite-btn');
-    var feedback = document.getElementById('invite-feedback');
-
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-    feedback.style.display = 'none';
-    feedback.className = 'invite-feedback';
-
-    fetch('/.netlify/functions/admin-users', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + _adminSession.access_token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ action: 'invite', email: email })
-    })
-    .then(function(res) {
-      return res.json().then(function(data) { return { status: res.status, data: data }; });
-    })
-    .then(function(result) {
-      btn.disabled = false;
-      btn.textContent = 'Send Invite';
-      feedback.style.display = '';
-      if (result.status === 200) {
-        feedback.className = 'invite-feedback ok';
-        feedback.textContent = 'Invite sent to ' + email + '. They will receive a magic-link email.';
-        document.getElementById('invite-email').value = '';
-      } else if (result.status === 503) {
-        feedback.className = 'invite-feedback warn';
-        feedback.innerHTML = '<strong>Invite not yet enabled.</strong> To enable: add <code>SUPABASE_SERVICE_ROLE_KEY</code> in Netlify → Site settings → Environment variables (get the key from <a href="https://supabase.com/dashboard/project/omfwcodoimjmbrhssvfl/settings/api" target="_blank" rel="noopener">Supabase → Project Settings → API → service_role</a>), then redeploy.';
-      } else {
-        feedback.className = 'invite-feedback err';
-        feedback.textContent = result.data.error || ('Invite failed (status ' + result.status + ')');
-      }
-    })
-    .catch(function(err) {
-      btn.disabled = false;
-      btn.textContent = 'Send Invite';
-      feedback.style.display = '';
-      feedback.className = 'invite-feedback err';
-      feedback.textContent = 'Network error: ' + err.message;
-    });
-  });
 
   // ── Auth gate ──────────────────────────────────────────────────────────────
   SomaAuth.onAuthStateChange(function(event, session) {
