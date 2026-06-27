@@ -125,3 +125,182 @@
 }
 .sg-approve:hover { opacity: 0.85; }
 .sg-approve:disabled { opacity: 0.45; cursor: default; }
+
+/* ── Committee view toggle (My order ↔ Consensus) ───────────────────────── */
+.sg-view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border, #d0d8e0);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 18px;
+  background: var(--white, #fff);
+  gap: 2px;
+}
+.sg-view-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-light, #777);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sg-view-btn:hover { color: var(--navy, #060e18); }
+.sg-view-btn.is-active {
+  background: var(--navy, #060e18);
+  color: var(--gold, #c9a84c);
+}
+
+/* ── Consensus view ─────────────────────────────────────────────────────── */
+.sg-consensus { max-width: 720px; }
+
+.sg-consensus-head { margin-bottom: 14px; }
+.sg-w-headline {
+  font-size: 1.02rem;
+  color: var(--navy, #060e18);
+}
+.sg-w-headline strong { font-weight: 700; }
+.sg-w-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 9px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.sg-w-strong { background: #065f46; color: #fff; }
+.sg-w-moderate { background: var(--gold-dark, #8a6d1c); color: #fff; }
+.sg-w-weak { background: #b45309; color: #fff; }
+.sg-w-n\/a { background: var(--border, #d0d8e0); color: var(--text-dark, #333); }
+.sg-consensus-sub {
+  color: var(--text-light, #777);
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
+
+.sg-cycle-note {
+  background: var(--gold-pale, #f5e9c5);
+  border: 1px solid var(--gold-dark, #8a6d1c);
+  border-radius: 8px;
+  color: var(--text-dark, #333);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.sg-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-light, #777);
+  font-size: 0.72rem;
+  margin: 0 0 6px 40px;
+}
+
+.sg-consensus-list { list-style: none; margin: 0; padding: 0; }
+
+.sg-consensus-item {
+  background: var(--white, #fff);
+  border: 1px solid var(--border, #d0d8e0);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+.sg-consensus-item.sg-split { border-left: 3px solid var(--gold-dark, #8a6d1c); }
+.sg-consensus-item.sg-agreed { border-left: 3px solid #065f46; }
+
+.sg-consensus-row { display: flex; align-items: flex-start; gap: 12px; }
+.sg-rank {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--navy, #060e18);
+  color: var(--gold, #c9a84c);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sg-consensus-main { flex: 1; min-width: 0; }
+.sg-consensus-title {
+  font-weight: 600;
+  color: var(--navy, #060e18);
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+/* Distribution band: track 1..n, Q1–Q3 box, median marker, member dots. */
+.sg-band {
+  position: relative;
+  height: 26px;
+  margin-bottom: 4px;
+}
+.sg-band-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  background: var(--border, #d0d8e0);
+  border-radius: 2px;
+}
+.sg-band-box {
+  position: absolute;
+  top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  background: rgba(201, 168, 76, 0.35); /* gold, translucent */
+  border: 1px solid var(--gold-dark, #8a6d1c);
+  border-radius: 4px;
+  min-width: 2px;
+}
+.sg-band-median {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  background: var(--navy, #060e18);
+  border-radius: 1px;
+}
+.sg-band-dot {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--navy, #060e18);
+  border: 1.5px solid var(--white, #fff);
+  box-shadow: 0 0 0 1px rgba(6, 14, 24, 0.25);
+}
+
+.sg-contested {
+  text-align: center;
+  margin: 6px 0 0 38px;
+  border-top: 1px dashed var(--gold-dark, #8a6d1c);
+  position: relative;
+}
+.sg-contested span {
+  display: inline-block;
+  position: relative;
+  top: -9px;
+  background: var(--white, #fff);
+  color: var(--gold-dark, #8a6d1c);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0 8px;
+}
+
+.sg-consensus-empty { margin-top: 4px; }
