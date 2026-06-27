@@ -175,13 +175,13 @@ describe('Inlined nav preserves required selectors', () => {
     });
   }
 
-  test('Resources label is preserved verbatim (a later change renames it)', () => {
+  test('Documents dropdown label is set (renamed from Resources)', () => {
     const doc = new JSDOM(read('resources.html')).window.document;
     const toggle = doc.querySelector('a[href="resources.html"].nav-dropdown-toggle');
-    assert.ok(toggle, 'Resources dropdown toggle must exist');
+    assert.ok(toggle, 'Documents dropdown toggle must exist');
     assert.ok(
-      toggle.textContent.includes('Resources'),
-      'Resources label must stay "Resources" — do not rename here'
+      toggle.textContent.includes('Documents'),
+      'Dropdown label must be "Documents" (renamed from "Resources")'
     );
   });
 });
