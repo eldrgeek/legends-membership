@@ -550,6 +550,11 @@ function findItemById(id) {
 
 // ── Inline page preview ─────────────────────────────────────────────────────────
 function openPreview(page, id) {
+  // Change-request page links pass a 'req-'-prefixed id (see crCard). Route those to
+  // the canonical review flow so the Accept sign-off button is wired by status. Without
+  // this, findItemById can't resolve a 'req-' id → the item reads as "not found" →
+  // `accepted` defaults to true → the Accept button is wrongly suppressed.
+  if (typeof id === 'string' && id.indexOf('req-') === 0) { crReview(id.slice(4)); return; }
   var found = findItemById(id);
   // Breaking changes carry an absolute preview-deploy URL (different origin); those
   // can't be iframed under X-Frame-Options SAMEORIGIN, so open them in a new tab.
