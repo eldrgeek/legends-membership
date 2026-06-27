@@ -553,3 +553,14 @@ window.SomaGuideConfig = {
 
   ] /* end walkthroughs */
 };
+
+/* Never run the assistant inside an embedded preview iframe (e.g. the Change Log
+ * review preview loads other pages into an iframe). Top-window-only guards in the
+ * changelog already stop the review loop; this also keeps a second Bill/Quinn
+ * widget from booting inside the preview. The engine auto-initialises only when
+ * window.SomaGuideConfig is present, so removing it in a sub-frame confines the
+ * widget to the top window. Runs synchronously before the deferred soma-guide.js
+ * module executes. */
+if (typeof window !== 'undefined' && window.self !== window.top) {
+  try { delete window.SomaGuideConfig; } catch (e) { window.SomaGuideConfig = undefined; }
+}

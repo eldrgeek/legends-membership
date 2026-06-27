@@ -579,6 +579,7 @@ function openPreview(page, id) {
 function closePreview() {
   _previewId = null;
   _reviewActive = false;
+  _activeReviewId = null;
   _clearReviewSession();
   var sessionNote = document.getElementById('pp-session-note');
   if (sessionNote) sessionNote.style.display = 'none';
@@ -912,6 +913,7 @@ function renderNewRequests() {
 
 // ── Review session state (beforeunload guard + sessionStorage restore) ────────
 var _reviewActive = false;
+var _activeReviewId = null;
 var _REVIEW_SS_KEY = 'legends-review-pending';
 
 function _saveReviewToSession(r) {
@@ -1115,6 +1117,13 @@ function crReview(id) {
   var r = _changeRequests.filter(function (x) { return x.id === id; })[0];
   if (!r) return;
 
+  // Re-entrancy guard: if this exact review is already active, do NOT start it
+  // again. The preview iframe boots its own auth (shared Supabase storage), which
+  // fires this page's auth handler, which re-runs the load+restore step, which
+  // re-calls crReview, which reloads the iframe... a loop that stacks Quinn voice
+  // sessions and keeps re-opening the preview. This guard severs that loop.
+  if (_reviewActive && _activeReviewId === id) return;
+
   var raw = (r.page || '').trim();
   // A change whose page is THIS changelog page must not be loaded into its own
   // preview iframe (that loops). Treat a self-referential page as "no page" so
@@ -1158,6 +1167,7 @@ function crReview(id) {
 
   // Mark review active now — covers all paths below (external URL, no-page, same-origin).
   _reviewActive = true;
+  _activeReviewId = id;
   _saveReviewToSession(r);
   var sessionNote = document.getElementById('pp-session-note');
   if (sessionNote) sessionNote.style.display = '';
@@ -1398,7 +1408,11 @@ SomaAuth.onAuthStateChange(function(event, session) {
           // Only the TOP window restores an interrupted review. Inside an embedded
           // preview iframe (same-origin), reading the shared sessionStorage and
           // re-calling crReview would recurse into nested iframes + stacked Quinns.
-          if (window.self === window.top) {
+          // Run the restore at most ONCE per page load. The auth handler can re-run
+          // this init block on token-refresh/storage events (which the preview iframe
+          // triggers); without this flag, each re-run would re-fire crReview.
+          if (window.self === window.top && !window.__reviewRestoreDone) {
+            window.__reviewRestoreDone = true;
             var saved = sessionStorage.getItem(_REVIEW_SS_KEY);
             if (saved) {
               var pr = JSON.parse(saved);
