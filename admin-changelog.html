@@ -13,6 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/js/soma-auth-config.js"></script>
   <script src="/js/soma-auth.js"></script>
+  <script src="/js/changelog-diff.js"></script>
   <style>
     .page-hero { background: var(--navy); padding: 100px 24px 48px; text-align: center; color: var(--white); }
     .page-hero h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold); margin-bottom: 8px; }
@@ -144,6 +145,10 @@
     .pp-open { color: var(--gold); font-size: 0.78rem; text-decoration: none; }
     .pp-close { background: none; border: none; color: #fff; font-size: 1.3rem; line-height: 1; }
     .pp-session-note { font-size: 0.72rem; color: rgba(255,255,255,0.5); white-space: nowrap; }
+    .pp-modes { display: inline-flex; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; overflow: hidden; }
+    .pp-mode { background: transparent; color: rgba(255,255,255,0.75); border: none; padding: 5px 12px; font-size: 0.76rem; font-weight: 600; }
+    .pp-mode + .pp-mode { border-left: 1px solid rgba(255,255,255,0.2); }
+    .pp-mode.active { background: var(--gold); color: var(--navy); }
     .page-preview iframe { width: 100%; height: 65vh; border: none; display: block; background: #fff; }
 
     /* New request form */
@@ -348,6 +353,10 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
         <div>
           <div class="pp-title" id="preview-title">Preview</div>
           <div class="pp-page" id="preview-page"></div>
+        </div>
+        <div class="pp-modes" id="preview-modes" style="display:none;" role="tablist">
+          <button type="button" class="pp-mode active" id="preview-mode-diff" data-mode="diff">What changed</button>
+          <button type="button" class="pp-mode" id="preview-mode-live" data-mode="live">Live page</button>
         </div>
         <button type="button" class="pp-accept" id="preview-accept" style="display:none;">&#10003; Accept</button>
         <button type="button" class="pp-refine" id="preview-refine">Needs refinement</button>
@@ -580,9 +589,13 @@ function closePreview() {
   _previewId = null;
   _reviewActive = false;
   _activeReviewId = null;
+  _previewMode = 'diff';
+  _previewCtx = null;
   _clearReviewSession();
   var sessionNote = document.getElementById('pp-session-note');
   if (sessionNote) sessionNote.style.display = 'none';
+  var modes = document.getElementById('preview-modes');
+  if (modes) modes.style.display = 'none';
   document.getElementById('page-preview').style.display = 'none';
   var frame = document.getElementById('preview-frame');
   frame.removeAttribute('srcdoc');
@@ -1084,6 +1097,39 @@ function crRevert(id) {
 // (fall back to the commit diff on GitHub). For awaiting-review items the preview
 // also surfaces an Accept (sign-off) button.
 var REPO_COMMIT_BASE = 'https://github.com/eldrgeek/legends-membership/commit/';
+var REPO_API_BASE = 'https://api.github.com/repos/eldrgeek/legends-membership/commits/';
+
+// Per-sha cache of GitHub commit fetches so re-opening a review never refetches.
+// Each entry is a Promise resolving to { ok, commit } | { ok:false, error }.
+// Unauthenticated GitHub is 60 req/hr/IP; caching keeps a review session well
+// under that. This is pure data — fetching NEVER re-calls crReview, so it cannot
+// re-enter the review loop the guards below protect against.
+var _commitCache = Object.create(null);
+function fetchCommit(sha) {
+  if (!sha) return Promise.resolve({ ok: false, error: 'no-sha' });
+  if (_commitCache[sha]) return _commitCache[sha];
+  var p = fetch(REPO_API_BASE + encodeURIComponent(sha), {
+    headers: { 'Accept': 'application/vnd.github+json' }
+  }).then(function (res) {
+    if (!res.ok) return { ok: false, error: 'http-' + res.status };
+    return res.json().then(function (json) { return { ok: true, commit: json }; });
+  }).catch(function (e) {
+    return { ok: false, error: (e && e.message) || 'network' };
+  });
+  // Cache the resolved value; on a transient failure drop the cache entry so a
+  // later re-open can retry (don't permanently poison the sha).
+  p = p.then(function (r) {
+    if (!r.ok) { try { delete _commitCache[sha]; } catch (e) {} }
+    return r;
+  });
+  _commitCache[sha] = p;
+  return p;
+}
+
+// Preview "What changed" (diff) vs "Live page" toggle. Tracks the active review's
+// data so the toggle can rebuild either view without re-entering crReview.
+var _previewMode = 'diff';
+var _previewCtx = null; // { id, r, commitResult, pageHref, diffHtml }
 
 // Quinn introduce-once: full self-intro on the first review per browser, brief
 // greeting on every return — the same pattern Bill uses (localStorage-gated). We
@@ -1152,18 +1198,36 @@ function crReview(id) {
 
   // Hand the walkthrough to the reviewer teammate (Quinn — own voice). Tell Quinn the
   // truth about state so it summarizes correctly rather than claiming work shipped.
-  if (window.somaGuide && typeof window.somaGuide.reviewChange === 'function') {
+  //
+  // `commit` is the GitHub commit JSON when we have it (enriches the brief with the
+  // real commit subject + files); null/undefined falls back to the description. This
+  // helper is called twice for committed changes: once immediately (description-based,
+  // so Quinn starts promptly while the diff loads), then again once the commit fetch
+  // resolves with the accurate, front-loaded summary. It does NOT touch crReview, so
+  // it cannot re-enter the review loop.
+  function speakReview(commit) {
+    if (!(window.somaGuide && typeof window.somaGuide.reviewChange === 'function')) return;
+    var summary;
+    if (isBlocked) {
+      // Keep the genuine blocked-state wording exactly as before.
+      summary = 'This request hasn’t been completed yet'
+        + (blockedReason ? ' — ' + blockedReason : '') + '. Nothing was applied to the site.';
+    } else if (window.ChangelogDiff && typeof window.ChangelogDiff.buildReviewSummary === 'function') {
+      summary = window.ChangelogDiff.buildReviewSummary(commit || null, r.description, r.title);
+    } else {
+      summary = r.description || r.title;
+    }
     try {
       window.somaGuide.reviewChange({
         title: r.title,
         description: r.description,
         page: isBlocked ? '' : r.page,
-        summary: isBlocked
-          ? ('This request hasn’t been completed yet' + (blockedReason ? ' — ' + blockedReason : '') + '. Nothing was applied to the site.')
-          : (r.description || r.title)
+        summary: summary
       });
     } catch (e) {}
   }
+  // Prompt start: description-based brief now; enriched after the commit fetch.
+  speakReview(null);
 
   // Mark review active now — covers all paths below (external URL, no-page, same-origin).
   _reviewActive = true;
@@ -1235,6 +1299,67 @@ function crReview(id) {
     document.getElementById('preview-open-tab').style.display = '';
   }
 
+  // ── "What changed" diff view (default for committed, non-blocked changes) ──────
+  // When the change has a real commit, fetch its diff from the public GitHub API
+  // and render it into the preview iframe via srcdoc (sandboxed, dark code panel).
+  // The header toggle flips between this diff and the existing "Live page" iframe.
+  // The fetch is pure data: it renders + re-speaks Quinn's enriched brief, and
+  // NEVER calls crReview, so none of the loop guards above are weakened.
+  var modesEl = document.getElementById('preview-modes');
+  var liveHref = (raw && !/^https?:\/\//i.test(raw))
+    ? '/' + raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '')
+    : (raw && raw.indexOf(location.host) !== -1
+        ? '/' + raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '') : null);
+
+  _previewMode = 'diff';
+  _previewCtx = { id: id, r: r, commitResult: null, pageHref: liveHref, diffHtml: null };
+
+  if (!isBlocked && r.commit_sha && window.ChangelogDiff) {
+    if (modesEl) {
+      modesEl.style.display = '';
+      // Live tab only meaningful when there's an embeddable same-origin page.
+      document.getElementById('preview-mode-live').style.display = liveHref ? '' : 'none';
+      _setPreviewMode('diff');
+    }
+    // Loading state while the commit fetch is in flight.
+    var loadingFrame = document.getElementById('preview-frame');
+    loadingFrame.removeAttribute('srcdoc');
+    loadingFrame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+      + 'body{margin:0;padding:40px 24px;background:#0d1117;color:#8b949e;'
+      + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:0.9rem;}'
+      + '</style></head><body>Loading diff…</body></html>';
+    document.getElementById('preview-page').textContent = 'commit ' + r.commit_sha.slice(0, 8);
+    var commitLink = document.getElementById('preview-open-tab');
+    commitLink.href = REPO_COMMIT_BASE + r.commit_sha;
+    commitLink.style.display = '';
+
+    var _fetchId = id;
+    fetchCommit(r.commit_sha).then(function (result) {
+      // If the user closed or switched reviews while we were fetching, drop it.
+      if (_activeReviewId !== _fetchId || !_reviewActive) return;
+      _previewCtx.commitResult = result;
+      if (result.ok) {
+        _previewCtx.diffHtml = window.ChangelogDiff.renderDiffHtml(result.commit, {
+          sha: r.commit_sha,
+          pageHref: liveHref,
+          description: r.description
+        });
+        // Re-speak Quinn's brief, now front-loaded from the real commit.
+        speakReview(result.commit);
+      } else {
+        _previewCtx.diffHtml = _diffFallbackHtml(r, result.error);
+      }
+      // Only paint if the diff view is still the active mode.
+      if (_previewMode === 'diff') {
+        var f = document.getElementById('preview-frame');
+        f.removeAttribute('srcdoc');
+        f.srcdoc = _previewCtx.diffHtml;
+      }
+    });
+  } else if (modesEl) {
+    modesEl.style.display = 'none';
+  }
+
   var acc = document.getElementById('preview-accept');
   if (r.status === 'awaiting-review' && !isBlocked) {
     acc.style.display = '';
@@ -1253,6 +1378,73 @@ function crReview(id) {
   if (el) el.classList.add('previewing');
   document.getElementById('page-preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// Fallback panel when the GitHub diff can't be fetched (rate limit / network /
+// 404). Never throws; keeps the description + commit link so the review proceeds.
+function _diffFallbackHtml(r, error) {
+  var esc = (window.ChangelogDiff && window.ChangelogDiff._esc) ||
+    function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+  var href = REPO_COMMIT_BASE + (r.commit_sha || '');
+  var why = error === 'http-403' ? ' (GitHub rate limit — try again in a bit)'
+    : error === 'http-404' ? ' (commit not found)'
+    : '';
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+    + 'body{margin:0;padding:24px 20px;background:#0d1117;color:#c9d1d9;'
+    + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;line-height:1.6;font-size:0.88rem;}'
+    + '.note{background:#27211a;border:1px solid #9e6a03;border-radius:8px;padding:12px 14px;color:#e3b341;margin:0 0 16px;}'
+    + '.desc{white-space:pre-wrap;color:#c9d1d9;}'
+    + 'a{color:#58a6ff;font-weight:600;}'
+    + '</style></head><body>'
+    + '<div class="note">Couldn’t load the diff' + why + ' — '
+    + '<a href="' + esc(href) + '" target="_blank" rel="noopener">view it on GitHub ↗</a></div>'
+    + (r.description ? '<div class="desc">' + esc(r.description) + '</div>' : '')
+    + '</body></html>';
+}
+
+// Switch the preview between the diff ("What changed") and the live page. Reuses
+// the existing same-origin iframe behavior for live mode and never re-enters
+// crReview, so the review loop guards stay intact.
+function _setPreviewMode(mode) {
+  _previewMode = mode;
+  var diffBtn = document.getElementById('preview-mode-diff');
+  var liveBtn = document.getElementById('preview-mode-live');
+  if (diffBtn) diffBtn.classList.toggle('active', mode === 'diff');
+  if (liveBtn) liveBtn.classList.toggle('active', mode === 'live');
+  if (!_previewCtx) return;
+  var frame = document.getElementById('preview-frame');
+  var openLink = document.getElementById('preview-open-tab');
+  var r = _previewCtx.r;
+  if (mode === 'live' && _previewCtx.pageHref) {
+    frame.removeAttribute('srcdoc');
+    frame.src = _previewCtx.pageHref;
+    document.getElementById('preview-page').textContent = _previewCtx.pageHref;
+    if (openLink) { openLink.href = _previewCtx.pageHref; openLink.style.display = ''; }
+  } else {
+    // Diff mode: paint the cached diff (or loading state until the fetch lands).
+    frame.removeAttribute('srcdoc');
+    frame.srcdoc = _previewCtx.diffHtml || ('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+      + 'body{margin:0;padding:40px 24px;background:#0d1117;color:#8b949e;'
+      + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:0.9rem;}'
+      + '</style></head><body>Loading diff…</body></html>');
+    if (r && r.commit_sha) {
+      document.getElementById('preview-page').textContent = 'commit ' + r.commit_sha.slice(0, 8);
+      if (openLink) { openLink.href = REPO_COMMIT_BASE + r.commit_sha; openLink.style.display = ''; }
+    }
+  }
+}
+
+// Wire the diff/live toggle once. (Buttons live in the static header.)
+(function wirePreviewModeToggle() {
+  document.addEventListener('DOMContentLoaded', function () {
+    var modes = document.getElementById('preview-modes');
+    if (!modes) return;
+    modes.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.pp-mode') : null;
+      if (!btn) return;
+      _setPreviewMode(btn.getAttribute('data-mode'));
+    });
+  });
+})();
 
 // ── Interaction handlers ──────────────────────────────────────────────────────
 
