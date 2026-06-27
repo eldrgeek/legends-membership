@@ -137,3 +137,94 @@ describe('renderDiffHtml', () => {
     assert.match(html, /b-renamed/);
   });
 });
+
+describe('extractAddedSnippets', () => {
+  test('pulls visible text from added HTML lines (tags/entities stripped)', () => {
+    const file = {
+      filename: 'transition-services.html',
+      patch: '@@ -10,3 +10,5 @@ <section class="goals">\n'
+        + '+    <li class="goal">Secure ongoing transition coaching for every Legend</li>\n'
+        + '+    <li class="goal">Build a peer mentor network &amp; warm intros</li>\n'
+        + ' <p>existing context line</p>'
+    };
+    const snips = CD.extractAddedSnippets(file);
+    assert.ok(snips.length >= 2, 'should find both added goals');
+    assert.ok(snips.some((s) => /Secure ongoing transition coaching for every Legend/.test(s)));
+    // Entities decoded, tags gone.
+    assert.ok(snips.some((s) => /Build a peer mentor network & warm intros/.test(s)));
+    assert.ok(!snips.some((s) => /<li/.test(s)), 'tags must be stripped');
+  });
+
+  test('drops short / non-distinctive snippets below minLen', () => {
+    const file = { patch: '+<span>ok</span>\n+<div>This is a long enough distinctive line</div>' };
+    const snips = CD.extractAddedSnippets(file);
+    assert.ok(snips.every((s) => s.length >= 12));
+    assert.ok(snips.some((s) => /long enough distinctive line/.test(s)));
+  });
+
+  test('ignores the +++ file header line', () => {
+    const file = { patch: '+++ b/page.html\n+<h2>A meaningful added heading here</h2>' };
+    const snips = CD.extractAddedSnippets(file);
+    assert.ok(!snips.some((s) => /b\/page\.html/.test(s)));
+    assert.ok(snips.some((s) => /A meaningful added heading here/.test(s)));
+  });
+
+  test('pure removal yields no snippets (the no-match fallback signal)', () => {
+    const file = { patch: '@@ -1,3 +1,0 @@\n-<div class="stats">Removed entirely</div>\n-<p>and more</p>' };
+    assert.equal(CD.extractAddedSnippets(file).length, 0);
+  });
+
+  test('null / empty patch yields no snippets and never throws', () => {
+    assert.equal(CD.extractAddedSnippets(null).length, 0);
+    assert.equal(CD.extractAddedSnippets({}).length, 0);
+    assert.equal(CD.extractAddedSnippets({ patch: '' }).length, 0);
+  });
+
+  test('sorts longest (most distinctive) first', () => {
+    const file = {
+      patch: '+<p>Short distinctive bit</p>\n'
+        + '+<p>This is a considerably longer and more distinctive snippet of text</p>'
+    };
+    const snips = CD.extractAddedSnippets(file);
+    assert.ok(snips[0].length >= snips[snips.length - 1].length);
+    assert.match(snips[0], /considerably longer/);
+  });
+});
+
+describe('pickPageFile', () => {
+  test('matches the file by page basename (with/without .html)', () => {
+    const commit = {
+      files: [
+        { filename: 'css/site.css' },
+        { filename: 'transition-services.html' },
+        { filename: 'index.html' }
+      ]
+    };
+    assert.equal(CD.pickPageFile(commit, '/transition-services').filename, 'transition-services.html');
+    assert.equal(CD.pickPageFile(commit, '/transition-services.html').filename, 'transition-services.html');
+  });
+
+  test('falls back to the first HTML file when no basename match', () => {
+    const commit = { files: [{ filename: 'a.css' }, { filename: 'about.html' }] };
+    assert.equal(CD.pickPageFile(commit, '/nope').filename, 'about.html');
+  });
+
+  test('falls back to the first file when no HTML file present', () => {
+    const commit = { files: [{ filename: 'a.css' }, { filename: 'b.js' }] };
+    assert.equal(CD.pickPageFile(commit, '/x').filename, 'a.css');
+  });
+
+  test('returns null for an empty commit', () => {
+    assert.equal(CD.pickPageFile({ files: [] }, '/x'), null);
+    assert.equal(CD.pickPageFile(null, '/x'), null);
+  });
+});
+
+describe('stripHtml', () => {
+  test('removes tags and decodes common entities', () => {
+    assert.equal(CD.stripHtml('<b>Greg &amp; Mike</b> &mdash; goals'), 'Greg & Mike — goals');
+    assert.equal(CD.stripHtml('plain text'), 'plain text');
+    assert.equal(CD.stripHtml(null), '');
+  });
+});
+

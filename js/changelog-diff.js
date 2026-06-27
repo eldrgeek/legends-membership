@@ -90,6 +90,111 @@
     return out || desc || ttl;
   }
 
+  // Strip HTML tags and decode the handful of entities a page snippet is likely
+  // to carry, leaving the human-visible text. Pure, defensive, never throws.
+  function stripHtml(s) {
+    var t = String(s == null ? '' : s);
+    // Drop tags entirely (greedy-safe, non-nested).
+    t = t.replace(/<[^>]*>/g, ' ');
+    // Decode the common named/numeric entities so the visible text matches what
+    // the rendered DOM actually contains.
+    t = t.replace(/&nbsp;/gi, ' ')
+         .replace(/&amp;/gi, '&')
+         .replace(/&lt;/gi, '<')
+         .replace(/&gt;/gi, '>')
+         .replace(/&quot;/gi, '"')
+         .replace(/&#39;/gi, "'")
+         .replace(/&rsquo;|&#8217;/gi, '’')
+         .replace(/&lsquo;|&#8216;/gi, '‘')
+         .replace(/&rdquo;|&#8221;/gi, '”')
+         .replace(/&ldquo;|&#8220;/gi, '“')
+         .replace(/&mdash;|&#8212;/gi, '—')
+         .replace(/&ndash;|&#8211;/gi, '–')
+         .replace(/&hellip;|&#8230;/gi, '…')
+         .replace(/&#(\d+);/g, function (_, n) {
+           try { return String.fromCharCode(parseInt(n, 10)); } catch (e) { return ' '; }
+         });
+    return t.replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * From a single commit `file` object, pull the human-visible text snippets that
+   * the change ADDED to the page — the strings we can later search for in the
+   * rendered live page to locate where the change happened.
+   *
+   * We read the unified-diff `patch`, take lines starting with '+' (excluding the
+   * '+++ ' file header), strip HTML tags/entities to the visible text, and keep
+   * only snippets distinctive enough to find reliably (>= minLen visible chars).
+   * Results are de-duplicated and sorted longest-first (most distinctive first),
+   * so the caller can try the strongest snippet before weaker ones.
+   *
+   * Pure: no DOM, no network. A pure REMOVAL (deletions only) yields []  — that's
+   * the signal the caller uses to fall back to a "removed content" note.
+   *
+   * @param {object|null} file    A commit file object ({ patch }).
+   * @param {object} [opts]
+   * @param {number} [opts.minLen=12]  Minimum visible-char length to keep.
+   * @param {number} [opts.max=6]      Cap on returned snippets.
+   * @returns {string[]} visible-text snippets, longest first.
+   */
+  function extractAddedSnippets(file, opts) {
+    opts = opts || {};
+    var minLen = typeof opts.minLen === 'number' ? opts.minLen : 12;
+    var max = typeof opts.max === 'number' ? opts.max : 6;
+    var patch = file && file.patch;
+    if (!patch) return [];
+    var lines = String(patch).split('\n');
+    var seen = Object.create(null);
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      // Added content lines start with a single '+'. Skip the '+++ ' header.
+      if (ln.charAt(0) !== '+' || ln.indexOf('+++') === 0) continue;
+      var visible = stripHtml(ln.slice(1));
+      if (visible.length < minLen) continue;
+      var key = visible.toLowerCase();
+      if (seen[key]) continue;
+      seen[key] = true;
+      out.push(visible);
+    }
+    // Longest (most distinctive) first.
+    out.sort(function (a, b) { return b.length - a.length; });
+    if (out.length > max) out = out.slice(0, max);
+    return out;
+  }
+
+  /**
+   * Pick the commit `file` whose change we should highlight on a given page: the
+   * file whose basename matches the page path, else the first HTML file, else the
+   * first file. Pure; returns the file object or null.
+   *
+   * @param {object|null} commit  GitHub commit JSON.
+   * @param {string} [pageHref]   Live-page path (e.g. "/transition-services").
+   * @returns {object|null}
+   */
+  function pickPageFile(commit, pageHref) {
+    var files = (commit && commit.files) || [];
+    if (!files.length) return null;
+    var base = String(pageHref || '').split('?')[0].split('#')[0]
+      .replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '').replace(/\/$/, '');
+    if (base) {
+      // Try exact basename match, with and without an .html extension.
+      var wantA = base.toLowerCase();
+      var wantB = base.replace(/\.html$/i, '').toLowerCase();
+      for (var i = 0; i < files.length; i++) {
+        var fn = String((files[i] && files[i].filename) || '').split('/').pop();
+        var fnLc = fn.toLowerCase();
+        var fnNoExt = fnLc.replace(/\.html$/i, '');
+        if (fnLc === wantA || fnNoExt === wantB) return files[i];
+      }
+    }
+    // Else the first HTML file.
+    for (var j = 0; j < files.length; j++) {
+      if (/\.html?$/i.test((files[j] && files[j].filename) || '')) return files[j];
+    }
+    return files[0];
+  }
+
   var STATUS_LABEL = {
     added: 'added', modified: 'modified', removed: 'removed',
     renamed: 'renamed', changed: 'modified', copied: 'copied'
@@ -227,6 +332,9 @@
   global.ChangelogDiff = {
     buildReviewSummary: buildReviewSummary,
     renderDiffHtml: renderDiffHtml,
+    extractAddedSnippets: extractAddedSnippets,
+    pickPageFile: pickPageFile,
+    stripHtml: stripHtml,
     // exposed for tests
     _firstLine: firstLine,
     _esc: esc,

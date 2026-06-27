@@ -149,6 +149,8 @@
     .pp-mode { background: transparent; color: rgba(255,255,255,0.75); border: none; padding: 5px 12px; font-size: 0.76rem; font-weight: 600; }
     .pp-mode + .pp-mode { border-left: 1px solid rgba(255,255,255,0.2); }
     .pp-mode.active { background: var(--gold); color: var(--navy); }
+    .pp-banner { background: #fffdf5; border-bottom: 1px solid #e6cf8a; color: #8a6d1a; font-size: 0.8rem; padding: 8px 16px; display: flex; align-items: center; gap: 12px; }
+    .pp-banner .pp-banner-act { background: var(--navy); color: #fff; border: none; border-radius: 5px; padding: 4px 10px; font-size: 0.74rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .page-preview iframe { width: 100%; height: 65vh; border: none; display: block; background: #fff; }
 
     /* New request form */
@@ -355,8 +357,8 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
           <div class="pp-page" id="preview-page"></div>
         </div>
         <div class="pp-modes" id="preview-modes" style="display:none;" role="tablist">
-          <button type="button" class="pp-mode active" id="preview-mode-diff" data-mode="diff">What changed</button>
-          <button type="button" class="pp-mode" id="preview-mode-live" data-mode="live">Live page</button>
+          <button type="button" class="pp-mode active" id="preview-mode-live" data-mode="live">Live page</button>
+          <button type="button" class="pp-mode" id="preview-mode-diff" data-mode="diff">What changed</button>
         </div>
         <button type="button" class="pp-accept" id="preview-accept" style="display:none;">&#10003; Accept</button>
         <button type="button" class="pp-refine" id="preview-refine">Needs refinement</button>
@@ -364,6 +366,7 @@ CREATE POLICY "Admin insert notes" ON public.changelog_notes FOR INSERT WITH CHE
         <span class="pp-session-note" id="pp-session-note" style="display:none;">Quinn is active &mdash; stay on this page</span>
         <button type="button" class="pp-close" onclick="closePreview()" aria-label="Close preview">&times;</button>
       </div>
+      <div class="pp-banner" id="preview-banner" style="display:none;"></div>
       <iframe id="preview-frame" title="Page preview" src="about:blank"></iframe>
     </div>
 
@@ -596,6 +599,9 @@ function closePreview() {
   if (sessionNote) sessionNote.style.display = 'none';
   var modes = document.getElementById('preview-modes');
   if (modes) modes.style.display = 'none';
+  // Tear down any live-page highlight we injected, and hide the banner.
+  _clearLivePageHighlight();
+  _setPreviewBanner('');
   document.getElementById('page-preview').style.display = 'none';
   var frame = document.getElementById('preview-frame');
   frame.removeAttribute('srcdoc');
@@ -1299,39 +1305,57 @@ function crReview(id) {
     document.getElementById('preview-open-tab').style.display = '';
   }
 
-  // ── "What changed" diff view (default for committed, non-blocked changes) ──────
-  // When the change has a real commit, fetch its diff from the public GitHub API
-  // and render it into the preview iframe via srcdoc (sandboxed, dark code panel).
-  // The header toggle flips between this diff and the existing "Live page" iframe.
-  // The fetch is pure data: it renders + re-speaks Quinn's enriched brief, and
-  // NEVER calls crReview, so none of the loop guards above are weakened.
+  // ── Live page (default) + "What changed" diff (secondary toggle) ──────────────
+  // Mike's call: show the REAL PAGE first, scrolled to and highlighting WHERE the
+  // change happened — the diff is too code-y as a default. So when the change has a
+  // real same-origin page we default to the live iframe (already loaded by the
+  // `else` branch above) and use the commit's added lines to find + highlight the
+  // changed text on that page. The diff becomes the optional "What changed" toggle.
+  // When there's no embeddable page we keep diff-first (or the summary card).
+  //
+  // The commit fetch is pure data: it renders the diff, re-speaks Quinn's enriched
+  // brief, and drives the highlight. It NEVER calls crReview, so none of the loop
+  // guards above (self!==top, _activeReviewId re-entrancy, __reviewRestoreDone) are
+  // weakened — loading r.page is exactly what those guards already protect.
   var modesEl = document.getElementById('preview-modes');
   var liveHref = (raw && !/^https?:\/\//i.test(raw))
     ? '/' + raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '')
     : (raw && raw.indexOf(location.host) !== -1
         ? '/' + raw.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '') : null);
 
-  _previewMode = 'diff';
-  _previewCtx = { id: id, r: r, commitResult: null, pageHref: liveHref, diffHtml: null };
+  // Default to the live page when we have one; otherwise the diff is the view.
+  var defaultMode = liveHref ? 'live' : 'diff';
+  _previewMode = defaultMode;
+  _previewCtx = {
+    id: id, r: r, commitResult: null, pageHref: liveHref,
+    diffHtml: null, snippets: null, highlightDone: false
+  };
 
   if (!isBlocked && r.commit_sha && window.ChangelogDiff) {
     if (modesEl) {
       modesEl.style.display = '';
       // Live tab only meaningful when there's an embeddable same-origin page.
       document.getElementById('preview-mode-live').style.display = liveHref ? '' : 'none';
-      _setPreviewMode('diff');
+      _setPreviewMode(defaultMode);
     }
-    // Loading state while the commit fetch is in flight.
-    var loadingFrame = document.getElementById('preview-frame');
-    loadingFrame.removeAttribute('srcdoc');
-    loadingFrame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
-      + 'body{margin:0;padding:40px 24px;background:#0d1117;color:#8b949e;'
-      + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:0.9rem;}'
-      + '</style></head><body>Loading diff…</body></html>';
-    document.getElementById('preview-page').textContent = 'commit ' + r.commit_sha.slice(0, 8);
     var commitLink = document.getElementById('preview-open-tab');
-    commitLink.href = REPO_COMMIT_BASE + r.commit_sha;
-    commitLink.style.display = '';
+    if (defaultMode === 'live') {
+      // Live page already loading in the iframe (from the `else` branch above).
+      document.getElementById('preview-page').textContent = liveHref;
+      commitLink.href = liveHref;
+      commitLink.style.display = '';
+    } else {
+      // Diff-only: show a loading state while the commit fetch is in flight.
+      var loadingFrame = document.getElementById('preview-frame');
+      loadingFrame.removeAttribute('srcdoc');
+      loadingFrame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+        + 'body{margin:0;padding:40px 24px;background:#0d1117;color:#8b949e;'
+        + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:0.9rem;}'
+        + '</style></head><body>Loading diff…</body></html>';
+      document.getElementById('preview-page').textContent = 'commit ' + r.commit_sha.slice(0, 8);
+      commitLink.href = REPO_COMMIT_BASE + r.commit_sha;
+      commitLink.style.display = '';
+    }
 
     var _fetchId = id;
     fetchCommit(r.commit_sha).then(function (result) {
@@ -1344,16 +1368,25 @@ function crReview(id) {
           pageHref: liveHref,
           description: r.description
         });
+        // Pull the visible-text snippets the change ADDED, for the page highlight.
+        try {
+          var file = window.ChangelogDiff.pickPageFile(result.commit, liveHref);
+          _previewCtx.snippets = window.ChangelogDiff.extractAddedSnippets(file);
+        } catch (e) { _previewCtx.snippets = []; }
         // Re-speak Quinn's brief, now front-loaded from the real commit.
         speakReview(result.commit);
       } else {
         _previewCtx.diffHtml = _diffFallbackHtml(r, result.error);
+        _previewCtx.snippets = [];
       }
-      // Only paint if the diff view is still the active mode.
+      // Paint whichever view is active. Diff: swap the srcdoc. Live: highlight the
+      // change location on the already-loaded page (waits for iframe load itself).
       if (_previewMode === 'diff') {
         var f = document.getElementById('preview-frame');
         f.removeAttribute('srcdoc');
         f.srcdoc = _previewCtx.diffHtml;
+      } else if (_previewMode === 'live') {
+        _highlightChangeOnLivePage(_fetchId);
       }
     });
   } else if (modesEl) {
@@ -1405,6 +1438,7 @@ function _diffFallbackHtml(r, error) {
 // the existing same-origin iframe behavior for live mode and never re-enters
 // crReview, so the review loop guards stay intact.
 function _setPreviewMode(mode) {
+  var changingFrom = _previewMode;
   _previewMode = mode;
   var diffBtn = document.getElementById('preview-mode-diff');
   var liveBtn = document.getElementById('preview-mode-live');
@@ -1415,12 +1449,23 @@ function _setPreviewMode(mode) {
   var openLink = document.getElementById('preview-open-tab');
   var r = _previewCtx.r;
   if (mode === 'live' && _previewCtx.pageHref) {
-    frame.removeAttribute('srcdoc');
-    frame.src = _previewCtx.pageHref;
+    _setPreviewBanner('');
+    // Reload the page only when we're actually leaving the diff (the live page may
+    // already be loaded; reloading needlessly would refire the iframe load).
+    if (changingFrom !== 'live' || frame.getAttribute('src') !== _previewCtx.pageHref) {
+      _previewCtx.highlightDone = false;
+      frame.removeAttribute('srcdoc');
+      frame.src = _previewCtx.pageHref;
+    }
     document.getElementById('preview-page').textContent = _previewCtx.pageHref;
     if (openLink) { openLink.href = _previewCtx.pageHref; openLink.style.display = ''; }
+    // Re-run the highlight (waits for the iframe load internally). Only meaningful
+    // once the commit fetch has resolved with snippets; the fetch's own .then also
+    // calls this when live is the active mode, so whichever lands last wins.
+    if (_previewCtx.snippets) _highlightChangeOnLivePage(_previewCtx.id);
   } else {
-    // Diff mode: paint the cached diff (or loading state until the fetch lands).
+    // Diff mode: clean up any highlight banner, paint the cached diff (or loading).
+    _setPreviewBanner('');
     frame.removeAttribute('srcdoc');
     frame.srcdoc = _previewCtx.diffHtml || ('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
       + 'body{margin:0;padding:40px 24px;background:#0d1117;color:#8b949e;'
@@ -1431,6 +1476,170 @@ function _setPreviewMode(mode) {
       if (openLink) { openLink.href = REPO_COMMIT_BASE + r.commit_sha; openLink.style.display = ''; }
     }
   }
+}
+
+// Small non-blocking banner above the iframe (e.g. "this change removed content").
+// `html` empty hides it. `actLabel`/`actMode` add a button that switches the view.
+function _setPreviewBanner(html, actLabel, actMode) {
+  var el = document.getElementById('preview-banner');
+  if (!el) return;
+  if (!html) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.innerHTML = '<span>' + html + '</span>';
+  if (actLabel) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pp-banner-act';
+    btn.textContent = actLabel;
+    btn.onclick = function () { _setPreviewMode(actMode || 'diff'); };
+    el.appendChild(btn);
+  }
+  el.style.display = '';
+}
+
+// CSS injected into the live-page iframe to mark the changed region. Kept here so
+// the same string drives apply + cleanup.
+var _HL_STYLE_ID = '__cl_review_highlight_style';
+var _HL_CLASS = '__cl_review_highlight';
+var _HL_CSS = '@keyframes __clReviewPulse{0%{box-shadow:0 0 0 0 rgba(212,160,23,0.55);}'
+  + '70%{box-shadow:0 0 0 10px rgba(212,160,23,0);}100%{box-shadow:0 0 0 0 rgba(212,160,23,0);}}'
+  + '.' + _HL_CLASS + '{outline:3px solid #d4a017 !important;outline-offset:2px !important;'
+  + 'background:rgba(212,160,23,0.16) !important;border-radius:3px;'
+  + 'animation:__clReviewPulse 1.4s ease-out 2;scroll-margin:40vh;}';
+
+// Remove any highlight we injected into a live-page iframe document. Defensive:
+// the doc may be cross-origin/gone; swallow everything.
+function _clearLivePageHighlight() {
+  try {
+    var frame = document.getElementById('preview-frame');
+    var doc = frame && frame.contentDocument;
+    if (!doc) return;
+    var marked = doc.querySelectorAll('.' + _HL_CLASS);
+    for (var i = 0; i < marked.length; i++) marked[i].classList.remove(_HL_CLASS);
+    var style = doc.getElementById(_HL_STYLE_ID);
+    if (style && style.parentNode) style.parentNode.removeChild(style);
+  } catch (e) {}
+}
+
+// Highlight WHERE the change happened on the live page now loaded in the preview
+// iframe. Uses the already-fetched commit's ADDED visible-text snippets to find
+// the matching element(s) in the same-origin iframe document, scrolls the first
+// into view, and applies a temporary gold outline + pulse. Pure removals (no
+// added text) or no match → show the page normally + a small "removed content"
+// banner pointing at the diff. NEVER throws and NEVER calls crReview, so the
+// review-loop guards stay intact. `expectId` ties this run to the active review.
+function _highlightChangeOnLivePage(expectId) {
+  // Bail if the review changed out from under us, or this isn't live mode.
+  if (_activeReviewId !== expectId || !_reviewActive) return;
+  if (_previewMode !== 'live' || !_previewCtx || !_previewCtx.pageHref) return;
+  var snippets = _previewCtx.snippets;
+  if (!snippets) return; // commit fetch not in yet; the fetch's .then will call us.
+
+  var frame = document.getElementById('preview-frame');
+  if (!frame) return;
+
+  // Run the search once the iframe has finished loading the page. If it's already
+  // loaded (complete), run now; else wait for the single 'load' event.
+  var ran = false;
+  function run() {
+    if (ran) return; ran = true;
+    if (_activeReviewId !== expectId || !_reviewActive || _previewMode !== 'live') return;
+    var doc, win;
+    try {
+      doc = frame.contentDocument;
+      win = frame.contentWindow;
+      // Cross-origin / login redirect: contentDocument throws or is null. Fall back.
+      if (!doc || !doc.body) throw new Error('no-doc');
+    } catch (e) {
+      // The page unexpectedly went cross-origin (e.g. redirected to login). Don't
+      // force a highlight — point the reviewer at the diff instead.
+      _setPreviewBanner('Couldn’t inspect this page to highlight the change.',
+        'See the diff', 'diff');
+      return;
+    }
+
+    // Pure removal (or extraction found nothing distinctive): nothing to find.
+    if (!snippets.length) {
+      _setPreviewBanner('This change removed content — see the diff for details.',
+        'See the diff', 'diff');
+      _previewCtx.highlightDone = true;
+      return;
+    }
+
+    _clearLivePageHighlight();
+    var matchedEl = null, matchedCount = 0;
+    try {
+      // Inject the highlight stylesheet into the iframe document.
+      if (!doc.getElementById(_HL_STYLE_ID)) {
+        var style = doc.createElement('style');
+        style.id = _HL_STYLE_ID;
+        style.textContent = _HL_CSS;
+        (doc.head || doc.documentElement).appendChild(style);
+      }
+      // Try each snippet (strongest first); highlight up to a few matched regions.
+      for (var s = 0; s < snippets.length && matchedCount < 3; s++) {
+        var el = _findElementWithText(doc, snippets[s]);
+        if (el && !el.classList.contains(_HL_CLASS)) {
+          el.classList.add(_HL_CLASS);
+          if (!matchedEl) matchedEl = el;
+          matchedCount++;
+        }
+      }
+    } catch (e2) { /* never let a DOM quirk break review */ }
+
+    if (matchedEl) {
+      try { matchedEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e3) {}
+      _setPreviewBanner('Highlighted where this change was made on the page.',
+        'See the diff', 'diff');
+      _previewCtx.highlightDone = true;
+    } else {
+      // We had added text but couldn't locate it (markup changed, dynamic render,
+      // etc.) — don't force it; offer the diff.
+      _setPreviewBanner('Couldn’t pinpoint the change on the page — view the diff to see exactly what changed.',
+        'See the diff', 'diff');
+    }
+  }
+
+  try {
+    if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+      // Give a tick for layout, then search.
+      setTimeout(run, 60);
+    }
+  } catch (e) { /* cross-origin readState read; fall through to load listener */ }
+  // Always also listen for load (covers the not-yet-loaded case and reloads).
+  frame.addEventListener('load', function onceLoad() {
+    frame.removeEventListener('load', onceLoad);
+    setTimeout(run, 60);
+  });
+}
+
+// Find the deepest element whose combined text contains `snippet` (case-insensitive,
+// whitespace-collapsed). Walks text nodes so we land on the smallest container that
+// actually holds the changed text, not an ancestor wrapping the whole page. Pure,
+// read-only, never throws.
+function _findElementWithText(doc, snippet) {
+  if (!doc || !snippet) return null;
+  var needle = String(snippet).replace(/\s+/g, ' ').trim().toLowerCase();
+  if (needle.length < 4) return null;
+  try {
+    var walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null, false);
+    var node;
+    while ((node = walker.nextNode())) {
+      var txt = (node.nodeValue || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (txt && txt.indexOf(needle) !== -1) {
+        // Prefer the parent element (the text node's container).
+        return node.parentElement || node.parentNode;
+      }
+    }
+    // Snippet may be split across child nodes; fall back to a coarser element scan.
+    var all = doc.body.getElementsByTagName('*');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      // Skip big containers — find a reasonably tight match.
+      var elTxt = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+      if (elTxt.indexOf(needle) !== -1 && elTxt.length < needle.length * 6) return el;
+    }
+  } catch (e) { return null; }
+  return null;
 }
 
 // Wire the diff/live toggle once. (Buttons live in the static header.)
