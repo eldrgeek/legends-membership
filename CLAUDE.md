@@ -1,5 +1,5 @@
 ---
-district: soma-core
+district: legends
 status: active
 depends_on: [soma-platform]
 capabilities: [supabase, auth, elevenlabs, netlify]
