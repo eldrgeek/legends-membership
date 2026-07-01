@@ -397,6 +397,28 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
     return (role === 'admin') || (user && ADMIN_EMAILS.indexOf(user.email) !== -1);
   }
 
+  // app_roles-backed authority (locke §3). Calls the SECURITY DEFINER RPC
+  // public.legends_is_admin(), which returns true if the caller holds a
+  // 'legends' or '*' admin grant in public.app_roles. This is the primary
+  // source of truth; the ADMIN_EMAILS allowlist is UI-only bootstrap that
+  // survives as an OR fallback until every admin is seeded into app_roles.
+  function appRolesIsAdmin() {
+    try {
+      var client = SomaAuth.getClient && SomaAuth.getClient();
+      if (!client || !client.rpc) return Promise.resolve(false);
+      return client.rpc('legends_is_admin').then(function (res) {
+        return !res.error && res.data === true;
+      }).catch(function () { return false; });
+    } catch (e) { return Promise.resolve(false); }
+  }
+
+  // Combined async gate: app_roles grant OR profiles.role==='admin' OR
+  // bootstrap email allowlist. Returns a Promise<boolean>.
+  function resolveIsAdmin(user, role) {
+    if (isAdmin(user, role)) return Promise.resolve(true); // fast path (profiles/allowlist)
+    return appRolesIsAdmin();
+  }
+
   // Committee privileges are nested: admins ARE committee members. True for
   // role 'admin' OR 'committee', or for an allowlisted bootstrap admin email.
   function isCommittee(user, role) {
@@ -1076,7 +1098,9 @@ ALTER TABLE public.bill_feedback ENABLE ROW LEVEL SECURITY;</pre>
     document.documentElement.style.visibility = '';
     SomaAuth.getRole(user).then(function(role) {
       updateAuthNav(user, role);
-      if (!isAdmin(user, role)) {
+      return resolveIsAdmin(user, role);
+    }).then(function(allowed) {
+      if (!allowed) {
         document.getElementById('not-authorized').style.display = 'flex';
         document.getElementById('admin-content').style.display = 'none';
       } else {

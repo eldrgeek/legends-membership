@@ -104,8 +104,37 @@ exports.handler = async function (event) {
     return jsonResponse(500, { error: 'Failed to verify caller role' });
   }
 
+  // app_roles-backed authority (locke §3): call legends_is_admin() as the
+  // CALLER (their JWT, not the service key) so auth.uid() resolves inside the
+  // SECURITY DEFINER RPC. Returns true iff the caller holds a 'legends' or '*'
+  // admin grant in public.app_roles. This is the primary source of truth.
+  let appRoleAdmin = false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/legends_is_admin`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${callerJwt}`, // caller identity, NOT service key
+        apikey: SERVICE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+    });
+    if (res.ok) {
+      const val = await res.json();
+      appRoleAdmin = val === true;
+    }
+  } catch (err) {
+    // Non-fatal: fall back to profiles/allowlist checks below.
+  }
+
+  // Bootstrap email allowlist is UI-only bootstrap and survives as an OR
+  // fallback until every admin is seeded into app_roles.
   const BOOTSTRAP_ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
-  if (callerRole !== 'admin' && !BOOTSTRAP_ADMIN_EMAILS.includes((callerUser.email || '').toLowerCase())) {
+  const isAuthorized =
+    appRoleAdmin ||
+    callerRole === 'admin' ||
+    BOOTSTRAP_ADMIN_EMAILS.includes((callerUser.email || '').toLowerCase());
+  if (!isAuthorized) {
     return jsonResponse(403, { error: 'Caller is not an admin' });
   }
 
