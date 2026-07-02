@@ -310,10 +310,6 @@ describe('Task 3 — NBRPA replacement in site copy', () => {
     assert.ok(!html.includes('NBRPA'), 'Found NBRPA in members/mo-evans.html');
   });
 
-  test('members/choo-smith.html: no NBRPA', () => {
-    const html = fs.readFileSync(path.join(ROOT, 'members/choo-smith.html'), 'utf8');
-    assert.ok(!html.includes('NBRPA'), 'Found NBRPA in members/choo-smith.html');
-  });
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -342,7 +338,7 @@ describe('Task 4 — Resources dropdown nav restructure', () => {
   ];
 
   const MEMBER_PAGES = [
-    'members/bruce-capers.html', 'members/choo-smith.html',
+    'members/bruce-capers.html',
     'members/george-tinsley.html', 'members/greg-foster.html',
     'members/herb-lang.html', 'members/leslie-johnson.html',
     'members/lionel-hollins.html', 'members/major-jones.html',
@@ -609,7 +605,7 @@ describe('Resources dropdown — hover-open (desktop), click-toggle (mobile)', (
 describe('Punchlist — No redundant Home nav item', () => {
   const ALL_CHECKED_PAGES = [
     ...NAV_PAGES,
-    'members/bruce-capers.html', 'members/choo-smith.html',
+    'members/bruce-capers.html',
     'members/george-tinsley.html', 'members/greg-foster.html',
     'members/herb-lang.html', 'members/leslie-johnson.html',
     'members/lionel-hollins.html', 'members/major-jones.html',
@@ -707,7 +703,7 @@ describe('Task 7 — Ask Bill gating: no fake committee-role check', () => {
 
   test('member profile pages have no #ask-bill-nav element', () => {
     const memberPages = [
-      'members/bruce-capers.html', 'members/choo-smith.html',
+      'members/bruce-capers.html',
       'members/george-tinsley.html', 'members/greg-foster.html',
       'members/herb-lang.html', 'members/leslie-johnson.html',
       'members/lionel-hollins.html', 'members/major-jones.html',
@@ -734,7 +730,7 @@ describe('Ask Bill widget — present on all pages', () => {
     'rec-detail.html', 'admin.html', 'admin-recommendations.html',
   ];
   const MEMBER_PAGES = [
-    'members/bruce-capers.html', 'members/choo-smith.html',
+    'members/bruce-capers.html',
     'members/george-tinsley.html', 'members/greg-foster.html',
     'members/herb-lang.html', 'members/leslie-johnson.html',
     'members/lionel-hollins.html', 'members/major-jones.html',
