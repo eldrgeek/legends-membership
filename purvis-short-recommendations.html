@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="/favicon-192.png">
+  <title>Purvis Short's Legends Life Recommendations | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <style>
+    .page-hero {
+      background: var(--navy);
+      padding: 100px 24px 48px;
+      text-align: center;
+      color: var(--white);
+    }
+    .page-hero .hero-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .page-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+    .page-hero p {
+      color: rgba(255,255,255,0.7);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .ideas-content {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+    .back-link {
+      display: inline-block;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      text-decoration: none;
+      margin-bottom: 32px;
+    }
+    .back-link:hover { color: var(--navy); }
+    .rec-block {
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .rec-block:last-of-type { border-bottom: none; }
+    .rec-block-header {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .rec-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--gold);
+      min-width: 36px;
+      line-height: 1.3;
+    }
+    .rec-block h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .rec-block p, .rec-block li {
+      font-size: 0.92rem;
+      color: var(--text-medium);
+      line-height: 1.7;
+    }
+    .rec-body { padding-left: 52px; }
+    .quote-block {
+      background: var(--gold-pale);
+      border-left: 3px solid var(--gold);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-style: italic;
+      color: var(--navy);
+      font-size: 0.95rem;
+    }
+    .phase-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .phase-card {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .phase-card .phase-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .phase-card h4 {
+      font-size: 0.95rem;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .phase-card .phase-timeline {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      margin-top: 8px;
+    }
+    .interview-questions {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-top: 16px;
+    }
+    .interview-questions h4 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-light);
+      margin-bottom: 12px;
+    }
+    .interview-questions ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .interview-questions li {
+      margin-bottom: 10px;
+      color: var(--text-dark);
+    }
+    .listen-with-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .listen-with-list span {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.8rem;
+      color: var(--text-medium);
+    }
+    .attribution-box {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin-top: 40px;
+    }
+    .attribution-box p {
+      font-size: 0.88rem;
+      color: var(--text-light);
+      font-style: italic;
+      margin: 0;
+    }
+    @media (max-width: 600px) {
+      .phase-grid { grid-template-columns: 1fr; }
+      .rec-body { padding-left: 0; margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- BEGIN nav (generated from partials/nav.html — do not edit inline) -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+      <span class="brand-home">Home Page</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li class="nav-dropdown">
+        <a href="members.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Committee &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="members.html" role="menuitem">Committee Members</a></li>
+          <li style="padding: 4px 16px 2px; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.3); cursor: default; pointer-events: none;">Subcommittees</li>
+          <li><a href="subcommittee-chapter-presidents.html" role="menuitem">Chapter President Communication</a></li>
+          <li><a href="subcommittee-membership.html" role="menuitem">New Membership &amp; Retention</a></li>
+          <li><a href="subcommittee-scholarships.html" role="menuitem">Scholarships &amp; Grants</a></li>
+          <li><a href="transition-services.html" role="menuitem">Legends Life</a></li>
+        </ul>
+      </li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Documents</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
+          <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
+        </ul>
+      </li>
+      <li><a href="recommendations.html" class="active">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="ask-bill-nav"><a href="https://bill-talk.netlify.app" onclick="if(window.somaGuide){event.preventDefault(); window.somaGuide.open();}">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Sign in or sign up</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+<!-- END nav -->
+
+<div class="page-hero">
+  <div class="hero-label">Committee Ideas</div>
+  <h1>Purvis Short's Legends Life Recommendations</h1>
+  <p>Rollout philosophy, ownership messaging, and a listening methodology for the new member engagement platform &mdash; submitted by 11-year NBA veteran and Legends Life Subcommittee Lead Purvis Short.</p>
+</div>
+
+<div class="ideas-content">
+
+  <a href="recommendations.html" class="back-link">&larr; Back to Recommendations</a>
+
+  <div class="rec-block">
+    <div class="rec-block-header">
+      <div class="rec-num">01</div>
+      <div>
+        <h2>Launch Legends Life as the NBRPA's New Way of Serving Members</h2>
+      </div>
+    </div>
+    <div class="rec-body">
+      <p>The platform should unfold in phases &mdash; each phase builds credibility rather than asking members to trust the whole system at once.</p>
+
+      <div class="phase-grid">
+        <div class="phase-card">
+          <div class="phase-label">Phase 1</div>
+          <h4>Listen &amp; Gather Information</h4>
+          <p>Theme: &ldquo;Help Us Build Legends Life.&rdquo; Member feedback, chapter listening sessions, surveys, NBA/NBPA engagement.</p>
+          <div class="phase-timeline">Months 1&ndash;3</div>
+        </div>
+        <div class="phase-card">
+          <div class="phase-label">Phase 2</div>
+          <h4>Build Trust</h4>
+          <p>Launch Legends Assist, establish service standards, and pilot member support.</p>
+          <div class="phase-timeline">Months 4&ndash;6</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rec-block">
+    <div class="rec-block-header">
+      <div class="rec-num">02</div>
+      <div>
+        <h2>Ownership Messaging</h2>
+      </div>
+    </div>
+    <div class="rec-body">
+      <p>Frame Legends Life as member-built, not committee-imposed. This creates ownership from day one.</p>
+      <div class="quote-block">&ldquo;A committee didn't create Legends Life. It was built from the voices of our members.&rdquo;</div>
+      <div class="quote-block">&ldquo;We're building this with you&mdash;not for you.&rdquo;</div>
+    </div>
+  </div>
+
+  <div class="rec-block">
+    <div class="rec-block-header">
+      <div class="rec-num">03</div>
+      <div>
+        <h2>Listening Methodology &mdash; Beyond Surveys</h2>
+      </div>
+    </div>
+    <div class="rec-body">
+      <p>We should not rely on surveys alone. The richest insights come from conversations rather than checkboxes. Conduct 20&ndash;30 structured member interviews, plus chapter listening sessions.</p>
+
+      <p><strong>Speak with:</strong></p>
+      <div class="listen-with-list">
+        <span>Younger retirees</span>
+        <span>Older retirees</span>
+        <span>Hall of Famers</span>
+        <span>WNBA members</span>
+        <span>Families / widows, where appropriate</span>
+        <span>Chapter Presidents</span>
+      </div>
+
+      <div class="interview-questions">
+        <h4>Six Questions to Ask Every Member We Interview</h4>
+        <ol>
+          <li>Tell me about your first year after retiring. What surprised you the most?</li>
+          <li>What has been your biggest challenge since leaving the game?</li>
+          <li>When you need help today, who do you call?</li>
+          <li>What would make the NBRPA more valuable to you?</li>
+          <li>What do you wish the NBRPA had done differently for you?</li>
+          <li>Imagine the perfect NBRPA. What would it do for you that it doesn't do today?</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="attribution-box">
+    <p>Submitted by Purvis Short, Legends Life Subcommittee Lead &mdash; 11-year NBA veteran, Golden State Warriors Legend.</p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="recommendations.html">Recommendations</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
+  <div class="footer-copy">&copy; 2026 Legends of Basketball &mdash; Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script>
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+    var user = session ? session.user : null;
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+</script>
+
+<script src="js/legends-knowledge.js"></script>
+<script src="js/legends-guide-config.js"></script>
+<script type="module" src="https://soma-guide.netlify.app/soma-guide.js"></script>
+<script src="js/nav-dropdown.js"></script>
+<script src="/js/community-nav.js" defer></script>
+<script src="/js/admin-review-nav.js" defer></script>
+</body>
+</html>

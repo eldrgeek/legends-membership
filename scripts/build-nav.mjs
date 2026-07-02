@@ -75,6 +75,7 @@ const ACTIVE_STATE = {
   // Top-level link active
   'recommendations.html': { link: 'recommendations.html' },
   'leslie-johnson-ideas.html': { link: 'recommendations.html' },
+  'purvis-short-recommendations.html': { link: 'recommendations.html' },
   'rec-detail.html': { link: 'recommendations.html' },
   'about.html': { link: 'about.html' },
 };

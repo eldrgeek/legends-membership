@@ -133,6 +133,30 @@
     .a-question label.q-label span.req { color: #e8a020; margin-left: 2px; }
     .a-hint { font-size: 12px; color: #888; margin-top: -6px; margin-bottom: 10px; font-style: italic; }
 
+    /* New-question review badge — only committee members see this survey today,
+       so newly proposed questions are visibly flagged for committee context. */
+    .a-question.new-question {
+      border-left: 3px solid #e8a020;
+      background: #fffdf7;
+      padding: 16px 18px;
+      border-radius: 0 8px 8px 0;
+    }
+    .new-q-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1a1a2e;
+      color: #e8a020;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .new-q-badge::before { content: "\2726"; font-size: 10px; }
+
     .a-scale-row {
       display: flex;
       align-items: center;
@@ -427,6 +451,29 @@
     <div class="a-question">
       <label class="q-label">Current city / state of residence</label>
       <input type="text" id="q_location" class="a-input" placeholder="e.g. Chicago, IL">
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">Which best describes your current stage of life?</label>
+      <div class="a-options-list" id="q_life_stage">
+        <label class="a-option-item"><input type="radio" name="life_stage" value="recent"> Recently Retired (0&ndash;5 years)</label>
+        <label class="a-option-item"><input type="radio" name="life_stage" value="second_career_building"> Building My Second Career</label>
+        <label class="a-option-item"><input type="radio" name="life_stage" value="established"> Established Career</label>
+        <label class="a-option-item"><input type="radio" name="life_stage" value="second_career_retired"> Retired from My Second Career</label>
+        <label class="a-option-item"><input type="radio" name="life_stage" value="enjoying_retirement"> Enjoying Retirement</label>
+      </div>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">Are you currently involved with your local Legends Chapter?</label>
+      <div class="a-options-list" id="q_chapter_activity">
+        <label class="a-option-item"><input type="radio" name="chapter_activity" value="very_active"> Very Active</label>
+        <label class="a-option-item"><input type="radio" name="chapter_activity" value="somewhat_active"> Somewhat Active</label>
+        <label class="a-option-item"><input type="radio" name="chapter_activity" value="rarely"> Rarely Participate</label>
+        <label class="a-option-item"><input type="radio" name="chapter_activity" value="not_active"> Not Active</label>
+      </div>
     </div>
 
     <div class="a-question">
@@ -944,6 +991,107 @@
       </div>
     </div>
 
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">Looking back, what do you wish had been available to help you during your transition from basketball?</label>
+      <textarea id="q_wish_available" class="a-textarea" placeholder="Share what would have made a difference..."></textarea>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">If you needed help today, which of these areas would be most valuable to you? Rate each 1&ndash;5.</label>
+      <div class="a-hint">1 = not valuable, 5 = extremely valuable</div>
+      <div id="rate_needs" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Career Guidance</span><div class="scale-buttons" id="rate_career"><button class="scale-btn" onclick="setScale('rate_career',1)">1</button><button class="scale-btn" onclick="setScale('rate_career',2)">2</button><button class="scale-btn" onclick="setScale('rate_career',3)">3</button><button class="scale-btn" onclick="setScale('rate_career',4)">4</button><button class="scale-btn" onclick="setScale('rate_career',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Financial Education</span><div class="scale-buttons" id="rate_finedu"><button class="scale-btn" onclick="setScale('rate_finedu',1)">1</button><button class="scale-btn" onclick="setScale('rate_finedu',2)">2</button><button class="scale-btn" onclick="setScale('rate_finedu',3)">3</button><button class="scale-btn" onclick="setScale('rate_finedu',4)">4</button><button class="scale-btn" onclick="setScale('rate_finedu',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Healthcare Navigation</span><div class="scale-buttons" id="rate_healthnav"><button class="scale-btn" onclick="setScale('rate_healthnav',1)">1</button><button class="scale-btn" onclick="setScale('rate_healthnav',2)">2</button><button class="scale-btn" onclick="setScale('rate_healthnav',3)">3</button><button class="scale-btn" onclick="setScale('rate_healthnav',4)">4</button><button class="scale-btn" onclick="setScale('rate_healthnav',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Benefits Information</span><div class="scale-buttons" id="rate_benefits"><button class="scale-btn" onclick="setScale('rate_benefits',1)">1</button><button class="scale-btn" onclick="setScale('rate_benefits',2)">2</button><button class="scale-btn" onclick="setScale('rate_benefits',3)">3</button><button class="scale-btn" onclick="setScale('rate_benefits',4)">4</button><button class="scale-btn" onclick="setScale('rate_benefits',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Business Opportunities</span><div class="scale-buttons" id="rate_bizopp"><button class="scale-btn" onclick="setScale('rate_bizopp',1)">1</button><button class="scale-btn" onclick="setScale('rate_bizopp',2)">2</button><button class="scale-btn" onclick="setScale('rate_bizopp',3)">3</button><button class="scale-btn" onclick="setScale('rate_bizopp',4)">4</button><button class="scale-btn" onclick="setScale('rate_bizopp',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Mentorship</span><div class="scale-buttons" id="rate_mentorship"><button class="scale-btn" onclick="setScale('rate_mentorship',1)">1</button><button class="scale-btn" onclick="setScale('rate_mentorship',2)">2</button><button class="scale-btn" onclick="setScale('rate_mentorship',3)">3</button><button class="scale-btn" onclick="setScale('rate_mentorship',4)">4</button><button class="scale-btn" onclick="setScale('rate_mentorship',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Legal &amp; Tax Referrals</span><div class="scale-buttons" id="rate_legaltax"><button class="scale-btn" onclick="setScale('rate_legaltax',1)">1</button><button class="scale-btn" onclick="setScale('rate_legaltax',2)">2</button><button class="scale-btn" onclick="setScale('rate_legaltax',3)">3</button><button class="scale-btn" onclick="setScale('rate_legaltax',4)">4</button><button class="scale-btn" onclick="setScale('rate_legaltax',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Healthy Aging</span><div class="scale-buttons" id="rate_healthyaging"><button class="scale-btn" onclick="setScale('rate_healthyaging',1)">1</button><button class="scale-btn" onclick="setScale('rate_healthyaging',2)">2</button><button class="scale-btn" onclick="setScale('rate_healthyaging',3)">3</button><button class="scale-btn" onclick="setScale('rate_healthyaging',4)">4</button><button class="scale-btn" onclick="setScale('rate_healthyaging',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Community Service Opportunities</span><div class="scale-buttons" id="rate_commservice"><button class="scale-btn" onclick="setScale('rate_commservice',1)">1</button><button class="scale-btn" onclick="setScale('rate_commservice',2)">2</button><button class="scale-btn" onclick="setScale('rate_commservice',3)">3</button><button class="scale-btn" onclick="setScale('rate_commservice',4)">4</button><button class="scale-btn" onclick="setScale('rate_commservice',5)">5</button></div></div>
+        <div class="a-scale-row"><span class="scale-lbl" style="min-width:200px;">Speaking Opportunities</span><div class="scale-buttons" id="rate_speaking"><button class="scale-btn" onclick="setScale('rate_speaking',1)">1</button><button class="scale-btn" onclick="setScale('rate_speaking',2)">2</button><button class="scale-btn" onclick="setScale('rate_speaking',3)">3</button><button class="scale-btn" onclick="setScale('rate_speaking',4)">4</button><button class="scale-btn" onclick="setScale('rate_speaking',5)">5</button></div></div>
+      </div>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">If you had one trusted place to call whenever you had a question or needed assistance, how valuable would that be?</label>
+      <div class="a-scale-row">
+        <span class="scale-lbl">Not valuable</span>
+        <div class="scale-buttons" id="scale_trusted_place">
+          <button class="scale-btn" onclick="setScale('scale_trusted_place',1)">1</button>
+          <button class="scale-btn" onclick="setScale('scale_trusted_place',2)">2</button>
+          <button class="scale-btn" onclick="setScale('scale_trusted_place',3)">3</button>
+          <button class="scale-btn" onclick="setScale('scale_trusted_place',4)">4</button>
+          <button class="scale-btn" onclick="setScale('scale_trusted_place',5)">5</button>
+        </div>
+        <span class="scale-lbl right">Extremely valuable</span>
+      </div>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">Which method would you prefer when contacting Legends of Basketball?</label>
+      <div class="a-options-list two-col" id="q_contact_method">
+        <label class="a-option-item"><input type="radio" name="contact_method" value="phone"> Phone</label>
+        <label class="a-option-item"><input type="radio" name="contact_method" value="email"> Email</label>
+        <label class="a-option-item"><input type="radio" name="contact_method" value="website"> Website</label>
+        <label class="a-option-item"><input type="radio" name="contact_method" value="app"> Mobile App</label>
+        <label class="a-option-item"><input type="radio" name="contact_method" value="chapter"> Local Chapter</label>
+        <label class="a-option-item"><input type="radio" name="contact_method" value="virtual"> Virtual Meeting</label>
+        <label class="a-option-item"><input type="radio" name="contact_method" value="text"> Text Message</label>
+      </div>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">How often would you like to hear from Legends of Basketball?</label>
+      <div class="a-options-list" id="q_comm_frequency">
+        <label class="a-option-item"><input type="radio" name="comm_frequency" value="monthly"> Monthly</label>
+        <label class="a-option-item"><input type="radio" name="comm_frequency" value="quarterly"> Quarterly</label>
+        <label class="a-option-item"><input type="radio" name="comm_frequency" value="relevant_only"> Only When Relevant</label>
+        <label class="a-option-item"><input type="radio" name="comm_frequency" value="special_events"> Special Events Only</label>
+      </div>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">Which opportunities would you most like to participate in? (Select all that apply)</label>
+      <div class="a-options-list two-col" id="q_opportunities">
+        <label class="a-option-item"><input type="checkbox" value="career_dev"> Career Development &amp; Transition</label>
+        <label class="a-option-item"><input type="checkbox" value="biz_networking"> Business Networking</label>
+        <label class="a-option-item"><input type="checkbox" value="community_service_opp"> Community Service</label>
+        <label class="a-option-item"><input type="checkbox" value="health_programs"> Health Programs</label>
+        <label class="a-option-item"><input type="checkbox" value="golf"> Golf Events</label>
+        <label class="a-option-item"><input type="checkbox" value="clinics"> Basketball Clinics</label>
+        <label class="a-option-item"><input type="checkbox" value="leadership"> Leadership Programs</label>
+        <label class="a-option-item"><input type="checkbox" value="speaking_opp"> Speaking Opportunities</label>
+        <label class="a-option-item"><input type="checkbox" value="social_events"> Social Events</label>
+        <label class="a-option-item"><input type="checkbox" value="travel"> Travel Opportunities</label>
+        <label class="a-option-item"><input type="checkbox" value="educational"> Educational Programs</label>
+      </div>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">What would make you proud to be part of Legends of Basketball?</label>
+      <textarea id="q_proud" class="a-textarea" placeholder="Share your thoughts..."></textarea>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">Finish this sentence: &ldquo;I would feel more connected to Legends of Basketball if ___.&rdquo;</label>
+      <textarea id="q_connected_if" class="a-textarea" placeholder="Complete the sentence..."></textarea>
+    </div>
+
+    <div class="a-question new-question">
+      <span class="new-q-badge">New — proposed by Purvis Short, under committee review</span>
+      <label class="q-label">In one sentence, what should Legends of Basketball become over the next ten years?</label>
+      <textarea id="q_ten_years" class="a-textarea" placeholder="Your one-sentence vision..."></textarea>
+    </div>
+
     <div class="a-question">
       <label class="q-label">33. Is there anything else you'd like Legends to know about your situation or needs?</label>
       <textarea id="q_tr6" class="a-textarea" placeholder="Your voice matters — share anything you'd like us to know..."></textarea>
@@ -1097,6 +1245,8 @@
       leagues: getChecked('q_league').join(', '),
       years_since_retirement: document.getElementById('q_years').value,
       membership_status: document.getElementById('q_status').value,
+      life_stage: getRadio('life_stage'),
+      chapter_activity: getRadio('chapter_activity'),
       location: document.getElementById('q_location').value,
       referral: getRadio('referral'),
       cam_connection: String(scaleValues['scale_cam1'] || ''),
@@ -1131,6 +1281,24 @@
       tr_immediate: getRadio('tr3'),
       tr_vision: document.getElementById('q_tr4').value,
       tr_readiness: String(scaleValues['scale_tr5'] || ''),
+      wish_available: document.getElementById('q_wish_available').value,
+      rate_career_guidance: String(scaleValues['rate_career'] || ''),
+      rate_financial_education: String(scaleValues['rate_finedu'] || ''),
+      rate_healthcare_navigation: String(scaleValues['rate_healthnav'] || ''),
+      rate_benefits_information: String(scaleValues['rate_benefits'] || ''),
+      rate_business_opportunities: String(scaleValues['rate_bizopp'] || ''),
+      rate_mentorship: String(scaleValues['rate_mentorship'] || ''),
+      rate_legal_tax_referrals: String(scaleValues['rate_legaltax'] || ''),
+      rate_healthy_aging: String(scaleValues['rate_healthyaging'] || ''),
+      rate_community_service_opportunities: String(scaleValues['rate_commservice'] || ''),
+      rate_speaking_opportunities: String(scaleValues['rate_speaking'] || ''),
+      trusted_place_value: String(scaleValues['scale_trusted_place'] || ''),
+      contact_method: getRadio('contact_method'),
+      comm_frequency: getRadio('comm_frequency'),
+      opportunities: getChecked('q_opportunities').join(', '),
+      proud_of: document.getElementById('q_proud').value,
+      connected_if: document.getElementById('q_connected_if').value,
+      ten_year_vision: document.getElementById('q_ten_years').value,
       tr_open: document.getElementById('q_tr6').value
     };
 
