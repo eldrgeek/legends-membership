@@ -22,6 +22,9 @@ last_reviewed: 2026-06-23
 
 **Depends on / used by:** loads the guide widget engine + styles from **soma-platform** (soma-guide.netlify.app CDN); TTS via **bill-talk** el-proxy; text Q&A via **VPS infer/ask**; auth via **Supabase**. Deployed on **Netlify** (legends-membership.netlify.app).
 
+**Commands**
+- If `npm`/`node` isn't found (common in dispatched/non-interactive shells with a thin PATH): use `scripts/with-node.sh <cmd>` instead of calling `npm`/`node` directly, e.g. `scripts/with-node.sh npm test`. It's nvm-aware and self-heals PATH.
+
 **Gotchas**
 - Ask-Bill is a 4-link external chain (soma-guide CDN, bill-talk el-proxy, ElevenLabs agent `agent_2401ks53q6t8e2drt1h7va3f2c52`, VPS infer/ask) — any one down breaks the widget. See BREADCRUMBS "what breaks what".
 - Netlify Identity is **permanently removed** (2026-06-05) — use SOMA Auth only, never re-add it.
