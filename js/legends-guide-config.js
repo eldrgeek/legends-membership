@@ -32,6 +32,7 @@ window.SomaGuideConfig = {
     avatar: '🏀',
     /* First-contact opener (no name yet). The full role intro comes AFTER the
      * person gives a name (see roleIntro). */
+    // TODO(drew): persona.greeting — opener that doesn't ask a question the chips can't answer
     greeting: 'I\'m Bill. Have we met before?',
     /* Delivered once Bill has a name — his role on the team. */
     roleIntro:
@@ -597,7 +598,11 @@ if (typeof window !== 'undefined' && window.self !== window.top) {
       window.clearInterval(timer);
       try { window.localStorage.setItem(GREETED, '1'); } catch (e) {}
       /* Small beat so the page settles before Bill steps forward. */
-      window.setTimeout(function () { window.somaGuide.open(); }, 700);
+      window.setTimeout(function () {
+        window.somaGuide.open();
+        /* Auto-open is uninvited — don't steal focus from the page. */
+        try { var i = document.querySelector('#soma-guide .sg-input'); if (i) i.blur(); } catch (e) {}
+      }, 700);
     } else if (tries >= 24) {
       window.clearInterval(timer); /* engine never loaded (~6s) — stay quiet */
     }

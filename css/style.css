@@ -918,3 +918,15 @@ footer .footer-copy { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
 .mt-16 { margin-top: 16px; }
 .mt-24 { margin-top: 24px; }
 .mb-0 { margin-bottom: 0 !important; }
+
+/* ── Ask Bill nav avatar ── */
+.nav-bill-avatar { font-size: 1.05em; line-height: 1; display: inline-block; margin-right: 3px; transform: translateY(1px); }
+
+/* ── Bill shell: 60+ legibility overrides (ID selector outranks engine classes) ── */
+#soma-guide .sg-greeting,
+#soma-guide .sg-msg      { font-size: 0.95rem; }
+#soma-guide .sg-input    { font-size: 0.95rem; }
+#soma-guide .sg-suggest-chip,
+#soma-guide .sg-suggest-more { font-size: 0.9rem; padding: 9px 16px; min-height: 38px; }
+#soma-guide .sg-btn-close { min-width: 40px !important; min-height: 40px !important; }
+#soma-guide.sg--text .sg-panel { height: 420px; }  /* verify visually on deploy */
