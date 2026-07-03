@@ -32,8 +32,7 @@ window.SomaGuideConfig = {
     avatar: '🏀',
     /* First-contact opener (no name yet). The full role intro comes AFTER the
      * person gives a name (see roleIntro). */
-    // TODO(drew): persona.greeting — opener that doesn't ask a question the chips can't answer
-    greeting: 'I\'m Bill. Have we met before?',
+    greeting: 'Welcome in — I\'m Bill, your host here at Legends. Pick a topic below, or type your name and I\'ll give you a proper welcome.',
     /* Delivered once Bill has a name — his role on the team. */
     roleIntro:
       'I help run this site for Greg Foster and the team — I can show you around, ' +
@@ -571,7 +570,7 @@ if (typeof window !== 'undefined' && window.self !== window.top) {
  * auto-open (soma-guide.js mount gate: `!introduced && !conversationalShell`),
  * so new members meet a silent FAB instead of Bill. Site policy is Bill-as-host:
  * on the very first visit — once per browser — open the shell so Bill greets
- * ("I'm Bill. Have we met before?").
+ * ("Welcome in — I'm Bill, your host here at Legends. …").
  *
  * Guards:
  *  - our own `auto-greeted` key: fires exactly once, even if the visitor closes
