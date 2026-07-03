@@ -651,6 +651,14 @@ if (typeof window !== 'undefined' && window.self !== window.top) {
   /* A ?sg_tour= deep link is here for a specific walkthrough (handler above) —
    * greeting would stomp the tour mode. Bill can greet on the next visit. */
   try { if (new URLSearchParams(window.location.search).get('sg_tour')) return; } catch (e) {}
+  /* A cross-page walkthrough hop is mid-flight (the engine persists tour state
+   * in sessionStorage across its own page navigations, and the sg_tour param
+   * doesn't survive those hops) — greeting now would kill the resumed tour on
+   * every page after the first. This runs before the engine consumes the keys. */
+  try {
+    if (window.sessionStorage.getItem('soma-guide-xp:legends-bill:wt-id') ||
+        window.sessionStorage.getItem('soma-guide-xp:legends-bill:resume-id')) return;
+  } catch (e) {}
   var GREETED = 'soma-guide:legends-bill:auto-greeted';
   var INTRODUCED = 'soma-guide:legends-bill:introduced';
   try {
@@ -665,6 +673,7 @@ if (typeof window !== 'undefined' && window.self !== window.top) {
       try { window.localStorage.setItem(GREETED, '1'); } catch (e) {}
       /* Small beat so the page settles before Bill steps forward. */
       window.setTimeout(function () {
+        if (window.somaGuide.wt) return; /* a walkthrough started meanwhile — don't stomp it */
         window.somaGuide.open();
         /* Auto-open is uninvited — don't steal focus from the page. */
         try { var i = document.querySelector('#soma-guide .sg-input'); if (i) i.blur(); } catch (e) {}
