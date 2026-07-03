@@ -549,10 +549,74 @@ window.SomaGuideConfig = {
           instruction: 'Use the 💬 or 🎙 buttons at the top of this panel to switch modes.'
         }
       ]
+    },
+
+    /* ── 4. Demo: round-2 batch (scholarships rebuild + Greg's phone) ──
+     * Deep-linked from the estate review surface's Quinn completion tours
+     * (?sg_tour=demo-scholarships-round2 — see the sg_tour handler below and
+     * _estate/completions/README.md "## Demo"). Also reachable as a normal
+     * chip/keyword tour ("what's new"). Plain narrations, no [[cues]]. */
+    {
+      id: 'demo-scholarships-round2',
+      label: 'What\'s new: Scholarships & Grants',
+      keywords: ['scholarships demo', 'what is new', 'whats new', 'new scholarships'],
+      steps: [
+        {
+          target: 'a[href="scholarships-debusschere.html"]',
+          page: '/subcommittee-scholarships',
+          label: 'Scholarships & Grants, rebuilt',
+          demo: 'hover',
+          narration:
+            'The Scholarships and Grants page was rebuilt — four named programs, ' +
+            'each with its own full detail page. Let\'s open the first one.',
+          instruction: 'Four programs: DeBusschere, Earl Lloyd, HBCU, and Member Grants.'
+        },
+        {
+          target: '.page-hero',
+          page: '/scholarships-debusschere',
+          label: 'DeBusschere Fund detail',
+          demo: 'hover',
+          narration:
+            'Here\'s the Dave DeBusschere Scholarship Fund — a real detail page with ' +
+            'eligibility, award amounts, and the current application timeline.',
+          instruction: 'Scroll for eligibility and the 2026–2027 timeline.'
+        },
+        {
+          target: '#contact-directory',
+          page: '/members',
+          label: 'Directory: Greg\'s phone live',
+          demo: 'hover',
+          narration:
+            'And one more thing — the contact directory now lists Greg\'s real phone ' +
+            'number, replacing the old placeholder.',
+          instruction: 'That\'s the round-2 batch. Explore from here, or ask me anything.'
+        }
+      ]
     }
 
   ] /* end walkthroughs */
 };
+
+/* ── Demo deep links (?sg_tour=<walkthrough-id>) ──────────────────────────
+ * The estate review surface's Quinn completion tours deep-link product pages
+ * with ?sg_tour=<id>; the soma-guide engine itself reads no URL params, so
+ * this site-side handler starts the walkthrough once the engine is up.
+ * Defensive by construction: no param → no-op; unknown id → startWalkthrough
+ * ignores it; engine never loads → poll gives up quietly (~20s). */
+(function () {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  var sgTourId = null;
+  try { sgTourId = new URLSearchParams(window.location.search).get('sg_tour'); } catch (e) { return; }
+  if (!sgTourId) return;
+  var tries = 0;
+  (function poll() {
+    if (window.somaGuide && typeof window.somaGuide.startWalkthrough === 'function') {
+      window.somaGuide.startWalkthrough(sgTourId);
+      return;
+    }
+    if (++tries < 80) window.setTimeout(poll, 250);
+  })();
+})();
 
 /* Never run the assistant inside an embedded preview iframe (e.g. the Change Log
  * review preview loads other pages into an iframe). Top-window-only guards in the
@@ -584,6 +648,9 @@ if (typeof window !== 'undefined' && window.self !== window.top) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   if (!window.SomaGuideConfig) return; /* framed/embedded — config was removed above */
   if (typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent)) return;
+  /* A ?sg_tour= deep link is here for a specific walkthrough (handler above) —
+   * greeting would stomp the tour mode. Bill can greet on the next visit. */
+  try { if (new URLSearchParams(window.location.search).get('sg_tour')) return; } catch (e) {}
   var GREETED = 'soma-guide:legends-bill:auto-greeted';
   var INTRODUCED = 'soma-guide:legends-bill:introduced';
   try {
