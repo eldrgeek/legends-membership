@@ -564,3 +564,42 @@ window.SomaGuideConfig = {
 if (typeof window !== 'undefined' && window.self !== window.top) {
   try { delete window.SomaGuideConfig; } catch (e) { window.SomaGuideConfig = undefined; }
 }
+
+/* ── First-visit auto-greet (Bill-as-host) ────────────────────────────────
+ * The engine's conversationalShell mode intentionally skips its own first-visit
+ * auto-open (soma-guide.js mount gate: `!introduced && !conversationalShell`),
+ * so new members meet a silent FAB instead of Bill. Site policy is Bill-as-host:
+ * on the very first visit — once per browser — open the shell so Bill greets
+ * ("I'm Bill. Have we met before?").
+ *
+ * Guards:
+ *  - our own `auto-greeted` key: fires exactly once, even if the visitor closes
+ *    Bill without answering (no nagging on every page load);
+ *  - the engine's `introduced` key: a visitor Bill already knows is never greeted;
+ *  - no localStorage → do nothing (would otherwise pop on every load);
+ *  - jsdom (test harness) → inert;
+ *  - iframe/embed contexts are already excluded above (SomaGuideConfig removed).
+ */
+(function () {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (!window.SomaGuideConfig) return; /* framed/embedded — config was removed above */
+  if (typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent)) return;
+  var GREETED = 'soma-guide:legends-bill:auto-greeted';
+  var INTRODUCED = 'soma-guide:legends-bill:introduced';
+  try {
+    if (window.localStorage.getItem(GREETED) === '1') return;
+    if (window.localStorage.getItem(INTRODUCED) === '1') return;
+  } catch (e) { return; }
+  var tries = 0;
+  var timer = window.setInterval(function () {
+    tries += 1;
+    if (window.somaGuide) {
+      window.clearInterval(timer);
+      try { window.localStorage.setItem(GREETED, '1'); } catch (e) {}
+      /* Small beat so the page settles before Bill steps forward. */
+      window.setTimeout(function () { window.somaGuide.open(); }, 700);
+    } else if (tries >= 24) {
+      window.clearInterval(timer); /* engine never loaded (~6s) — stay quiet */
+    }
+  }, 250);
+})();
