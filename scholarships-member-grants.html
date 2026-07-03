@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/favicon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="/favicon-192.png">
+  <title>Member Grant Program | Legends of Basketball</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://soma-guide.netlify.app/soma-guide.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="/js/soma-auth-config.js"></script>
+  <script src="/js/soma-auth.js"></script>
+  <style>
+    .page-hero {
+      background: var(--navy);
+      padding: 100px 24px 48px;
+      text-align: center;
+      color: var(--white);
+    }
+    .page-hero .hero-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .page-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+    .page-hero p {
+      color: rgba(255,255,255,0.7);
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .program-content {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+    .back-link {
+      display: inline-block;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      text-decoration: none;
+      margin-bottom: 32px;
+    }
+    .back-link:hover { color: var(--navy); }
+    .program-block {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .program-block:last-of-type { border-bottom: none; }
+    .program-block h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+    .program-block p, .program-block li {
+      font-size: 0.92rem;
+      color: var(--text-medium);
+      line-height: 1.7;
+    }
+    .program-block ul, .program-block ol {
+      padding-left: 1.3rem;
+      margin: 0.5rem 0;
+    }
+    .fact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .fact-card {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .fact-card .fact-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .attribution-box {
+      background: var(--off-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin-top: 40px;
+    }
+    .attribution-box p {
+      font-size: 0.88rem;
+      color: var(--text-light);
+      font-style: italic;
+      margin: 0;
+    }
+    .attribution-box a { color: var(--gold); }
+    @media (max-width: 600px) {
+      .fact-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- BEGIN nav (generated from partials/nav.html — do not edit inline) -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-main">Legends of Basketball</span>
+      <span class="brand-sub">Membership Services Committee</span>
+      <span class="brand-home">Home Page</span>
+    </a>
+    <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+    <ul class="nav-links">
+      <li class="nav-dropdown">
+        <a href="members.html" class="nav-dropdown-toggle active" aria-haspopup="true" aria-expanded="false">Committee &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="members.html" role="menuitem">Committee Members</a></li>
+          <li style="padding: 4px 16px 2px; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.3); cursor: default; pointer-events: none;">Subcommittees</li>
+          <li><a href="subcommittee-chapter-presidents.html" role="menuitem">Chapter President Communication</a></li>
+          <li><a href="subcommittee-membership.html" role="menuitem">New Membership &amp; Retention</a></li>
+          <li><a href="subcommittee-scholarships.html" role="menuitem">Scholarships &amp; Grants</a></li>
+          <li><a href="transition-services.html" role="menuitem">Legends Life</a></li>
+        </ul>
+      </li>
+      <li class="nav-dropdown">
+        <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
+        <ul class="nav-dropdown-menu" role="menu">
+          <li><a href="resources.html" role="menuitem">Documents</a></li>
+          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
+          <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
+        </ul>
+      </li>
+      <li><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="about.html">About &amp; Contact</a></li>
+      <li id="ask-bill-nav"><a href="https://bill-talk.netlify.app" onclick="if(window.somaGuide){event.preventDefault(); window.somaGuide.open();}">Ask Bill</a></li>
+      <li id="login-nav"><a href="login.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.18); padding: 5px 11px; border-radius: 4px;">Sign in or sign up</a></li>
+      <li id="nav-admin-link" style="display:none;"><a href="admin.html" style="font-size: 0.78rem; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.35); padding: 5px 11px; border-radius: 4px;">Admin</a></li>
+      <li id="auth-nav" style="display:none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 12px; margin-left: 4px; align-items: center; gap: 8px;">
+        <span id="auth-name" style="font-size: 0.78rem; color: rgba(255,255,255,0.55);"></span>
+        <button onclick="SomaAuth.signOut()" style="background: none; border: 1px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.65); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; white-space: nowrap;">Sign Out</button>
+      </li>
+    </ul>
+  </div>
+</nav>
+<!-- END nav -->
+
+<div class="page-hero">
+  <div class="hero-label">Member Grant</div>
+  <h1>Member Grant Program</h1>
+  <p>Need-based financial assistance for Legends of Basketball members facing hardship or pursuing personal development opportunities.</p>
+</div>
+
+<div class="program-content">
+
+  <a href="subcommittee-scholarships.html" class="back-link">&larr; Back to Scholarships &amp; Grants</a>
+
+  <div class="program-block">
+    <h2>About the Program</h2>
+    <p>The Member Grant Program is a charitable fund with a mission to benefit, support, and assist individual Legends of Basketball members in financial need &mdash; whether facing immediate hardship or seeking support for personal development.</p>
+  </div>
+
+  <div class="program-block">
+    <h2>Eligible Funding Categories</h2>
+    <ul>
+      <li>Mortgage relief</li>
+      <li>Medical or surgical expenses</li>
+      <li>Past-due debt</li>
+      <li>Funeral expenses</li>
+      <li>Career development</li>
+      <li>Vocational training</li>
+    </ul>
+  </div>
+
+  <div class="fact-grid">
+    <div class="fact-card">
+      <div class="fact-label">Award</div>
+      <p style="margin:0;">Maximum $2,500 per grant; the Finance, Audit, and Compensation Committee has discretion to reduce amounts. Capped at $75,000 total awarded annually across all recipients.</p>
+    </div>
+    <div class="fact-card">
+      <div class="fact-label">Review Cycle</div>
+      <p style="margin:0;">Applications must arrive by the 20th of each month for that cycle's review; allow 30 days from submission for a decision.</p>
+    </div>
+  </div>
+
+  <div class="program-block">
+    <h2>Eligibility</h2>
+    <ul>
+      <li>Must be a Legends of Basketball member</li>
+      <li>Adjusted gross income must not exceed $150,000</li>
+      <li>Cannot have received the Dave DeBusschere or Earl Lloyd scholarship in the current or preceding year</li>
+      <li>Limited to one grant every two years</li>
+      <li>Preference given to WNBA members, Harlem Globetrotters alumni, and former NBA players with fewer than three full seasons</li>
+    </ul>
+  </div>
+
+  <div class="program-block">
+    <h2>How to Apply</h2>
+    <p>Submit a written request using the official application form to:</p>
+    <p style="margin-left: 1rem;">
+      Legends of Basketball<br>
+      Attn: Director of Membership Services<br>
+      444 N. Michigan Ave., Suite 2970<br>
+      Chicago, IL 60611
+    </p>
+    <p>Or electronically to <a href="mailto:memberalert@legendsofbasketball.com" style="color: var(--gold, #d4af37);">memberalert@legendsofbasketball.com</a>.</p>
+  </div>
+
+  <div class="attribution-box">
+    <p>Source: <a href="https://www.legendsofbasketball.com/grants-and-scholarships/member-grant-program/" target="_blank" rel="noopener">legendsofbasketball.com/grants-and-scholarships/member-grant-program</a>. Visit the canonical page for the most current details.</p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-brand">Legends of Basketball</div>
+  <div class="footer-tagline">Where The Story Continues</div>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="members.html">Committee</a>
+    <a href="minutes.html">Meeting Minutes</a>
+    <a href="resources.html">Resources</a>
+    <a href="about.html">About &amp; Contact</a>
+  </div>
+  <div id="footer-admin-link" style="display:none; margin-bottom: 10px;"><a href="admin.html" style="color: rgba(255,255,255,0.35); font-size: 0.75rem;">Admin</a></div>
+  <div class="footer-copy">&copy; 2026 Legends of Basketball &mdash; Membership Services Committee. All rights reserved.</div>
+</footer>
+
+<script>
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+
+  SomaAuth.onAuthStateChange(function(event, session) {
+    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+    var user = session ? session.user : null;
+    var el = document.getElementById('auth-nav');
+    var nm = document.getElementById('auth-name');
+    var loginNav = document.getElementById('login-nav');
+    var navAdmin = document.getElementById('nav-admin-link');
+    if (user) {
+      if (el) el.style.display = 'flex';
+      if (nm) nm.textContent = (user.user_metadata && user.user_metadata.full_name) || user.email;
+      if (loginNav) loginNav.style.display = 'none';
+      SomaAuth.getRole(user).then(function(role) {
+        var admin = (role === 'admin') || ADMIN_EMAILS.indexOf(user.email) !== -1;
+        if (navAdmin) navAdmin.style.display = admin ? 'list-item' : 'none';
+        var adminLink = document.getElementById('footer-admin-link');
+        if (adminLink) adminLink.style.display = admin ? 'block' : 'none';
+      });
+    } else {
+      if (el) el.style.display = 'none';
+      if (loginNav) loginNav.style.display = '';
+      if (navAdmin) navAdmin.style.display = 'none';
+    }
+  });
+  SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+</script>
+
+<script src="js/legends-knowledge.js"></script>
+<script src="js/legends-guide-config.js"></script>
+<script type="module" src="https://soma-guide.netlify.app/soma-guide.js"></script>
+<script src="js/nav-dropdown.js"></script>
+<script src="/js/community-nav.js" defer></script>
+<script src="/js/admin-review-nav.js" defer></script>
+</body>
+</html>

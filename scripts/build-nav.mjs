@@ -62,6 +62,10 @@ const ACTIVE_STATE = {
   'subcommittee-chapter-presidents.html': { dropdown: 'members.html' },
   'subcommittee-membership.html': { dropdown: 'members.html' },
   'subcommittee-scholarships.html': { dropdown: 'members.html' },
+  'scholarships-debusschere.html': { dropdown: 'members.html' },
+  'scholarships-earl-lloyd.html': { dropdown: 'members.html' },
+  'scholarships-hbcu.html': { dropdown: 'members.html' },
+  'scholarships-member-grants.html': { dropdown: 'members.html' },
   'transition-services.html': { dropdown: 'members.html' },
 
   // Resources dropdown active

@@ -259,6 +259,11 @@ describe('Task 3 — NBRPA replacement in site copy', () => {
     'admin.html',
     'admin-recommendations.html',
     'minutes.html',
+    'subcommittee-scholarships.html',
+    'scholarships-debusschere.html',
+    'scholarships-earl-lloyd.html',
+    'scholarships-hbcu.html',
+    'scholarships-member-grants.html',
   ];
 
   for (const page of CLEAN_PAGES) {
@@ -310,6 +315,73 @@ describe('Task 3 — NBRPA replacement in site copy', () => {
     assert.ok(!html.includes('NBRPA'), 'Found NBRPA in members/mo-evans.html');
   });
 
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Task 4 (2026-07-03): Greg's phone number + scholarships page rework
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('Task 4 — Greg Foster phone number', () => {
+  test('members.html: Greg Foster row shows the real phone number, not the placeholder', () => {
+    const html = fs.readFileSync(path.join(ROOT, 'members.html'), 'utf8');
+    assert.ok(!html.includes('(phone pending)'),
+      'Found "(phone pending)" placeholder still present in members.html');
+    assert.ok(html.includes('(915) 471-6696'),
+      'Greg Foster\'s real phone number not found in members.html');
+  });
+});
+
+describe('Task 4 — Scholarships page rework (icons/links removed, headings kept)', () => {
+  const SCHOLARSHIPS_PAGE = fs.readFileSync(
+    path.join(ROOT, 'subcommittee-scholarships.html'), 'utf8');
+
+  test('keeps the two required section headings', () => {
+    assert.match(SCHOLARSHIPS_PAGE, /Scholarships &amp; Grants Available to Members/);
+    assert.match(SCHOLARSHIPS_PAGE, /Scholarship <span style="color: var\(--gold\);">Eligibility<\/span>/);
+  });
+
+  test('removes the old icon-card grids (no emoji icon markers left in the two reworked sections)', () => {
+    // The old cards used emoji glyphs as visual icons; none should remain.
+    for (const emoji of ['🎓', '🏫', '💵', '👤', '📋', '⚠️']) {
+      assert.ok(!SCHOLARSHIPS_PAGE.includes(emoji),
+        `Found leftover icon glyph "${emoji}" — icon-card style should be fully removed`);
+    }
+  });
+
+  test('links out to a local detail page per program instead of external cards', () => {
+    for (const page of [
+      'scholarships-debusschere.html',
+      'scholarships-earl-lloyd.html',
+      'scholarships-hbcu.html',
+      'scholarships-member-grants.html',
+    ]) {
+      assert.ok(SCHOLARSHIPS_PAGE.includes(`href="${page}"`),
+        `subcommittee-scholarships.html should link to local detail page ${page}`);
+    }
+  });
+
+  test('keeps the Scholarship America partnership section untouched', () => {
+    assert.match(SCHOLARSHIPS_PAGE, /Partnership with Scholarship America/);
+  });
+
+  test('keeps the DB-backed Subcommittee Goals block untouched', () => {
+    assert.match(SCHOLARSHIPS_PAGE, /id="soma-goals" data-group="scholarships"/);
+  });
+
+  for (const page of [
+    'scholarships-debusschere.html',
+    'scholarships-earl-lloyd.html',
+    'scholarships-hbcu.html',
+    'scholarships-member-grants.html',
+  ]) {
+    test(`${page}: exists, has a back-link to the scholarships page, and cites the canonical source`, () => {
+      const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
+      assert.ok(html.includes('href="subcommittee-scholarships.html" class="back-link"'),
+        `${page} must link back to subcommittee-scholarships.html`);
+      assert.match(html, /legendsofbasketball\.com/,
+        `${page} must attribute its source content to legendsofbasketball.com`);
+    });
+  }
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
