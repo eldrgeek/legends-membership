@@ -30,7 +30,11 @@
  *   ALTER TABLE public.bill_transcripts ENABLE ROW LEVEL SECURITY;
  *   -- reads restricted to admins; inserts happen via the service-role function
  *   CREATE POLICY "admin read transcripts" ON public.bill_transcripts FOR SELECT
- *     USING (auth.jwt() ->> 'email' IN ('mw@mike-wolf.com', 'gfos44@gmail.com'));
+ *     USING (auth.jwt() ->> 'email' IN ('mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'));
+ *   -- (demo-admin added 2026-07-04 for the admin walkthrough recording, WQ-80;
+ *   --  live policy updated via Management API the same day. change_requests
+ *   --  "admin read" policy got the same email; its UPDATE policy deliberately
+ *   --  did NOT — the demo account is read-only at the DB level.)
  */
 
 const SUPABASE_URL = 'https://omfwcodoimjmbrhssvfl.supabase.co';
