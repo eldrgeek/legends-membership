@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
   // Statuses that need a human's attention in the queue.
   var PENDING = ['new', 'awaiting-approval', 'awaiting-review', 'blocked'];
 

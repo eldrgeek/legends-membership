@@ -13,6 +13,22 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/js/soma-auth-config.js"></script>
   <script src="/js/soma-auth.js"></script>
+  <script>
+    // Committee-only page gate (minutes.html pattern): hide until a session
+    // is confirmed; signed-out visitors are sent to login with a return path.
+    document.documentElement.style.visibility = 'hidden';
+    SomaAuth.onAuthStateChange(function(event, session) {
+      if (event === 'SIGNED_OUT') { window.location.href = '/'; return; }
+      if (event !== 'INITIAL_SESSION') return;
+      var user = session ? session.user : null;
+      if (!user) {
+        window.location.replace('/login.html?redirect=' + encodeURIComponent(window.location.pathname));
+      } else {
+        document.documentElement.style.visibility = '';
+      }
+    });
+    SomaAuth.init(window.SOMA_AUTH_CONFIG.url, window.SOMA_AUTH_CONFIG.anonKey);
+  </script>
   <style>
     body { background: var(--off-white); }
 
@@ -542,7 +558,7 @@ function resetZoom() {
 
 init();
 
-var ADMIN_EMAILS_SM = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+var ADMIN_EMAILS_SM = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
 SomaAuth.onAuthStateChange(function(event, session) {
   if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') {
     if (event === 'SIGNED_OUT') window.location.replace('/');

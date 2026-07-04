@@ -15,7 +15,7 @@
 'use strict';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://omfwcodoimjmbrhssvfl.supabase.co';
-const BOOTSTRAP_ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+const BOOTSTRAP_ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
 
 function jsonResponse(statusCode, body) {
   return {

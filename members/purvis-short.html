@@ -190,7 +190,7 @@
 </footer>
 
 <script>
-  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
   SomaAuth.onAuthStateChange(function(event, session) {
     if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') {
       if (event === 'SIGNED_OUT') window.location.replace('/');

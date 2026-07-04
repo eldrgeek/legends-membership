@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
   var COMMITTEE_EMAILS = [
     'gfos44@gmail.com',
     'majorjjones@yahoo.com',

@@ -17,7 +17,7 @@
  * service-role key bypasses RLS — it must NEVER appear in client code or the repo.
  */
 
-const ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+const ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
 const BUCKET = 'site-config';
 const SETTINGS_FILE = 'resource-visibility.json';
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://omfwcodoimjmbrhssvfl.supabase.co';

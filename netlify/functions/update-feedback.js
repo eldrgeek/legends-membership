@@ -9,7 +9,7 @@
 const SUPABASE_URL = 'https://omfwcodoimjmbrhssvfl.supabase.co';
 /* Anon key is public — safe to embed. Service-role key stays in env. */
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tZndjb2RvaW1qbWJyaHNzdmZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NzEyNjMsImV4cCI6MjA5NjI0NzI2M30.8Oe2JABFB5qN2dIFk-rccl7-F5R4YjqsTrGFAqZCAlE';
-const ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+const ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
 const ALLOWED_STATUSES = ['new', 'greg-approved', 'rejected', 'dispatched', 'shipped'];
 
 function jsonResponse(statusCode, body) {

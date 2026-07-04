@@ -116,7 +116,7 @@
 <script src="/js/auth-visibility.js" defer></script>
 <!-- END nav -->
 <script>
-  var ADMIN_EMAILS_MO = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  var ADMIN_EMAILS_MO = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
   SomaAuth.onAuthStateChange(function(event, session) {
     if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
     var user = session ? session.user : null;

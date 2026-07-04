@@ -33,7 +33,7 @@
   // role is being added in a sibling change; we accept both 'admin' and
   // 'committee'. The email allowlists are a bootstrap fallback for owners whose
   // profiles.role may not be seeded yet — RLS on the server still gates writes.
-  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+  var ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
   var COMMITTEE_EMAILS = [
     'gfos44@gmail.com',
     'majorjjones@yahoo.com',

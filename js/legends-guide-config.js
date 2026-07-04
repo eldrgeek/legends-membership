@@ -108,7 +108,7 @@ window.SomaGuideConfig = {
   isAdmin: function () {
     try {
       var s = (window.SomaAuth && SomaAuth.session) ? SomaAuth.session : null;
-      var admins = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+      var admins = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
       return !!(s && s.user && admins.indexOf((s.user.email || '').toLowerCase()) !== -1);
     } catch (e) { return false; }
   },

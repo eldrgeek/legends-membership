@@ -12,7 +12,7 @@
  * Table SQL lives in templates/soma-affordances/sql/schema.sql (change_requests).
  */
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://omfwcodoimjmbrhssvfl.supabase.co';
-const ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com'];
+const ADMIN_EMAILS = ['mw@mike-wolf.com', 'gfos44@gmail.com', 'demo-admin@mike-wolf.com'];
 const MAX_BODY_BYTES = 32768;
 
 function jsonResponse(statusCode, body) {
