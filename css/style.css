@@ -953,7 +953,7 @@ footer .footer-copy { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
   font-family: inherit;
   text-align: left;
   transition: border-color 0.2s, background 0.2s, transform 0.2s;
-  max-width: 420px;
+  max-width: 460px;
 }
 .tour-card:hover, .tour-card:focus-visible {
   border-color: var(--gold);
@@ -1053,7 +1053,7 @@ footer .footer-copy { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
   border: none;
   color: rgba(255,255,255,0.78);
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 1rem; /* 60+ readability (Ren review 2026-07-04) */
   line-height: 1.5;
   text-align: left;
   padding: 8px 10px;
@@ -1064,9 +1064,34 @@ footer .footer-copy { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
 .tour-chapter:hover, .tour-chapter:focus-visible { background: rgba(255,255,255,0.1); color: var(--white); }
 .tour-chapter.active { background: rgba(201,168,76,0.18); color: var(--white); }
 .tour-chapter.active .tour-chapter-time { color: var(--gold); }
-.tour-chapter-time { font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.45); font-size: 0.82rem; flex: 0 0 auto; }
+.tour-chapter-time { font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.45); font-size: 0.9rem; flex: 0 0 auto; }
 body.tour-lightbox-open { overflow: hidden; }
 @media (max-width: 700px) {
   .tour-card { max-width: 100%; }
   .tour-lightbox-panel { margin: 2vh 10px; padding: 14px; }
+}
+
+/* Member-gated dollar figures (player-benefits.html) — visitor state.
+   Dotted gold underline + pointer signal "a real number lives here; sign in
+   to see it" (Ren review 2026-07-04, WQ-99 P1-4). js/auth-visibility.js adds
+   .revealed for signed-in users, which removes the affordance, and wires the
+   visitor click through to /login.html?redirect=<this page>. */
+.member-figure {
+  border-bottom: 2px dotted var(--gold);
+  cursor: pointer;
+}
+.member-figure.revealed {
+  border-bottom: none;
+  cursor: auto;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }

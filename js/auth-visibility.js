@@ -33,6 +33,12 @@
 
   if (!window.SomaAuth) return;
 
+  // Login URL that returns the visitor to the page they were reading.
+  function gateLoginHref() {
+    var here = window.location.pathname + window.location.search;
+    return '/login.html?redirect=' + encodeURIComponent(here);
+  }
+
   function reveal(authed) {
     // 1. Committee-gated nav/footer entries.
     document.querySelectorAll('[data-auth-gate]').forEach(function (el) {
@@ -40,14 +46,45 @@
     });
 
     // 2. Member-only figures: swap placeholder <-> real value.
+    //    Visitor state is a deep gate (Ren review 2026-07-04, WQ-99 P1-4):
+    //    dotted-gold affordance (css .member-figure, cleared by .revealed),
+    //    title + visually-hidden text for screen readers, and click-through
+    //    to login with a redirect back to this page.
     document.querySelectorAll('.member-figure[data-member-figure]').forEach(function (el) {
+      // Capture the visitor placeholder once, before any swap and before the
+      // SR span exists, so it never absorbs the SR text.
+      if (!el.hasAttribute('data-visitor-text')) {
+        var srOld = el.querySelector('.member-figure-sr');
+        if (srOld) srOld.remove();
+        el.setAttribute('data-visitor-text', el.textContent);
+      }
       if (authed) {
-        if (!el.hasAttribute('data-visitor-text')) {
-          el.setAttribute('data-visitor-text', el.textContent);
-        }
-        el.textContent = el.getAttribute('data-member-figure');
-      } else if (el.hasAttribute('data-visitor-text')) {
+        el.textContent = el.getAttribute('data-member-figure'); // wipes SR span too
+        el.classList.add('revealed');
+        el.removeAttribute('title');
+        el.removeAttribute('role');
+        el.removeAttribute('tabindex');
+      } else {
         el.textContent = el.getAttribute('data-visitor-text');
+        el.classList.remove('revealed');
+        el.setAttribute('title', 'Sign in to see this amount');
+        el.setAttribute('role', 'link');
+        el.setAttribute('tabindex', '0');
+        var sr = document.createElement('span');
+        sr.className = 'visually-hidden member-figure-sr';
+        sr.textContent = ' (member amount — sign in to see it)';
+        el.appendChild(sr);
+        if (!el.hasAttribute('data-gate-wired')) {
+          el.setAttribute('data-gate-wired', '1');
+          var toLogin = function () {
+            if (el.classList.contains('revealed')) return; // signed in meanwhile
+            window.location.href = gateLoginHref();
+          };
+          el.addEventListener('click', toLogin);
+          el.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toLogin(); }
+          });
+        }
       }
     });
 
@@ -62,7 +99,7 @@
   }
 
   // Exposed for unit tests.
-  window.LegendsAuthVisibility = { reveal: reveal, apply: apply };
+  window.LegendsAuthVisibility = { reveal: reveal, apply: apply, gateLoginHref: gateLoginHref };
 
   try {
     SomaAuth.onAuthStateChange(function (event, session) {

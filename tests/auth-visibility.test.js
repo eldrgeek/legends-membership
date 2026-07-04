@@ -200,9 +200,15 @@ async function loadFixture({ session, viaEvent }) {
 }
 
 function stateOf(doc) {
+  const fig = doc.querySelector('.member-figure');
+  const sr = fig.querySelector('.member-figure-sr');
   return {
     gated: Array.from(doc.querySelectorAll('[data-auth-gate]')).map((el) => el.style.display),
-    figure: doc.querySelector('.member-figure').textContent,
+    // Sighted-visitor figure text = textContent minus the visually-hidden SR suffix.
+    figure: sr ? fig.textContent.slice(0, fig.textContent.length - sr.textContent.length) : fig.textContent,
+    srText: sr ? sr.textContent : null,
+    title: fig.getAttribute('title'),
+    revealed: fig.classList.contains('revealed'),
     invite: doc.querySelector('.member-invite').style.display,
   };
 }
@@ -216,6 +222,24 @@ describe('auth-visibility.js behavior', () => {
     s.gated.forEach((d) => assert.strictEqual(d, 'none'));
     assert.strictEqual(s.figure, '—');
     assert.strictEqual(s.invite, '');
+    // Deep gating (Ren 2026-07-04, WQ-99 P1-4): SR text + title + no .revealed.
+    assert.strictEqual(s.srText, ' (member amount — sign in to see it)');
+    assert.strictEqual(s.title, 'Sign in to see this amount');
+    assert.strictEqual(s.revealed, false);
+  });
+
+  test('visitor gated figure is click-wired to login with redirect back', async () => {
+    const dom = await loadFixture({ session: null, viaEvent: false });
+    const fig = dom.window.document.querySelector('.member-figure');
+    // jsdom forbids stubbing window.location, so pin the two halves:
+    // the handler is wired, and the href it navigates to is correct.
+    assert.strictEqual(fig.getAttribute('data-gate-wired'), '1', 'click/keydown handler wired');
+    assert.strictEqual(fig.getAttribute('role'), 'link');
+    assert.strictEqual(fig.getAttribute('tabindex'), '0');
+    assert.strictEqual(
+      dom.window.LegendsAuthVisibility.gateLoginHref(),
+      '/login.html?redirect=%2Fplayer-benefits.html'
+    );
   });
 
   test('signed-in via getSession(): gated items revealed, real figures, invite hidden', async () => {
@@ -224,6 +248,10 @@ describe('auth-visibility.js behavior', () => {
     s.gated.forEach((d) => assert.strictEqual(d, ''));
     assert.strictEqual(s.figure, '$1,000');
     assert.strictEqual(s.invite, 'none');
+    // Revealed figures drop every visitor affordance (dotted style via .revealed, title, SR text).
+    assert.strictEqual(s.srText, null);
+    assert.strictEqual(s.title, null);
+    assert.strictEqual(s.revealed, true);
   });
 
   test('signed-in via INITIAL_SESSION event: same reveal', async () => {
@@ -242,6 +270,10 @@ describe('auth-visibility.js behavior', () => {
     s.gated.forEach((d) => assert.strictEqual(d, 'none'));
     assert.strictEqual(s.figure, '—');
     assert.strictEqual(s.invite, '');
+    // Visitor affordances come back after sign-out (SR span re-created).
+    assert.strictEqual(s.srText, ' (member amount — sign in to see it)');
+    assert.strictEqual(s.title, 'Sign in to see this amount');
+    assert.strictEqual(s.revealed, false);
   });
 });
 
