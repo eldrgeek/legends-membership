@@ -203,9 +203,9 @@
         <a href="resources.html" class="nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
         <ul class="nav-dropdown-menu" role="menu">
           <li><a href="resources.html" role="menuitem">Documents</a></li>
-          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
-          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
-          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li data-auth-gate="member" style="display:none;"><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li data-auth-gate="member" style="display:none;"><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li data-auth-gate="member" style="display:none;"><a href="assessment.html" role="menuitem">Assessment</a></li>
           <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
           <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
         </ul>
@@ -222,6 +222,7 @@
     </ul>
   </div>
 </nav>
+<script src="/js/auth-visibility.js" defer></script>
 <!-- END nav -->
 
 <div class="page-hero">
@@ -321,7 +322,7 @@
   <div class="footer-links">
     <a href="index.html">Home</a>
     <a href="members.html">Committee</a>
-    <a href="minutes.html">Meeting Minutes</a>
+    <a href="minutes.html" data-auth-gate="member" style="display:none;">Meeting Minutes</a>
     <a href="resources.html">Resources</a>
     <a href="recommendations.html">Recommendations</a>
     <a href="about.html">About &amp; Contact</a>

@@ -224,9 +224,9 @@
         <a href="resources.html" class="nav-dropdown-toggle active" aria-haspopup="true" aria-expanded="false">Resources &#9662;</a>
         <ul class="nav-dropdown-menu" role="menu">
           <li><a href="resources.html" role="menuitem">Documents</a></li>
-          <li><a href="minutes.html" role="menuitem">Minutes</a></li>
-          <li><a href="systems-map.html" role="menuitem">Systems Map</a></li>
-          <li><a href="assessment.html" role="menuitem">Assessment</a></li>
+          <li data-auth-gate="member" style="display:none;"><a href="minutes.html" role="menuitem">Minutes</a></li>
+          <li data-auth-gate="member" style="display:none;"><a href="systems-map.html" role="menuitem">Systems Map</a></li>
+          <li data-auth-gate="member" style="display:none;"><a href="assessment.html" role="menuitem">Assessment</a></li>
           <li><a href="player-benefits.html" role="menuitem">Player Benefits</a></li>
           <li><a href="membership-offerings.html" role="menuitem">Membership Offerings</a></li>
         </ul>
@@ -243,6 +243,7 @@
     </ul>
   </div>
 </nav>
+<script src="/js/auth-visibility.js" defer></script>
 <!-- END nav -->
 
 <div class="hero hero-small">
@@ -263,6 +264,11 @@
 
     <div class="highlight-box" style="margin-top: 1.75rem;">
       <p><strong>This page is a starting point, not a benefits statement.</strong> Figures cited reflect publicly available CBA terms and official announcements as of mid-2026. Benefit amounts, eligibility rules, and plan administrators can change. Always verify your personal eligibility and current benefit levels directly with the official source for your league.</p>
+    </div>
+
+    <div class="member-invite" style="margin-top: 1.25rem; background: rgba(201,168,76,0.12); border: 1px solid var(--gold); border-radius: 10px; padding: 1.4rem 1.75rem; max-width: 760px;">
+      <p style="margin: 0 0 1rem 0; font-size: 1.05rem; line-height: 1.65; color: var(--text-dark);"><strong style="color: var(--navy);">Current dollar amounts on this page are shown to signed-in members.</strong> Sign in to see current benefit amounts &mdash; it&rsquo;s free for all former players.</p>
+      <a class="btn btn-gold" href="/login.html?redirect=%2Fplayer-benefits.html" style="font-size: 1rem;">Sign In to See Amounts</a>
     </div>
   </div>
 </section>
@@ -309,7 +315,7 @@
         <div class="benefit-card">
           <h4>Pension Plan</h4>
           <p>A defined-benefit pension based on the number of credited seasons you played. Vests at <strong>3 credited seasons</strong>. You can begin collecting as early as <strong>age 45</strong> (with a reduced amount) or wait until <strong>age 62</strong> for the full benefit.</p>
-          <p style="margin-top: 0.6rem;">Under the 2023 CBA, the monthly benefit rate is approximately <strong>TBA per credited season</strong> (at age 62). Example: 10 seasons = roughly TBA at normal retirement age.</p>
+          <p style="margin-top: 0.6rem;">Under the 2023 CBA, the monthly benefit rate is approximately <strong><span class="member-figure" data-member-figure="$1,000">&#8212;</span> per credited season</strong> (at age 62). Example: 10 seasons = roughly <span class="member-figure" data-member-figure="$10,000/month">&#8212;</span> at normal retirement age.</p>
         </div>
 
         <div class="benefit-card">
@@ -338,13 +344,16 @@
 
         <div class="benefit-card">
           <h4>Tuition &amp; Career Transition</h4>
-          <p>Up to <strong>TBA</strong> reimbursed for tuition and career development, with a <strong>TBA lifetime cap</strong> (increased by TBA for players with 3+ years of service). Apply through the NBPA.</p>
+          <p>Up to <strong><span class="member-figure" data-member-figure="$41,667/year">&#8212;</span></strong> reimbursed for tuition and career development, with a <strong><span class="member-figure" data-member-figure="$125,000">&#8212;</span> lifetime cap</strong> (increased by <span class="member-figure" data-member-figure="$24,000">&#8212;</span> for players with 3+ years of service). Apply through the NBPA.</p>
         </div>
 
       </div>
 
       <h3 style="font-family: 'Playfair Display', serif; color: var(--navy); font-size: 1.1rem; margin: 2rem 0 0.75rem;">NBA Pension — Approximate Monthly Benefit at Age 62</h3>
       <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.75rem;">Based on the 2023 CBA rate. Actual amounts may vary; verify with NBPA. Collecting before age 62 results in a reduced amount.</p>
+      <div class="member-invite" style="background: rgba(201,168,76,0.12); border: 1px solid var(--gold); border-radius: 10px; padding: 1.1rem 1.5rem; margin-bottom: 0.75rem;">
+        <p style="margin: 0; font-size: 1rem; line-height: 1.6; color: var(--text-dark);">Sign in to see the current pension amounts &mdash; free for all former players. <a href="/login.html?redirect=%2Fplayer-benefits.html" style="color: var(--navy); font-weight: 700;">Sign in &rarr;</a></p>
+      </div>
       <table class="service-table">
         <thead>
           <tr>
@@ -354,11 +363,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>3 seasons (minimum)</td><td>TBA</td><td>TBA</td></tr>
-          <tr><td>5 seasons</td><td>TBA</td><td>TBA</td></tr>
-          <tr><td>8 seasons</td><td>TBA</td><td>TBA</td></tr>
-          <tr><td>10 seasons</td><td>TBA</td><td>TBA</td></tr>
-          <tr><td>15 seasons</td><td>TBA</td><td>TBA</td></tr>
+          <tr><td>3 seasons (minimum)</td><td><span class="member-figure" data-member-figure="~$3,000">&#8212;</span></td><td><span class="member-figure" data-member-figure="~$36,000">&#8212;</span></td></tr>
+          <tr><td>5 seasons</td><td><span class="member-figure" data-member-figure="~$5,000">&#8212;</span></td><td><span class="member-figure" data-member-figure="~$60,000">&#8212;</span></td></tr>
+          <tr><td>8 seasons</td><td><span class="member-figure" data-member-figure="~$8,000">&#8212;</span></td><td><span class="member-figure" data-member-figure="~$96,000">&#8212;</span></td></tr>
+          <tr><td>10 seasons</td><td><span class="member-figure" data-member-figure="~$10,000">&#8212;</span></td><td><span class="member-figure" data-member-figure="~$120,000">&#8212;</span></td></tr>
+          <tr><td>15 seasons</td><td><span class="member-figure" data-member-figure="~$15,000">&#8212;</span></td><td><span class="member-figure" data-member-figure="~$180,000">&#8212;</span></td></tr>
         </tbody>
       </table>
 
@@ -394,16 +403,16 @@
           <h4>One-Time Recognition Payment (Retired Players)</h4>
           <p>The 2026 CBA created a landmark one-time lump-sum payment for already-retired players based on years of service:</p>
           <ul>
-            <li><strong>5–7 years of service:</strong> TBA</li>
-            <li><strong>8–11 years of service:</strong> TBA</li>
-            <li><strong>12+ years of service:</strong> TBA</li>
+            <li><strong>5–7 years of service:</strong> <span class="member-figure" data-member-figure="$30,000">&#8212;</span></li>
+            <li><strong>8–11 years of service:</strong> <span class="member-figure" data-member-figure="$50,000">&#8212;</span></li>
+            <li><strong>12+ years of service:</strong> <span class="member-figure" data-member-figure="$100,000">&#8212;</span></li>
           </ul>
           <p style="margin-top: 0.5rem;">Minimum 5 years of service required to qualify. Contact WNBPA to confirm your eligibility and payment timeline.</p>
         </div>
 
         <div class="benefit-card">
           <h4>Life Insurance</h4>
-          <p>The 2026 CBA dramatically expanded life insurance for active WNBA players to over <strong>TBA per player</strong> (up from TBA under the prior CBA). Verify your current coverage and beneficiary designations with the WNBPA.</p>
+          <p>The 2026 CBA dramatically expanded life insurance for active WNBA players to over <strong><span class="member-figure" data-member-figure="$700,000">&#8212;</span> per player</strong> (up from <span class="member-figure" data-member-figure="$100,000">&#8212;</span> under the prior CBA). Verify your current coverage and beneficiary designations with the WNBPA.</p>
         </div>
 
         <div class="benefit-card">
@@ -441,9 +450,9 @@
 
         <div class="benefit-card">
           <h4>2022 NBA/NBPA Recognition Payments</h4>
-          <p>In July 2022, the NBA and NBPA jointly announced ongoing recognition payments totaling approximately <strong>TBA</strong> for eligible former ABA players.</p>
+          <p>In July 2022, the NBA and NBPA jointly announced ongoing recognition payments totaling approximately <strong><span class="member-figure" data-member-figure="$24.5 million">&#8212;</span></strong> for eligible former ABA players.</p>
           <p style="margin-top: 0.5rem;"><strong>Eligibility:</strong> Played at least 3 seasons in the ABA <em>and</em> did not qualify for the NBA pension plan.</p>
-          <p style="margin-top: 0.5rem;">Payments are ongoing (not a one-time lump sum) — approximately <strong>TBA per year per season of ABA service</strong>, funded equally by the NBA and NBPA. Call the NBA ABA hotline to confirm your status: <strong>1-888-996-1727</strong>.</p>
+          <p style="margin-top: 0.5rem;">Payments are ongoing (not a one-time lump sum) — approximately <strong><span class="member-figure" data-member-figure="$3,828">&#8212;</span> per year per season of ABA service</strong>, funded equally by the NBA and NBPA. Call the NBA ABA hotline to confirm your status: <strong>1-888-996-1727</strong>.</p>
         </div>
 
         <div class="benefit-card">
@@ -492,7 +501,7 @@
 
         <div class="benefit-card">
           <h4>NBRPA Financial Assistance Grant</h4>
-          <p>Up to <strong>TBA per member</strong> (once every two years) for members with AGI of TBA or less who demonstrate financial need. <strong>Applications from Harlem Globetrotter alumni receive preference</strong> alongside WNBA alumni and NBA players with fewer than 3 seasons — recognizing that these groups have no formal pension to fall back on.</p>
+          <p>Up to <strong><span class="member-figure" data-member-figure="$2,500">&#8212;</span> per member</strong> (once every two years) for members with AGI of <span class="member-figure" data-member-figure="$150,000">&#8212;</span> or less who demonstrate financial need. <strong>Applications from Harlem Globetrotter alumni receive preference</strong> alongside WNBA alumni and NBA players with fewer than 3 seasons — recognizing that these groups have no formal pension to fall back on.</p>
         </div>
 
         <div class="benefit-card">
@@ -545,13 +554,13 @@
 
       <div class="benefit-card">
         <h4>Financial Assistance Grant</h4>
-        <p>Up to <strong>TBA</strong> per member every two years for members with AGI ≤ TBA who demonstrate financial need. Applications accepted monthly (by the 20th). Preference given to WNBA, Globetrotter, and NBA players with fewer than 3 credited seasons.</p>
+        <p>Up to <strong><span class="member-figure" data-member-figure="$2,500">&#8212;</span></strong> per member every two years for members with AGI ≤ <span class="member-figure" data-member-figure="$150,000">&#8212;</span> who demonstrate financial need. Applications accepted monthly (by the 20th). Preference given to WNBA, Globetrotter, and NBA players with fewer than 3 credited seasons.</p>
         <p style="margin-top: 0.5rem;"><a href="https://www.legendsofbasketball.com/grants-and-scholarships/member-grant-program/" target="_blank" rel="noopener" style="color: var(--gold-light, #e8c96e);">Apply →</a></p>
       </div>
 
       <div class="benefit-card">
         <h4>Scholarships</h4>
-        <p>The <strong>Dave DeBusschere Scholarship Fund</strong> and <strong>Earl Lloyd Scholarship</strong> support members and their children. Over TBA in scholarship funds has been distributed to former players and families to date.</p>
+        <p>The <strong>Dave DeBusschere Scholarship Fund</strong> and <strong>Earl Lloyd Scholarship</strong> support members and their children. Over <span class="member-figure" data-member-figure="$1 million">&#8212;</span> in scholarship funds has been distributed to former players and families to date.</p>
         <p style="margin-top: 0.5rem;"><a href="https://www.legendsofbasketball.com/grants-and-scholarships/" target="_blank" rel="noopener" style="color: var(--gold-light, #e8c96e);">Learn more →</a></p>
       </div>
 
@@ -621,7 +630,7 @@
   <div class="footer-links">
     <a href="index.html">Home</a>
     <a href="members.html">Committee</a>
-    <a href="minutes.html">Meeting Minutes</a>
+    <a href="minutes.html" data-auth-gate="member" style="display:none;">Meeting Minutes</a>
     <a href="resources.html">Resources</a>
     <a href="player-benefits.html">Player Benefits</a>
     <a href="recommendations.html">Recommendations</a>
