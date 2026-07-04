@@ -71,6 +71,31 @@
     <a href="members.html" class="btn btn-gold">Meet the Committee</a>
     <a href="about.html" class="btn btn-outline">Our Mission</a>
   </div>
+  <!-- Show, don't tell: narrated walkthrough videos (WQ-82). Committee tour reveals on sign-in via data-auth-gate. -->
+  <div class="tour-card-strip">
+    <button type="button" class="tour-card"
+            data-tour-video="/videos/site-tour.mp4"
+            data-tour-poster="/videos/site-tour-poster.jpg"
+            data-tour-chapters="/videos/site-tour.vtt"
+            data-tour-title="Site tour — how this site works (6 minutes)">
+      <span class="tour-card-thumb"><img src="/videos/site-tour-poster.jpg" alt=""><span class="tour-card-play" aria-hidden="true">&#9654;</span></span>
+      <span class="tour-card-text">
+        <span class="tour-card-kicker">Video tour</span>
+        <span class="tour-card-label">See how this site works — 6 min tour</span>
+      </span>
+    </button>
+    <button type="button" class="tour-card" data-auth-gate="member" style="display:none;"
+            data-tour-video="/videos/committee-tour.mp4"
+            data-tour-poster="/videos/committee-tour-poster.jpg"
+            data-tour-chapters="/videos/committee-tour.vtt"
+            data-tour-title="Your committee tour — what sign-in unlocks (3 minutes)">
+      <span class="tour-card-thumb"><img src="/videos/committee-tour-poster.jpg" alt=""><span class="tour-card-play" aria-hidden="true">&#9654;</span></span>
+      <span class="tour-card-text">
+        <span class="tour-card-kicker">For committee members</span>
+        <span class="tour-card-label">Your committee tour — 3 min</span>
+      </span>
+    </button>
+  </div>
 </div>
 
 <section>
@@ -246,6 +271,7 @@
 </script>
 
 <script src="js/nav-dropdown.js"></script>
+<script src="/js/tour-video.js" defer></script>
 <script src="/js/community-nav.js" defer></script>
 <script src="js/legends-knowledge.js"></script>
   <script src="js/legends-guide-config.js"></script>

@@ -255,6 +255,21 @@
 
     <a href="admin.html" class="back-link">&#8592; Back to Admin</a>
 
+    <!-- Show, don't tell: admin walkthrough video (WQ-82). Admin-only page — the admin tour card lives here, nowhere else. -->
+    <div class="tour-card-strip" style="justify-content: flex-start; margin: 12px 0 28px;">
+      <button type="button" class="tour-card tour-card--light"
+              data-tour-video="/videos/admin-tour.mp4"
+              data-tour-poster="/videos/admin-tour-poster.jpg"
+              data-tour-chapters="/videos/admin-tour.vtt"
+              data-tour-title="Admin tour — the review queue and admin tools (3 minutes)">
+        <span class="tour-card-thumb"><img src="/videos/admin-tour-poster.jpg" alt=""><span class="tour-card-play" aria-hidden="true">&#9654;</span></span>
+        <span class="tour-card-text">
+          <span class="tour-card-kicker">Video tour</span>
+          <span class="tour-card-label">Admin tour — how the admin tools work (3 min)</span>
+        </span>
+      </button>
+    </div>
+
     <!-- Stats -->
     <div class="stats-row">
       <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
@@ -1846,5 +1861,6 @@ document.documentElement.style.visibility = 'hidden';
 <script src="js/nav-dropdown.js"></script>
 <script src="/js/community-nav.js" defer></script>
 <script src="/js/admin-review-nav.js" defer></script>
+<script src="/js/tour-video.js" defer></script>
 </body>
 </html>
