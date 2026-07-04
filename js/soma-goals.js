@@ -44,7 +44,8 @@
     'gtinsley@pengeo.com',
     'wdavis5455@yahoo.com',
     'mo@elos360.com',
-    'purvis.short@icloud.com'
+    'purvis.short@icloud.com',
+    'demo-committee@mike-wolf.com'
   ];
 
   function cleanEmail(user) {
