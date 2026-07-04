@@ -315,6 +315,61 @@ describe('tour-video.js lightbox', () => {
     assert.ok(video._testPlayed, 'chapter click plays');
   });
 
+  test('two tours sequentially: ONE timeupdate handler, no stale-cue errors (Ren 2026-07-04)', async () => {
+    // Regression pin for the per-renderChapters listener leak: opening a second
+    // tour with a different cue count made the stale closure index past the new
+    // list (items[i] undefined → TypeError on every timeupdate).
+    const COMMITTEE_VTT = fs.readFileSync(path.join(ROOT, 'videos', 'committee-tour.vtt'), 'utf8');
+    const dom = new JSDOM(`
+      <!doctype html>
+      <body>
+        <button type="button" id="t-site"
+                data-tour-video="/videos/site-tour.mp4"
+                data-tour-chapters="/videos/site-tour.vtt"
+                data-tour-title="Site tour">Play</button>
+        <button type="button" id="t-committee"
+                data-tour-video="/videos/committee-tour.mp4"
+                data-tour-chapters="/videos/committee-tour.vtt"
+                data-tour-title="Committee tour">Play</button>
+      </body>
+    `, {
+      url: 'https://legends-membership.netlify.app/index.html',
+      runScripts: 'dangerously',
+      beforeParse(window) {
+        window.HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+        window.HTMLMediaElement.prototype.pause = function () {};
+        window.fetch = (url) => Promise.resolve({
+          text: () => Promise.resolve(/committee/.test(url) ? COMMITTEE_VTT : SITE_VTT),
+        });
+      },
+    });
+    const errors = [];
+    dom.window.addEventListener('error', (e) => errors.push(e.error || e.message));
+    dom.window.eval(TOUR_VIDEO_JS);
+    await tick();
+
+    const doc = dom.window.document;
+    doc.getElementById('t-site').click();          // 14 chapters
+    await tick(); await tick();
+    dom.window.LegendsTourVideo.close();
+    doc.getElementById('t-committee').click();     // 8 chapters
+    await tick(); await tick();
+
+    const box = doc.querySelector('.tour-lightbox');
+    const video = box.querySelector('video');
+    const items = box.querySelectorAll('.tour-chapter');
+    assert.strictEqual(items.length, 8, 'committee chapter list rendered');
+
+    // Fire timeupdate inside committee chapter 1 (0–29.333s). With the leak,
+    // the stale 14-cue handler throws AND fights the highlight.
+    video.currentTime = 10;
+    video.dispatchEvent(new dom.window.Event('timeupdate'));
+    assert.deepStrictEqual(errors, [], `timeupdate raised: ${errors.join('; ')}`);
+    const active = Array.from(items).map((el, i) => (el.classList.contains('active') ? i : null))
+      .filter((i) => i !== null);
+    assert.deepStrictEqual(active, [0], 'exactly the current tour\'s first chapter is active');
+  });
+
   test('Escape closes and pauses; backdrop click closes; close button closes', async () => {
     const dom = await loadLightbox();
     const doc = dom.window.document;

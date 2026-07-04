@@ -69,6 +69,7 @@
   // ── Lightbox (built once, reused) ──────────────────────────────────
   var box = null;
   var lastTrigger = null;
+  var currentCues = []; // chapters of the tour currently loaded in the lightbox
 
   function build() {
     box = document.createElement('div');
@@ -97,6 +98,22 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && box.style.display !== 'none') close();
     });
+
+    // ONE module-level timeupdate handler for the lifetime of the lightbox.
+    // renderChapters() only swaps `currentCues`; wiring a fresh listener per
+    // render stacked handlers with stale cue closures across tours (Ren
+    // review 2026-07-04) — items[i] went undefined when cue counts differed.
+    var video = box.querySelector('video');
+    video.addEventListener('timeupdate', function () {
+      if (!currentCues.length) return;
+      var t = video.currentTime;
+      var items = box.querySelectorAll('.tour-chapters-list .tour-chapter');
+      currentCues.forEach(function (cue, i) {
+        if (!items[i]) return;
+        var active = t >= cue.start && (cue.end == null || t < cue.end);
+        items[i].classList.toggle('active', active);
+      });
+    });
   }
 
   function renderChapters(cues) {
@@ -104,6 +121,7 @@
     var list = box.querySelector('.tour-chapters-list');
     var video = box.querySelector('video');
     list.innerHTML = '';
+    currentCues = cues; // the build()-wired timeupdate handler reads this
     if (!cues.length) { wrap.style.display = 'none'; return; }
     cues.forEach(function (cue) {
       var li = document.createElement('li');
@@ -121,14 +139,6 @@
       list.appendChild(li);
     });
     wrap.style.display = '';
-    video.addEventListener('timeupdate', function () {
-      var t = video.currentTime;
-      var items = list.querySelectorAll('.tour-chapter');
-      cues.forEach(function (cue, i) {
-        var active = t >= cue.start && (cue.end == null || t < cue.end);
-        items[i].classList.toggle('active', active);
-      });
-    });
   }
 
   function open(trigger) {
@@ -160,6 +170,7 @@
         video.appendChild(track);
       }
       box.querySelector('.tour-chapters').style.display = 'none';
+      currentCues = []; // new video: no active chapters until its VTT arrives
       if (chaptersUrl && typeof fetch === 'function') {
         fetch(chaptersUrl).then(function (r) { return r.text(); }).then(function (text) {
           renderChapters(parseVtt(text));
