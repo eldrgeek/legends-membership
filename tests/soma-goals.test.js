@@ -328,3 +328,58 @@ describe('SOMA Goals — graceful degradation', () => {
     dom.window.close();
   });
 });
+
+// Regression: the Change Log review preview loads pages into an iframe whose
+// auth client shares storage with the parent, so Supabase fires SIGNED_IN /
+// INITIAL_SESSION / TOKEN_REFRESHED repeatedly for the SAME user. Each event
+// used to re-fetch + re-render the goals widget, making the iframe flash
+// continuously. The widget must render once per identity and ignore redundant
+// events. We assert the goals read happens exactly once across a storm.
+describe('SOMA Goals — no flashing on redundant auth events', () => {
+  function goalsGets(backend) {
+    return backend.state.requests.filter(
+      (r) => r.method === 'GET' && r.pathname === '/rest/v1/goals'
+    ).length;
+  }
+
+  test('repeated same-user auth events do not re-render (single goals read)', async () => {
+    const backend = makeBackend({
+      goals: [
+        { id: 'g1', group: 'scholarships', title: 'Goal One', status: 'approved', created_by: 'x@y.com', created_at: '2026-01-01T00:00:00Z' }
+      ],
+      committeeTokens: ['tok-committee']
+    });
+    const dom = await loadGoals(backend, { session: COMMITTEE_SESSION, role: 'committee' });
+    assert.equal(goalsGets(backend), 1, 'initial mount reads goals once');
+
+    // Simulate the cross-frame / token-refresh event storm for the same user.
+    const fire = dom.window.SomaAuth._handler;
+    fire('SIGNED_IN', COMMITTEE_SESSION);
+    fire('INITIAL_SESSION', COMMITTEE_SESSION);
+    fire('TOKEN_REFRESHED', COMMITTEE_SESSION);
+    fire('SIGNED_IN', COMMITTEE_SESSION);
+    await tick(); await tick(); await tick();
+
+    assert.equal(goalsGets(backend), 1, 'redundant same-user events trigger no extra reads/renders');
+    dom.window.close();
+  });
+
+  test('a genuine identity change still re-renders', async () => {
+    const backend = makeBackend({
+      goals: [
+        { id: 'g1', group: 'scholarships', title: 'Goal One', status: 'approved', created_by: 'x@y.com', created_at: '2026-01-01T00:00:00Z' }
+      ],
+      committeeTokens: ['tok-committee']
+    });
+    const dom = await loadGoals(backend, { session: COMMITTEE_SESSION, role: 'committee' });
+    assert.equal(goalsGets(backend), 1);
+
+    const OTHER = { access_token: 'tok-other', user: { id: 'u9', email: 'fan@example.com' } };
+    dom.window.SomaAuth.getRole = () => Promise.resolve('member');
+    dom.window.SomaAuth._handler('SIGNED_IN', OTHER);
+    await tick(); await tick(); await tick();
+
+    assert.equal(goalsGets(backend), 2, 'a different user re-reads/re-renders');
+    dom.window.close();
+  });
+});
