@@ -1,0 +1,61 @@
+VENDORED SOMA-GUIDE ENGINE — provenance and drift record
+=========================================================
+
+Why these files are here
+------------------------
+Until 2026-08-11 the Legends site loaded the Ask Bill widget engine from
+https://soma-guide.netlify.app — a third-party host with a MANUAL (non-git)
+deploy. On 2026-08-11 that host was returning 404 for the entire site:
+
+    curl -sI https://soma-guide.netlify.app/soma-guide.js  -> HTTP/2 404
+    curl -s -o /dev/null -w '%{http_code}' https://soma-guide.netlify.app/  -> 404
+
+Production was still serving those references, so window.somaGuide was
+undefined for every member, the in-page #ask-bill-section button did nothing,
+and the stylesheet 404'd. Nothing in the estate noticed. Legends is priority #1;
+its member-facing guide must not depend on a hand-deployed third-party host.
+
+These assets are therefore VENDORED and served same-origin from
+/vendor/soma-guide/, so Ask Bill ships and rolls back with this repo.
+
+Source
+------
+Repo:          ~/Projects/soma-platform
+Path:          packages/soma-guide/
+Commit SHA:    4e4de7a0f13a1bd3f715ada36842b489282121ce
+Commit date:   2026-07-27 10:45:30 -0700
+Commit subject: fix(soma-guide): the guide is a bottom sheet on phones, not a floating window
+Working tree:  CLEAN at time of copy (git status --porcelain packages/soma-guide/ was empty)
+Engine version: SOMA_GUIDE_VERSION = '2026-0727a'
+Copied:        2026-08-11 (UTC) by the vendoring pass
+
+Files and checksums (sha256, as copied)
+---------------------------------------
+f3528ae2cef2f0267c53a4814a5f0c6b7ca790df9615d946a6baf1d543956589  soma-guide.js
+fde9204246fd08578881a51cfe0fca6bbd760d78f2cd1975423d71434e28d3a2  soma-guide.css
+2c9e2e8f2e6cd1ec721013059a783ef4478c8cca1f5374eaf0f5325110d2f012  soma-guide-shim.js
+
+These files are a BYTE-IDENTICAL copy of the source. Do not hand-edit them.
+All Legends-specific behaviour lives in:
+    js/legends-guide-config.js          (persona, walkthroughs, endpoints)
+    js/legends-knowledge.js             (site knowledge pack)
+    js/legends-ask-bill-resilience.js   (degradation layer)
+
+How to detect drift
+-------------------
+    shasum -a 256 vendor/soma-guide/*.js vendor/soma-guide/*.css
+    shasum -a 256 ~/Projects/soma-platform/packages/soma-guide/soma-guide.{js,css}
+
+`npm run verify:deploy` compares the LIVE same-origin assets against these
+vendored files, and `npm run test:dependency-failures` asserts the vendored
+engine still emits the sentinel string the resilience layer hooks. If soma-platform
+moves ahead, re-copy the three files and update the SHA + checksums above.
+
+How to refresh
+--------------
+    SRC=~/Projects/soma-platform/packages/soma-guide
+    cp $SRC/soma-guide.js $SRC/soma-guide.css $SRC/soma-guide-shim.js vendor/soma-guide/
+    npm run test:dependency-failures     # must stay green
+    # then update the SHA, date and checksums in this file
+
+Do NOT re-point the HTML back at soma-guide.netlify.app.

@@ -1,0 +1,1004 @@
+/* SOMA Guide Widget — portable floating assistant */
+
+/* ── Widget root ── */
+#soma-guide {
+  position: fixed;
+  z-index: 9999;
+  bottom: 28px;
+  right: 28px;
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  color: #060e18;
+  user-select: text;
+}
+/* SOMA principle: all content text is selectable (scrape, don't screenshot).
+ * Only the chrome (drag handle + buttons) opts out, to avoid selecting on drag. */
+.sg-header, .sg-fab, .sg button, .sg-suggest-chip, .sg-suggest-more { user-select: none; }
+
+/* ── FAB (minimized state) ── */
+.sg-fab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #c9a84c;
+  color: #060e18;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 20px 12px 14px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.22);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.sg-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.28); }
+.sg-fab-avatar { font-size: 1.2rem; line-height: 1; }
+.sg-fab-name { line-height: 1; }
+
+/* ── Panel ── */
+.sg-panel {
+  display: none;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.93);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* ── Mode: minimized ── */
+.sg--min .sg-panel { display: none; }
+.sg--min .sg-fab   { display: flex; }
+
+/* ── Mode: idle ── */
+.sg--idle .sg-fab  { display: none; }
+.sg--idle .sg-panel {
+  display: flex;
+  width: 340px;
+  max-height: min(520px, 85vh);
+}
+
+/* ── Mode: text ── */
+.sg--text .sg-fab  { display: none; }
+.sg--text .sg-panel {
+  display: flex;
+  width: 360px;
+  height: 480px;
+  resize: none;
+  overflow: hidden;
+}
+
+/* ── Mode: walkthrough ── */
+.sg--walkthrough .sg-fab  { display: none; }
+.sg--walkthrough .sg-panel {
+  display: flex;
+  width: 340px;
+  max-height: min(520px, 85vh);
+}
+
+/* ── Mode: voice ── */
+.sg--voice .sg-fab  { display: none; }
+.sg--voice .sg-panel {
+  display: flex;
+  width: 248px;
+}
+
+/* Mode containers (idle / voice / text / walkthrough / tour bar) are switched
+ * via the `hidden` attribute in JS. Their own `display:flex/block` rules would
+ * otherwise override `hidden` and stack every mode at once — make `hidden` win. */
+.sg [hidden] { display: none !important; }
+
+/* When an inline form (feedback/action) is active, focus on it: hide the chat
+ * scrollback so the form isn't buried below history that's irrelevant to filling it. */
+.sg-messages--focus > :not(.sg-feedback-form) { display: none; }
+
+/* ── Resize handles (all four corners, with cursor + hover hint) ── */
+.sg-resize-h { position: absolute; width: 14px; height: 14px; z-index: 6; }
+.sg--min .sg-resize-h { display: none; }
+.sg-resize-nw { top: 0; left: 0;  cursor: nwse-resize; }
+.sg-resize-ne { top: 0; right: 0; cursor: nesw-resize; }
+.sg-resize-sw { bottom: 0; left: 0;  cursor: nesw-resize; }
+.sg-resize-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.sg-resize-h::after { content: ''; position: absolute; width: 7px; height: 7px; opacity: 0; transition: opacity 0.12s; }
+.sg-resize-h:hover::after { opacity: 1; border: 2px solid #c9a84c; }
+.sg-resize-nw:hover::after { top: 3px; left: 3px; border-right: 0; border-bottom: 0; }
+.sg-resize-ne:hover::after { top: 3px; right: 3px; border-left: 0; border-bottom: 0; }
+.sg-resize-sw:hover::after { bottom: 3px; left: 3px; border-right: 0; border-top: 0; }
+.sg-resize-se:hover::after { bottom: 3px; right: 3px; border-left: 0; border-top: 0; }
+/* keep header controls clickable above the top-corner handles */
+.sg-header-btns, .sg-persona { position: relative; z-index: 7; }
+
+/* ── Header ── */
+.sg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: #060e18;
+  color: #fff;
+  cursor: grab;
+  border-radius: 14px 14px 0 0;
+}
+.sg-header:active { cursor: grabbing; }
+
+.sg-persona {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Let the persona block shrink so a long name (e.g. "Quinn · Review") can never
+   * push the header buttons — including Close (×) — off the edge of a narrow panel. */
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.sg-persona-avatar { font-size: 1.1rem; flex-shrink: 0; }
+.sg-persona-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #c9a84c;
+  /* Truncate instead of overflowing the header. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sg-version {
+  font-size: 0.6rem;
+  font-family: monospace;
+  opacity: 0.38;
+  color: #c9a84c;
+  align-self: flex-end;
+  padding-bottom: 1px;
+  letter-spacing: 0.02em;
+}
+
+.sg-header-btns {
+  display: flex;
+  gap: 4px;
+  /* Never shrink or wrap — keep all controls (incl. Close ×) visible at any width. */
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  margin-left: 8px;
+}
+.sg-header-btns button {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+.sg-header-btns button:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.12);
+}
+
+/* Close (×) button — more prominent than the minimize (−) */
+.sg-btn-close {
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 1.2rem !important;
+  padding: 2px 8px !important;
+  min-width: 28px;
+  min-height: 28px;
+}
+.sg-btn-close:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,0.18) !important;
+}
+
+/* ── Body ── */
+.sg-body {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── Idle UI ── */
+.sg-greeting {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #333;
+  margin: 0 0 14px;
+}
+.sg-topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.sg-topic-btn {
+  background: #f5f1e8;
+  border: 1px solid #e8dfc4;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.84rem;
+  color: #060e18;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sg-topic-btn:hover {
+  background: #ede7d3;
+  border-color: #c9a84c;
+}
+
+/* ── Suggestion chips (conversational shell) ── */
+.sg-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 2px 10px;
+}
+.sg-suggest-chip,
+.sg-suggest-more {
+  background: #f5f1e8;
+  border: 1px solid #e8dfc4;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: #060e18;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sg-suggest-chip:hover,
+.sg-suggest-more:hover {
+  background: #ede7d3;
+  border-color: #c9a84c;
+}
+.sg-suggest-more {
+  background: transparent;
+  border-color: transparent;
+  color: #5f5e5a;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+/* Tell → Show offer buttons */
+.sg-offer { display: flex; gap: 8px; }
+.sg-offer-show, .sg-offer-tell {
+  border-radius: 8px; padding: 7px 14px; font-family: inherit; font-size: 0.82rem; cursor: pointer;
+}
+.sg-offer-show { background: #102036; color: #c9a84c; border: none; font-weight: 600; }
+.sg-offer-show:hover { background: #1a3050; }
+.sg-offer-do { background: #c9a84c; color: #0d1b2a; border: none; font-weight: 600; }
+.sg-offer-do:hover { background: #b8962f; }
+.sg-offer-tell { background: transparent; color: #5f5e5a; border: 1px solid #d9d5c8; }
+.sg-offer-tell:hover { border-color: #c9a84c; color: #060e18; }
+
+/* Output-mode toggle (Text / Voice) — the explicit "how should Bill answer" choice.
+ * On first encounter the Voice option pulses to announce "you can talk to me",
+ * then quiets once the user has engaged.
+ * Lives at panel level (sibling of .sg-header / .sg-body), NOT inside the
+ * scrollable .sg-body — pinned so it can never scroll out of the clip box. */
+.sg-io-toggle { display: flex; gap: 6px; padding: 10px 14px 0; flex: 0 0 auto; }
+.sg-io-btn {
+  flex: 1;
+  border: 1px solid #d9d5c8;
+  background: #f5f1e8;
+  color: #5f5e5a;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.sg-io-btn--active { background: #102036; color: #c9a84c; border-color: #102036; font-weight: 600; }
+.sg-io-voice--pulse { border-color: #c9a84c; animation: sg-voice-pulse 2.2s ease-in-out infinite; }
+@keyframes sg-voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.5); }
+  50%      { box-shadow: 0 0 0 6px rgba(201,168,76,0); }
+}
+
+/* ── Voice UI ── */
+.sg-voice-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  gap: 12px;
+}
+.sg-orb {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #c9a84c, #8b6c2a);
+  box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.5);
+  animation: sg-breathe 2.4s ease-in-out infinite;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Active state: orb shrinks to a small indicator so transcript text can read clearly */
+.sg-orb--active {
+  width: 36px;
+  height: 36px;
+}
+.sg-orb.sg-orb--speaking {
+  animation: sg-pulse 0.6s ease-in-out infinite;
+}
+@keyframes sg-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(201,168,76,0.0); }
+}
+@keyframes sg-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 4px rgba(201,168,76,0.3); }
+  50%       { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(201,168,76,0.0); }
+}
+.sg-voice-status {
+  font-size: 0.82rem;
+  color: #666;
+  margin: 0;
+  text-align: center;
+}
+.sg-voice-transcript {
+  font-size: 0.92rem;
+  color: #1a1a1a;
+  margin: 4px 0 0;
+  text-align: center;
+  line-height: 1.6;
+  min-height: 0;
+  padding: 0;
+  word-break: break-word;
+  transition: background 0.2s, padding 0.2s;
+}
+.sg-voice-transcript:not(:empty) {
+  background: #f5f1e8;
+  border-radius: 8px;
+  border-left: 3px solid #c9a84c;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+/* ── Text UI ── */
+.sg-text-ui {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.sg-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-right: 2px;
+}
+.sg-msg {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  word-break: break-word;
+}
+.sg-msg--user {
+  background: #060e18;
+  color: #fff;
+  align-self: flex-end;
+  border-radius: 10px 10px 2px 10px;
+}
+.sg-msg--agent {
+  background: #f5f1e8;
+  color: #060e18;
+  align-self: flex-start;
+  border-radius: 10px 10px 10px 2px;
+  user-select: text;
+  -webkit-user-select: text;
+  position: relative;
+}
+
+/* Copy button — appears on hover/focus-within */
+.sg-msg--agent .sg-copy-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.7rem;
+  color: #7a5e1a;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  line-height: 1.5;
+  font-family: inherit;
+  pointer-events: none;
+}
+.sg-msg--agent:hover .sg-copy-btn,
+.sg-msg--agent:focus-within .sg-copy-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sg-msg--agent .sg-copy-btn:hover {
+  background: #fff8e7;
+  border-color: #c9a84c;
+}
+.sg-msg--agent .sg-copy-btn--copied {
+  color: #2a7a3a;
+  border-color: rgba(42,122,58,0.4);
+}
+.sg-input-bar {
+  display: flex;
+  gap: 6px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.sg-input {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sg-input:focus { border-color: #c9a84c; }
+.sg-send {
+  background: #c9a84c;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #060e18;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.15s;
+}
+.sg-send:hover { background: #b8963e; }
+
+/* ── Mic (voice input) button ── */
+.sg-mic {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+}
+.sg-mic:hover { opacity: 1; background: #fff8e7; border-color: #c9a84c; }
+.sg-mic--listening {
+  opacity: 1;
+  background: #fff0f0;
+  border-color: #d9534f;
+  animation: sg-mic-pulse 0.9s ease-in-out infinite;
+}
+@keyframes sg-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217,83,79,0.35); }
+  50%       { box-shadow: 0 0 0 5px rgba(217,83,79,0); }
+}
+
+/* ── Web-search toggle ── */
+.sg-web-toggle {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.sg-web-toggle:hover { opacity: 0.75; }
+.sg-web-toggle--on {
+  opacity: 1;
+  background: #fff8e7;
+  border-color: #c9a84c;
+}
+
+/* ── Inference thinking indicator ── */
+.sg-msg--thinking {
+  opacity: 0.55;
+  font-style: italic;
+  letter-spacing: 0.2em;
+  animation: sg-pulse 1.2s ease-in-out infinite;
+}
+@keyframes sg-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.75; }
+}
+
+/* ── "Show me where" action bubble ── */
+.sg-msg--action {
+  align-self: flex-start;
+  background: none;
+  padding: 0;
+  max-width: 100%;
+}
+.sg-show-me-btn {
+  background: none;
+  border: 1px solid #c9a84c;
+  border-radius: 16px;
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  color: #7a5e1a;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.sg-show-me-btn:hover { background: #fff8e7; }
+
+/* ── Walkthrough UI ── */
+.sg-wt-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sg-wt-narration {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #1a1a1a;
+  margin: 0;
+  background: #f5f1e8;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid #c9a84c;
+}
+.sg-wt-instruction {
+  font-size: 0.83rem;
+  line-height: 1.55;
+  color: #555;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── TTS narration bar ── */
+.sg-tts-bar {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+.sg-btn-icon {
+  background: none;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 5px;
+  color: #c9a84c;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 3px 7px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sg-btn-icon:hover {
+  background: rgba(201, 168, 76, 0.14);
+  border-color: #c9a84c;
+}
+
+/* ── Walkthrough bar (Next/Exit controls) ── */
+.sg-wt-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+.sg-wt-menu {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: #555;
+  transition: border-color 0.15s, color 0.15s;
+}
+.sg-wt-menu:hover { border-color: #999; color: #333; }
+.sg-wt-exit {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #666;
+  transition: border-color 0.15s, color 0.15s;
+}
+.sg-wt-exit:hover { border-color: #999; color: #333; }
+.sg-wt-prog {
+  flex: 1;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #999;
+}
+.sg-wt-next {
+  background: #060e18;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #c9a84c;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sg-wt-next:hover { background: #1a2a3a; }
+
+/* ── Resume bar ── */
+.sg-resume-bar {
+  padding: 12px 14px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+.sg-resume-bar > p {
+  font-size: 0.82rem;
+  color: #555;
+  margin: 0 0 8px;
+}
+.sg-resume-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a84c transparent;
+}
+.sg-resume-steps::-webkit-scrollbar { width: 4px; }
+.sg-resume-steps::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.45); border-radius: 2px; }
+.sg-resume-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.sg-wt-resume {
+  background: #060e18;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #c9a84c;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sg-wt-resume:hover { background: #1a2a3a; }
+.sg-wt-restart,
+.sg-wt-home {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #666;
+}
+.sg-wt-restart:hover,
+.sg-wt-home:hover { border-color: #999; color: #333; }
+
+/* ── Page element highlight ── */
+.sg-highlight {
+  outline: 3px solid #c9a84c !important;
+  outline-offset: 4px;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 8px rgba(201, 168, 76, 0.18), 0 0 20px rgba(201, 168, 76, 0.35) !important;
+  position: relative;
+  z-index: 1000;
+  transition: outline 0.25s ease, box-shadow 0.25s ease;
+}
+/* Inline elements (e.g. <a> in nav) need a block context to show the full ring */
+.sg-highlight[data-sg-was-inline] {
+  display: inline-block !important;
+}
+
+/* ── Demo cursor ── */
+.sg-demo-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  width: 20px;
+  height: 24px;
+  opacity: 0;
+  transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              top  0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s;
+}
+.sg-demo-cursor--visible {
+  opacity: 1;
+}
+.sg-demo-cursor svg {
+  display: block;
+  filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.45));
+}
+
+/* Click ripple animation */
+.sg-demo-ripple {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99998;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(201, 168, 76, 0.55);
+  animation: sg-ripple 0.65s ease-out forwards;
+}
+@keyframes sg-ripple {
+  to { transform: scale(3.5); opacity: 0; }
+}
+
+/* Generic dropdown open class used by demo cursor */
+.sg-demo-open > .nav-dropdown-menu,
+.sg-demo-open > [role="menu"],
+.sg-demo-open > .dropdown-menu {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ── Play/pause auto-advance button in walkthrough bar ── */
+.sg-wt-playpause {
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 5px;
+  background: none;
+  color: #c9a84c;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sg-wt-playpause:hover {
+  background: rgba(201,168,76,0.12);
+  border-color: #c9a84c;
+}
+
+/* ── Walkthrough navigator (step-tree) ── */
+.sg-wt-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 130px;
+  overflow-y: auto;
+  border-top: 1px solid #e8e0c8;
+  padding-top: 8px;
+  margin-top: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a84c transparent;
+}
+.sg-wt-nav::-webkit-scrollbar { width: 4px; }
+.sg-wt-nav::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.45); border-radius: 2px; }
+.sg-wt-nav-step {
+  background: #f0ece0;
+  border: 1px solid #e0d8c0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: #444;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.sg-wt-nav-step:hover {
+  background: #e8e0ca;
+  border-color: #b8963e;
+  color: #060e18;
+}
+.sg-wt-nav-step--current {
+  border-color: #c9a84c;
+  background: #f5eed8;
+  color: #060e18;
+  font-weight: 600;
+}
+.sg-wt-nav-step--sub {
+  margin-left: 14px;
+  font-size: 0.74rem;
+  color: #555;
+  background: #f8f5ef;
+  border-color: #e8e0cc;
+}
+.sg-wt-nav-step--sub:hover {
+  background: #ede7d3;
+  border-color: #b8963e;
+  color: #060e18;
+}
+.sg-wt-nav-step--sub.sg-wt-nav-step--current {
+  background: #f5eed8;
+  border-color: #c9a84c;
+  color: #060e18;
+  font-weight: 600;
+}
+
+/* ── Mobile responsive — ≤600px ──────────────────────────────────────────────
+ * On a phone the guide is a BOTTOM SHEET, not a floating window. It used to
+ * open to a 340×460 panel positioned at an explicit left/top, which on a
+ * 375×812 screen meant it auto-opened across the middle of the page covering
+ * ~half the viewport. Now: it starts as the FAB (see isMobileViewport() in
+ * soma-guide.js), and when opened it is pinned to the bottom edge, full width,
+ * capped at 62vh, with the page still readable above it.
+ * The JS half of this — no auto-open, no drag, no resize, no remembered desktop
+ * size — is gated on the same 600px breakpoint. Keep the two in step. */
+@media (max-width: 600px) {
+  #soma-guide {
+    bottom: 14px;
+    right: 14px;
+  }
+
+  /* FAB — compact but still tappable */
+  .sg-fab {
+    padding: 10px 14px 10px 11px;
+    font-size: 0.82rem;
+    gap: 6px;
+  }
+  .sg-fab-avatar { font-size: 1.05rem; }
+
+  /* Open in any mode → sheet pinned to the bottom edge, full width.
+   * Uses the #id so it beats the base `bottom/right` rule on #soma-guide. */
+  #soma-guide.sg--idle,
+  #soma-guide.sg--text,
+  #soma-guide.sg--walkthrough,
+  #soma-guide.sg--voice {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+  }
+
+  .sg--idle .sg-panel,
+  .sg--text .sg-panel,
+  .sg--walkthrough .sg-panel,
+  .sg--voice .sg-panel {
+    width: 100%;
+    max-width: 100%;
+    max-height: 62vh;
+    /* Square off the bottom corners — the sheet meets the screen edge. */
+    border-radius: 16px 16px 0 0;
+    /* Clear the iPhone home indicator without stranding a gap on other phones. */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Text panel: fixed height, no resize handle (pinch/zoom handles zoom on mobile) */
+  .sg--text .sg-panel {
+    height: 62vh;
+    resize: none;
+  }
+
+  /* Corner drag-handles are meaningless on a pinned sheet, and they sit exactly
+   * where a thumb lands. */
+  .sg-resize-h { display: none; }
+
+  /* The header no longer drags — don't advertise that it does. Both rules are
+   * needed: the base sheet sets `grabbing` on :active, which outranks a bare
+   * `.sg-header` selector. */
+  .sg-header,
+  .sg-header:active { cursor: default; }
+
+  /* Body: tighter padding saves vertical space */
+  .sg-body { padding: 12px; }
+
+  /* Walk-through nav — shorten scrollable area to save screen */
+  .sg-wt-nav { max-height: 100px; }
+
+  /* Resume steps list — same cap */
+  .sg-resume-steps { max-height: 140px; }
+
+  /* Close button — larger hit target on touch */
+  .sg-btn-close {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ── Feedback topic buttons (affordance in idle/greeting list) ── */
+.sg-topic-btn--feedback {
+  background: #f0f4ff;
+  border-color: #c3cfe8;
+  color: #1a3060;
+}
+.sg-topic-btn--feedback:hover { background: #e3eaff; }
+
+/* ── Inline feedback capture form ── */
+.sg-feedback-form {
+  background: #f9f7f2;
+  border: 1px solid #e8dfc4;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+.sg-feedback-form-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #060e18;
+  margin-bottom: 2px;
+}
+.sg-feedback-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #444;
+}
+.sg-feedback-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #1a1a1a;
+  resize: vertical;
+  min-height: 72px;
+  background: #fff;
+}
+.sg-feedback-textarea:focus { outline: none; border-color: #c9a84c; }
+.sg-feedback-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #1a1a1a;
+  background: #fff;
+}
+.sg-feedback-input:focus { outline: none; border-color: #c9a84c; }
+.sg-feedback-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.sg-feedback-submit {
+  background: #060e18;
+  color: #c9a84c;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 18px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sg-feedback-submit:hover { opacity: 0.85; }
+.sg-feedback-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.sg-feedback-cancel {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sg-feedback-cancel:hover { background: #f0f0f0; }
+.sg-feedback-status {
+  font-size: 0.78rem;
+  color: #555;
+  min-height: 16px;
+}
+.sg-feedback-status--error { color: #c0392b; font-weight: 600; }

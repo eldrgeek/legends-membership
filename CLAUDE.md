@@ -20,7 +20,7 @@ last_reviewed: 2026-06-23
 - global: `repo-docs`, `second-brain-builder`
 - gap: change-management queue/daemon operating procedure (Bill log → changelog → review) should become a local skill
 
-**Depends on / used by:** loads the guide widget engine + styles from **soma-platform** (soma-guide.netlify.app CDN); TTS via **bill-talk** el-proxy; text Q&A via **VPS infer/ask**; auth via **Supabase**. Deployed on **Netlify** (legends-membership.netlify.app).
+**Depends on / used by:** the guide widget engine + styles are **vendored same-origin** at `vendor/soma-guide/` (copied from **soma-platform**; the old soma-guide.netlify.app CDN was dropped 2026-08-11 after it 404'd in production undetected — see `vendor/soma-guide/PROVENANCE.txt`); TTS via **bill-talk** el-proxy; text Q&A via **VPS infer/ask**; auth via **Supabase**. Deployed on **Netlify** (legends-membership.netlify.app). Voice and inference are allowed to fail — `npm run test:dependency-failures` proves what members still get when they do.
 
 **Gotchas**
 - Ask-Bill is a 4-link external chain (soma-guide CDN, bill-talk el-proxy, ElevenLabs agent `agent_2401ks53q6t8e2drt1h7va3f2c52`, VPS infer/ask) — any one down breaks the widget. See BREADCRUMBS "what breaks what".

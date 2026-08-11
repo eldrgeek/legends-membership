@@ -66,16 +66,38 @@ voice-input affordances render.
 then fix.** That table is the regression contract for Bill's brain.
 
 The engine source is resolved from `$SOMA_GUIDE_SRC`, then
-`../soma-platform/packages/soma-guide/soma-guide.js` (sibling checkout) —
-it is deliberately not vendored here.
+`vendor/soma-guide/soma-guide.js` (what production actually serves), then a
+sibling `soma-platform` checkout.
+
+## Layer 4b — Dependency failures (`npm run test:dependency-failures`)
+
+**The only failure-path suite in this repo.** Every other layer proves the happy
+path. This one blocks each external dependency individually — guide bundle,
+bill-talk, ElevenLabs, VPS `/infer/ask`, and all four at once — and asserts the
+intended degradation.
+
+The contract, for every single-dependency outage:
+- a member can still reach core content (nav + readable body)
+- a member can still submit a request (`bugs.html` → recommendations API)
+- the degradation is intentional, not an undefined-global accident
+
+Voice and inference may degrade. Navigation, reading and submitting must not.
+
+Written 2026-08-11 after `soma-guide.netlify.app` was found 404 in production —
+`window.somaGuide` undefined for every member, the "Ask Bill →" button doing
+nothing — with no test, alarm, or human noticing. It was verified RED against
+the pre-fix tree before the fix landed; a matrix that was green beforehand is
+not a matrix.
 
 ## Layer 5 — Deploy drift (`npm run verify:deploy`)
 
-The engine deploys **manually** to soma-guide.netlify.app; this site deploys
-via git CD. `tools/verify-deploy.mjs` diffs every live surface against local
-sources (engine js/css, config, knowledge pack) and probes the
-submit-feedback function and the inference endpoint. Exit 1 on drift.
-Run it after every engine change and after every push.
+The engine is now vendored and ships via git CD with the rest of the site.
+`tools/verify-deploy.mjs` diffs every live surface against local sources
+(vendored engine js/css, config, knowledge pack, resilience layer), asserts no
+page still references the dead soma-guide CDN, warns if the vendored engine has
+drifted from `soma-platform`, and probes the submit-feedback function and the
+inference endpoint. Exit 1 on drift. Run after every push.
+Set `DEPLOY_URL` to point it at a Netlify deploy preview instead of production.
 
 ## Layer 6 — Supabase E2E (`npm run test:e2e`)
 

@@ -2,14 +2,17 @@
  * Bill test harness — loads the REAL soma-guide engine with the REAL Bill
  * config (js/legends-guide-config.js + js/legends-knowledge.js) in jsdom.
  *
- * The engine is not vendored in this repo (pages load it from the
- * soma-guide.netlify.app CDN), so tests resolve the source from:
+ * The engine is now VENDORED in this repo at vendor/soma-guide/ (it used to be
+ * loaded from the soma-guide.netlify.app CDN, which was 404 in production on
+ * 2026-08-11 with nobody watching). Tests resolve the source from:
  *   1. $SOMA_GUIDE_SRC                                  (explicit override)
- *   2. ../soma-platform/packages/soma-guide/soma-guide.js (sibling checkout)
- *   3. js/soma-guide.js                                  (legacy vendored copy)
+ *   2. vendor/soma-guide/soma-guide.js                   (what production serves)
+ *   3. ../soma-platform/packages/soma-guide/soma-guide.js (upstream checkout)
+ *   4. js/soma-guide.js                                  (legacy vendored copy)
  *
- * Keeping the engine out of this repo is deliberate — the deploy-drift check
- * (tools/verify-deploy.mjs) is what guards CDN/source skew.
+ * Preferring the vendored copy means tests exercise exactly the bytes members
+ * get. Drift between the vendored copy and upstream soma-platform is reported
+ * by tools/verify-deploy.mjs; provenance is in vendor/soma-guide/PROVENANCE.txt.
  */
 
 'use strict';
@@ -23,6 +26,7 @@ const ROOT = path.join(__dirname, '..', '..');
 function resolveEngineSrc() {
   const candidates = [
     process.env.SOMA_GUIDE_SRC,
+    path.join(ROOT, 'vendor', 'soma-guide', 'soma-guide.js'),
     path.join(ROOT, '..', 'soma-platform', 'packages', 'soma-guide', 'soma-guide.js'),
     path.join(ROOT, 'js', 'soma-guide.js'),
   ].filter(Boolean);

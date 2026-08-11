@@ -2,12 +2,23 @@
 
 ## Ask Bill is broken → diagnostic path
 
-**Step 1 — Is soma-guide loading?**
+**Step 0 — Run the failure matrix first.** It reproduces every dependency
+outage locally in seconds and tells you which link is broken:
 ```bash
-curl -I https://soma-guide.netlify.app/soma-guide.js
+npm run test:dependency-failures
 ```
-- 404 → fix soma-platform CDN deploy (see soma-platform/RECIPES.md)
+
+**Step 1 — Is soma-guide loading?** (engine is VENDORED same-origin since 2026-08-11)
+```bash
+curl -I https://legends-membership.netlify.app/vendor/soma-guide/soma-guide.js
+```
+- 404 → the site deploy is broken or `vendor/soma-guide/` was not committed; check Netlify build log
 - 200 → continue
+
+> Do **not** go back to `https://soma-guide.netlify.app/soma-guide.js`. That host
+> 404s and deploys by hand; depending on it is what took Ask Bill down silently.
+> If the widget is missing, members still get the same-origin fallback panel from
+> `js/legends-ask-bill-resilience.js` — degraded, but not dead.
 
 **Step 2 — Is el-proxy alive?**
 ```bash
