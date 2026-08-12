@@ -138,14 +138,26 @@ try {
     // confirmation blocks the session.
     let jwt = null;
     const signup = await rest('/auth/v1/signup', { key: ANON_KEY, method: 'POST', body: { email, password } });
+    const signupUserId = signup.json && ((signup.json.user && signup.json.user.id) || signup.json.id);
     if (signup.status < 300 && signup.json && signup.json.access_token) {
       jwt = signup.json.access_token;
-      if (signup.json.user && signup.json.user.id) createdUserIds.push(signup.json.user.id);
+      if (signupUserId) createdUserIds.push(signupUserId);
       console.log('  (non-member created via PUBLIC open signup — stranger door confirmed open)');
+    } else if (signup.status < 300 && signupUserId) {
+      // Open signup created the account but requires email confirmation for a
+      // session. The door is still open — any inbox can click the link. Confirm
+      // via admin (simulating that click) and sign in.
+      createdUserIds.push(signupUserId);
+      const confirm = await rest(`/auth/v1/admin/users/${signupUserId}`, {
+        key: SERVICE_KEY, method: 'PUT', body: { email_confirm: true },
+      });
+      if (confirm.status >= 300) throw new Error(`could not confirm signup user: HTTP ${confirm.status}`);
+      jwt = await signIn(email, password);
+      console.log('  (non-member created via PUBLIC open signup; email-confirm simulated via admin — stranger door confirmed open)');
     } else {
       await adminCreateUser(email, password);
       jwt = await signIn(email, password);
-      console.log(`  (public signup gave no session — HTTP ${signup.status}; non-member admin-created instead)`);
+      console.log(`  (public signup refused — HTTP ${signup.status}; non-member admin-created instead)`);
     }
 
     const msgs = await rest('/rest/v1/community_messages?select=id,user_email&limit=10', { key: ANON_KEY, jwt });
