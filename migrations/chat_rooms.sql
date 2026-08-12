@@ -18,23 +18,31 @@ create table if not exists public.chat_rooms (
   created_at  timestamptz default now()
 );
 
--- 2. Row level security.
+-- 2. Row level security. Rooms belong to a community; the list is visible only to
+--    that community's members (SCC-III C2/C3, 2026-08-12 — the room list is
+--    community-internal data, and open signup means "signed in" proves nothing).
+--    Requires migrations/community_members.sql.
+alter table public.chat_rooms
+  add column if not exists community_id text not null default 'legends'
+  references public.communities(id);
+
 alter table public.chat_rooms enable row level security;
 
--- Anyone (anon + authenticated) may read the room list.
 drop policy if exists "anyone can read chat rooms" on public.chat_rooms;
-create policy "anyone can read chat rooms"
+drop policy if exists "community members can read their chat rooms" on public.chat_rooms;
+create policy "community members can read their chat rooms"
   on public.chat_rooms
   for select
-  using (true);
+  to authenticated
+  using (public.is_member_of(community_id));
 
--- Any signed-in user may create a room.
 drop policy if exists "authenticated users can create chat rooms" on public.chat_rooms;
-create policy "authenticated users can create chat rooms"
+drop policy if exists "community members can create chat rooms" on public.chat_rooms;
+create policy "community members can create chat rooms"
   on public.chat_rooms
   for insert
   to authenticated
-  with check (true);
+  with check (public.is_member_of(community_id));
 
 -- (No update/delete policy: rooms are durable once created.)
 
