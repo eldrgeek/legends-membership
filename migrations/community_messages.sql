@@ -9,19 +9,29 @@ create table if not exists public.community_messages (
 
 alter table public.community_messages enable row level security;
 
+-- Messages are scoped to a community; RLS gates on membership, not authentication
+-- (SCC-III C2, 2026-08-12: `to authenticated using (true)` let any signed-up
+-- stranger read every room and dump the membership roster). Requires
+-- migrations/community_members.sql (communities, community_members, is_member_of).
+alter table public.community_messages
+  add column if not exists community_id text not null default 'legends'
+  references public.communities(id);
+
 drop policy if exists "community messages are readable by signed in users" on public.community_messages;
-create policy "community messages are readable by signed in users"
+drop policy if exists "community members can read their community messages" on public.community_messages;
+create policy "community members can read their community messages"
   on public.community_messages
   for select
   to authenticated
-  using (true);
+  using (public.is_member_of(community_id));
 
 drop policy if exists "signed in users can post their own community messages" on public.community_messages;
-create policy "signed in users can post their own community messages"
+drop policy if exists "community members can post their own community messages" on public.community_messages;
+create policy "community members can post their own community messages"
   on public.community_messages
   for insert
   to authenticated
-  with check (auth.uid() = user_id);
+  with check (auth.uid() = user_id and public.is_member_of(community_id));
 
 create index if not exists community_messages_room_created_at_idx
   on public.community_messages (room, created_at);
