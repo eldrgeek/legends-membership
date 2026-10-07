@@ -1,6 +1,6 @@
 [build]
-  command = "node scripts/build-nav.mjs"
-  publish = "."
+  command = "node scripts/build-nav.mjs && node scripts/build-site.mjs"
+  publish = "_site"
   functions = "netlify/functions"
 
 [[redirects]]

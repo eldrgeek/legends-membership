@@ -25,4 +25,5 @@ last_reviewed: 2026-06-23
 **Gotchas**
 - Ask-Bill is a 4-link external chain (soma-guide CDN, bill-talk el-proxy, ElevenLabs agent `agent_2401ks53q6t8e2drt1h7va3f2c52`, VPS infer/ask) — any one down breaks the widget. See BREADCRUMBS "what breaks what".
 - Netlify Identity is **permanently removed** (2026-06-05) — use SOMA Auth only, never re-add it.
+- **Only `_site/` is public** (2026-10-07). The Netlify build (`scripts/build-site.mjs`) copies an allowlist of pages and assets into `_site/`; everything else in the repo (functions source, docs, SQL, scripts) returns 404. A new public file or directory must be added to the allowlist in `scripts/build-site.mjs`, or it will not be served. The build fails if a page references a local file missing from `_site/`, or if a private file type (md, sql, zip, yml, package.json, ...) lands there.
 - el-proxy and the recommendations/inference API live **elsewhere** (bill-talk, VPS), not in this repo; only intake/feedback functions are local.
